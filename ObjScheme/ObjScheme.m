@@ -170,7 +170,7 @@ static ObSScope* __globalScope;
     [ObjScheme assertSyntax: ([array count] == 3) elseRaise: @"bad define-macro syntax"];
     NSString* macroName = [array objectAtIndex: 1];
     id body = [ObjScheme expandToken: [array lastObject] atTopLevel: NO];
-    id invocation = [[ObjScheme globalScope] evaluateList: body];
+    id invocation = [[ObjScheme globalScope] evaluate: body];
     [ObjScheme assertSyntax: [invocation isKindOfClass: [ObSInvocation class]] elseRaise: @"body of define-macro must be an invocation"];
     [[ObjScheme globalScope] defineMacroNamed: macroName asInvocation: invocation];
     return nil;
@@ -504,11 +504,130 @@ static ObSScope* __globalScope;
     ";; More macros can also go here"
     ")";
 
-  [[ObjScheme globalScope] evaluateList: [ObjScheme parseString: macros]];
+  ObSScope* global = [ObjScheme globalScope];
+  [global evaluate: [ObjScheme parseString: macros]];
+  [global defineMacroNamed: @"let" asInvocation: [ObSInvocation fromBlock: ^(NSArray* list) {
+        NSArray* bindings = [list objectAtIndex: 0];
+        NSArray* body = [list subarrayWithRange: NSMakeRange(1, [list count]-1)];
+
+        NSMutableArray* names = [NSMutableArray arrayWithCapacity: [bindings count]];
+        NSMutableArray* expressions = [NSMutableArray arrayWithCapacity: [bindings count]];
+        for ( NSArray* binding in bindings) {
+          [ObjScheme assertSyntax: [binding isKindOfClass: [NSArray class]] elseRaise: @"Illegal let binding list"];
+          [ObjScheme assertSyntax: ([binding count] == 2) elseRaise: @"Illegal let binding list item wrong length"];
+          [names addObject: [binding objectAtIndex: 0]];
+          [expressions addObject: [ObjScheme expandToken: [bindings objectAtIndex: 1] atTopLevel: YES]];
+        }
+
+        NSMutableArray* expandedBody = [NSMutableArray arrayWithCapacity: [body count]];
+        for ( id token in body ) {
+          [expandedBody addObject: [ObjScheme expandToken: token atTopLevel: YES]];
+        }
+
+        // expands to ((lambda (names) body) expressions)
+        NSMutableArray* lambdaExpression = [NSMutableArray arrayWithObjects: S_LAMBDA, names, nil];
+        [lambdaExpression addObjectsFromArray: expandedBody];
+
+        NSMutableArray* resultExpression = [NSMutableArray arrayWithObject: lambdaExpression];
+        [resultExpression addObjectsFromArray: expressions];
+
+        return resultExpression;
+      }]];
 }
 
 
-- (id)evaluateList:(NSArray*)list {
+- (id)evaluate:(id)token {
+  NSAssert(token != nil, @"nil token");
+
+  @try {
+    while ( 1 ) {
+      if ( [token isKindOfClass: [ObSSymbol class]] ) {
+        return [self resolveVariable: token]; // variable reference
+
+      } else if ( ! [token isKindOfClass: [NSArray class]] ) {
+        return token; // literal
+
+      } else {
+        NSArray* list = token;
+        id head = [list objectAtIndex: 0];
+        NSArray* rest = [list subarrayWithRange: NSMakeRange(1, [list count]-1)];
+
+        if ( [head isEqual: S_QUOTE] ) { // (quote exp) -> exp
+          return rest; // that's easy- literally the rest of the array is the value
+
+        } else if ( [head isEqual: S_IF] ) { // (if test consequence alternate) <- note that full form is enforced by expansion
+          id test = [rest objectAtIndex: 0];
+          id consequence = [rest objectAtIndex: 1];
+          id alternate = [rest objectAtIndex: 2];
+          token = IF([self evaluate: test]) ? consequence : alternate;
+          continue; // I'm being explicit here for clarity, we'll now evaluate this token
+
+        } else if ( [head isEqual: S_SET] ) { // (set! variableName expression)
+          NSString* variableName = [rest objectAtIndex: 0];
+          id expression = [rest objectAtIndex: 1];
+          ObSScope* definingScope = [self findScopeOf: variableName]; // I do this first, which can fail, so we don't bother executing predicate
+          id value = [self evaluate: expression];
+          [definingScope setObject: value forKey: variableName];
+
+        } else if ( [head isEqual: S_DEFINE] ) { // (define variableName expression)
+          NSString* variableName = [rest objectAtIndex: 0];
+          id expression = [rest objectAtIndex: 1];
+          [self setObject: [self evaluate: expression] forKey: variableName];
+
+        } else if ( [head isEqual: S_LAMBDA] ) { // (lambda (argumentNames) body)
+          NSArray* argumentNames = [rest objectAtIndex: 0];
+          NSArray* body = [rest objectAtIndex: 1];
+          return [[[ObSProcedure alloc] initWithArgumentNames: argumentNames
+                                                   expression: body
+                                                        scope: self] autorelease];
+
+        } else if ( [head isEqual: S_BEGIN] ) { // (begin expression...)
+          id result = [NSNumber numberWithBool: NO];
+          for ( id expression in rest ) {
+            result = [self evaluate: expression];
+          }
+          return result; // begin evaluates to value of final expression
+
+        } else {
+          id executable = [self evaluate: head];
+          NSMutableArray* arguments = [NSMutableArray arrayWithCapacity: [rest count]];
+          for ( id subToken in rest ) {
+            [arguments addObject: [self evaluate: subToken]];
+          }
+
+          if ( [executable isKindOfClass: [ObSProcedure class]] ) {
+            // a named function, which we now will in turn resolve within this scope, and invoke a level deeper
+            ObSProcedure* procedure = executable;
+            ObSScope* invocationScope = [[ObSScope alloc] initWithOuterScope: procedure.scope
+                                                        paramListNameOrNames: procedure.argumentNames
+                                                                   arguments: arguments];
+            id ret = [invocationScope evaluate: procedure.expression];
+            [invocationScope release]; // trying to be conservative with memory in highly recursive environment here
+            return ret;
+
+          } else {
+            // this is the actual executable, and the rest of the details are the arguments
+            ObSInvocation* invocation = executable;
+            return [invocation invokeWithArguments: arguments];
+          }
+        }
+      }
+    }
+
+  } @catch ( NSException* e ) {
+    NSLog( @"FAILED TO EVALUATE %@", token );
+    [e raise];
+  }
+}
+
+- (ObSScope*)findScopeOf:(NSString*)name {
+  if ( [self objectForKey: name] != nil )
+    return self;
+  if ( _outerScope != nil )
+    return [_outerScope findScopeOf: name];
+
+  [NSException raise: @"LookupError" format: @"Couldn't find defining scope of %@", name];
+  return nil;
 }
 
 - (void)defineMacroNamed:(NSString*)name asInvocation:(ObSInvocation*)procedure {
@@ -531,16 +650,16 @@ static ObSScope* __globalScope;
 
 @implementation ObSProcedure
 
-@synthesize scope=_scope, name=_name, parameters=_parameters;
+@synthesize scope=_scope, expression=_expression, argumentNames=_argumentNames;
 
 
-- (id)initWithParameterList:(NSArray*)parameters
-             expressionName:(NSString*)expressionName
+- (id)initWithArgumentNames:(NSArray*)argumentNames
+                 expression:(id)expression
                       scope:(ObSScope*)scope {
 
   if ( (self = [self init]) ) {
-    _parameters = [parameters retain];
-    _name = [expressionName retain];
+    _argumentNames = [argumentNames retain];
+    _expression = [expression retain];
     _scope = [scope retain];
   }
 

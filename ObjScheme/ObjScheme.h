@@ -39,10 +39,11 @@
                arguments:(NSArray*)argument;
 - (id)resolveVariable:(NSString*)variable;
 - (void)bootstrapMacros;
-- (id)evaluateList:(NSArray*)list;
+- (id)evaluate:(id)token;
 - (void)defineMacroNamed:(NSString*)name asInvocation:(ObSInvocation*)procedure;
 - (BOOL)hasMacroNamed:(NSString*)name;
 - (ObSInvocation*)macroNamed:(NSString*)name;
+- (ObSScope*)findScopeOf:(NSString*)name;
 
 @end
 
@@ -50,17 +51,17 @@
 
 
 @interface ObSProcedure : NSObject {
-  NSArray* _parameters;
-  NSString* _name;
+  NSArray* _argumentNames;
+  id _expression;
   ObSScope* _scope;
 }
 
-@property (readonly) NSArray* parameters;
-@property (readonly) NSString* name;
+@property (readonly) NSArray* argumentNames;
+@property (readonly) id expression;
 @property (readonly) ObSScope* scope;
 
-- (id)initWithParameterList:(NSArray*)parameters
-             expressionName:(NSString*)expressionName
+- (id)initWithArgumentNames:(NSArray*)argumentNames
+                 expression:(id)expression
                       scope:(ObSScope*)scope;
 @end
 
