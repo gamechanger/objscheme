@@ -380,6 +380,25 @@ static ObSScope* __globalScope;
         NSNumber* second = [list objectAtIndex: 1];
         return [NSNumber numberWithBool: [first floatValue] <= [second floatValue]];
       }] forKey: @"<="];
+
+  // TODO:
+  /*
+    - equal? eq? '=' for non-numbers
+    - length
+    - cons, car, cdr, cdar, cadr
+    - list
+    - list? null? symbol? boolean? pair? port?
+    - apply
+    - eval
+    - call/cc
+    - write
+    - map
+    - display
+    - symbol->string
+    - string-append
+    - display
+    - MAYBE I/O: load, read, write, read-char, open-input-file, close-input-port, open-output-file, close-output-port, eof-object?
+   */
 }
 
 + (BOOL)IF:(id)token {
