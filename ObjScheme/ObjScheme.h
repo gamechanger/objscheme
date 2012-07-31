@@ -13,9 +13,9 @@
 
 @interface ObjScheme : NSObject
 + (ObSScope*)globalScope;
-+ (id)parseFromInPort:(ObSInPort*)inPort;
++ (id)parse:(ObSInPort*)inPort;
 + (id)parseString:(NSString*)string;
-+ (id)loadFromInPort:(ObSInPort*)inPort;
++ (id)read:(ObSInPort*)inPort;
 @end
 
 
@@ -83,9 +83,11 @@ typedef id (^ObSInvocationBlock)(NSArray*);
 
 
 @interface ObSInPort : NSObject {
-  NSData* _data;
+  NSString* _data;
+  NSUInteger _cursor;
 }
 - (id)initWithData:(NSData*)data;
+- (id)initWithString:(NSString*)data;
 - (NSString*)nextToken;
 @end
 

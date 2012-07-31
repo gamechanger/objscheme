@@ -24,6 +24,10 @@ static NSString* S_CONS = @"cons";
 static NSString* S_LET = @"let";
 static NSString* S_F = @"#f";
 static NSString* S_T = @"#t";
+static NSString* S_OPENPAREN = @"(";
+static NSString* S_CLOSEPAREN = @")";
+
+static NSString* S_EOF = @"#EOF#";
 
 #define IF(x) [ObjScheme IF: (x)]
 
@@ -48,6 +52,7 @@ static NSString* S_T = @"#t";
 
 static NSDictionary* __constants;
 static ObSScope* __globalScope;
+static NSDictionary* __quotes;
 
 + (void)initialize {
   __constants = [[NSDictionary alloc]
@@ -59,6 +64,12 @@ static ObSScope* __globalScope;
                   nil];
   __globalScope = [[ObSScope alloc] init];
   [__globalScope bootstrapMacros];
+  __quotes = [[NSDictionary alloc]
+                  initWithObjectsAndKeys:
+                 S_QUOTE, @"'",
+               S_QUASIQUOTE, @"`",
+               S_UNQUOTE, @",",
+               S_UNQUOTESPLICING, @",@", nil];
 }
 
 + (ObSScope*)globalScope {
@@ -272,13 +283,56 @@ static ObSScope* __globalScope;
 /**
  * read a program, then expand and error-check it
  */
-+ (id)parseFromInPort:(ObSInPort*)inPort {
++ (id)parse:(ObSInPort*)inPort {
+  return [ObjScheme expandToken: [ObjScheme read: inPort] atTopLevel: YES];
 }
 
-+ (id)loadFromInPort:(ObSInPort*)inPort {
++ (id)readAheadFromToken:(id)token andPort:(ObSInPort*)inPort {
+  if ( [token isEqual: S_OPENPAREN] ) {
+    NSMutableArray* list = [NSMutableArray array];
+
+    while ( 1 ) {
+      token = [inPort nextToken];
+      if ( [token isEqual: S_CLOSEPAREN] ) {
+        break;
+
+      } else {
+        [list addObject: [ObjScheme readAheadFromToken: token andPort: inPort]];
+      }
+    }
+
+    return list;
+
+  } else if ( [token isEqual: S_CLOSEPAREN] ) {
+    [NSException raise: @"SyntaxError" format: @"unexpected ')'"];
+    return nil;
+
+  } else if ( [__quotes objectForKey: token] != nil ) {
+    NSString* expandedQuote = [__quotes objectForKey: token];
+    return [NSArray arrayWithObjects: expandedQuote, [ObjScheme read: inPort], nil];
+
+  } else if ( token == S_EOF ) {
+    [NSException raise: @"SyntaxError" format: @"unexpected EOF in list"];
+    return nil;
+
+  } else {
+    return [ObjScheme atomFromToken: token];
+  }
+}
+
++ (id)read:(ObSInPort*)inPort {
+  id token = [inPort nextToken];
+
+  if ( token == S_EOF ) {
+    return S_EOF;
+
+  } else {
+    return [ObjScheme readAheadFromToken: token andPort: inPort];
+  }
 }
 
 + (id)parseString:(NSString*)string {
+  return [ObjScheme parse: [[[ObSInPort alloc] initWithString: string] autorelease]];
 }
 
 
@@ -710,7 +764,97 @@ static ObSScope* __globalScope;
 }
 
 - (id)invokeWithArguments:(NSArray*)arguments {
-  _block(arguments);
+  return _block(arguments);
+}
+
+@end
+
+
+
+
+
+@implementation ObSInPort
+
+- (id)initWithString:(NSString*)string {
+  if ( (self = [super init]) ) {
+    _data = [string retain];
+  }
+  return self;
+}
+
+- (id)initWithData:(NSData*)data {
+  if ( (self = [super init]) ) {
+    _data = [[NSString alloc] initWithData: data
+                                  encoding: NSUTF8StringEncoding];
+  }
+  return self;
+}
+
+- (void)dealloc {
+  [_data release];
+  [super dealloc];
+}
+
+- (NSString*)readLine {
+  NSRange nextNL = [_data rangeOfString: @"\n"
+                                options: 0
+                                  range: NSMakeRange(_cursor, [_data length]-_cursor)];
+  _cursor = nextNL.location + 1; // move us past the newline
+  return [_data substringWithRange: NSMakeRange(_cursor, nextNL.location-_cursor)]; // return everything up to that
+}
+
+- (NSString*)readQuoted {
+  NSRange nextQuote = [_data rangeOfString: @"\""
+                                   options: 0
+                                     range: NSMakeRange(_cursor, [_data length]-_cursor)];
+  NSUInteger startQuote = _cursor - 1;
+  NSUInteger endQuote = nextQuote.location;
+  NSUInteger length = endQuote + 1 - startQuote;
+  _cursor = endQuote + 1; // move us past the quote
+  return [_data substringWithRange: NSMakeRange(startQuote, length)];
+}
+
+- (NSString*)readToken {
+  NSUInteger start = _cursor-1;
+  unichar c = [_data characterAtIndex: _cursor];
+  while ( c != ' ' && c != '\t' && c != '\n' ) {
+    c = [_data characterAtIndex: _cursor++];
+  }
+  return [_data substringWithRange: NSMakeRange(start, _cursor-start)];
+}
+
+- (NSString*)nextToken {
+  switch ( [_data characterAtIndex: _cursor++] ) {
+  case ' ': case '\n': case '\t':
+    return [self nextToken];
+
+  case '(':  return S_OPENPAREN;
+  case ')':  return S_CLOSEPAREN;
+  case '`':  return S_QUASIQUOTE;
+  case '\'': return S_QUOTE;
+  case ',':
+    {
+      unichar next = [_data characterAtIndex: _cursor];
+      if ( next == '@' ) {
+        _cursor++;
+        return S_UNQUOTESPLICING;
+
+      } else {
+        return S_UNQUOTE;
+      }
+    }
+
+  case ';':
+    [self readLine];
+    return [self nextToken];
+
+  case '"':
+    return [self readQuoted];
+
+  default:
+    return [self readToken];
+
+  }
 }
 
 @end
