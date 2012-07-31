@@ -25,6 +25,8 @@ static NSString* S_LET = @"let";
 static NSString* S_F = @"#f";
 static NSString* S_T = @"#t";
 
+#define IF(x) [ObjScheme IF: (x)]
+
 @interface ObjScheme ()
 
 + (id)atomFromToken:(NSString*)token;
@@ -168,9 +170,9 @@ static ObSScope* __globalScope;
     [ObjScheme assertSyntax: ([array count] == 3) elseRaise: @"bad define-macro syntax"];
     NSString* macroName = [array objectAtIndex: 1];
     id body = [ObjScheme expandToken: [array lastObject] atTopLevel: NO];
-    id procedure = [[ObjScheme globalScope] evaluateList: body];
-    [ObjScheme assertSyntax: [procedure isKindOfClass: [ObSProcedure class]] elseRaise: @"body of define-macro must be a procedure"];
-    [[ObjScheme globalScope] defineMacroNamed: macroName asProcedure: procedure];
+    id invocation = [[ObjScheme globalScope] evaluateList: body];
+    [ObjScheme assertSyntax: [invocation isKindOfClass: [ObSInvocation class]] elseRaise: @"body of define-macro must be an invocation"];
+    [[ObjScheme globalScope] defineMacroNamed: macroName asInvocation: invocation];
     return nil;
 
   } else if ( [op isEqualToString: S_BEGIN] ) {
@@ -220,7 +222,7 @@ static ObSScope* __globalScope;
     return [ObjScheme expandQuasiquote: [array objectAtIndex: 1]];
 
   } else if ( [op isMemberOfClass: [ObSSymbol class]] && [[ObjScheme globalScope] hasMacroNamed: op] ) {
-    ObSProcedure* macro = [[ObjScheme globalScope] macroNamed: op];
+    ObSInvocation* macro = [[ObjScheme globalScope] macroNamed: op];
     NSArray* macroArguments = [array subarrayWithRange: NSMakeRange(1, [array count]-1)];
     return [ObjScheme expandToken: [macro invokeWithArguments: macroArguments] atTopLevel: NO];
 
@@ -286,7 +288,7 @@ static ObSScope* __globalScope;
 }
 
 + (void)addGlobalsToScope:(ObSScope*)scope {
-  [scope setObject: [ObSProcedure procedureWithBlock: ^(NSArray* list) {
+  [scope setObject: [ObSInvocation fromBlock: ^(NSArray* list) {
         if ( [list count] == 0 )
           return [NSNumber numberWithInteger: 0];
 
@@ -307,7 +309,7 @@ static ObSScope* __globalScope;
         }
       }] forKey: @"+"];
 
-  [scope setObject: [ObSProcedure procedureWithBlock: ^(NSArray* list) {
+  [scope setObject: [ObSInvocation fromBlock: ^(NSArray* list) {
         NSNumber* first = [list objectAtIndex: 0];
         NSNumber* second = [list objectAtIndex: 1];
         if ( strcmp([first objCType], @encode(int)) == 0 ) {
@@ -318,7 +320,7 @@ static ObSScope* __globalScope;
         }
       }] forKey: @"-"];
 
-  [scope setObject: [ObSProcedure procedureWithBlock: ^(NSArray* list) {
+  [scope setObject: [ObSInvocation fromBlock: ^(NSArray* list) {
         if ( [list count] == 0 )
           return [NSNumber numberWithInteger: 0];
 
@@ -339,7 +341,7 @@ static ObSScope* __globalScope;
         }
       }] forKey: @"*"];
 
-  [scope setObject: [ObSProcedure procedureWithBlock: ^(NSArray* list) {
+  [scope setObject: [ObSInvocation fromBlock: ^(NSArray* list) {
         NSNumber* first = [list objectAtIndex: 0];
         NSNumber* second = [list objectAtIndex: 1];
         if ( strcmp([first objCType], @encode(int)) == 0 ) {
@@ -350,34 +352,46 @@ static ObSScope* __globalScope;
         }
       }] forKey: @"/"];
 
-  [scope setObject: [ObSProcedure procedureWithBlock: ^(NSArray* list) {
+  [scope setObject: [ObSInvocation fromBlock: ^(NSArray* list) {
         NSAssert([list count] == 1, @"not only takes 1 arg");
-        return [ObjScheme isEmptyList: [list objectAtIndex: 0]];
+        return [NSNumber numberWithBool: [ObjScheme isEmptyList: [list objectAtIndex: 0]]];
       }] forKey: @"not"];
 
-  [scope setObject: [ObSProcedure procedureWithBlock: ^(NSArray* list) {
+  [scope setObject: [ObSInvocation fromBlock: ^(NSArray* list) {
         NSNumber* first = [list objectAtIndex: 0];
         NSNumber* second = [list objectAtIndex: 1];
         return [NSNumber numberWithBool: [first floatValue] > [second floatValue]];
       }] forKey: @">"];
 
-  [scope setObject: [ObSProcedure procedureWithBlock: ^(NSArray* list) {
+  [scope setObject: [ObSInvocation fromBlock: ^(NSArray* list) {
         NSNumber* first = [list objectAtIndex: 0];
         NSNumber* second = [list objectAtIndex: 1];
         return [NSNumber numberWithBool: [first floatValue] < [second floatValue]];
       }] forKey: @"<"];
 
-  [scope setObject: [ObSProcedure procedureWithBlock: ^(NSArray* list) {
+  [scope setObject: [ObSInvocation fromBlock: ^(NSArray* list) {
         NSNumber* first = [list objectAtIndex: 0];
         NSNumber* second = [list objectAtIndex: 1];
         return [NSNumber numberWithBool: [first floatValue] >= [second floatValue]];
       }] forKey: @">="];
 
-  [scope setObject: [ObSProcedure procedureWithBlock: ^(NSArray* list) {
+  [scope setObject: [ObSInvocation fromBlock: ^(NSArray* list) {
         NSNumber* first = [list objectAtIndex: 0];
         NSNumber* second = [list objectAtIndex: 1];
         return [NSNumber numberWithBool: [first floatValue] <= [second floatValue]];
       }] forKey: @"<="];
+}
+
++ (BOOL)IF:(id)token {
+  if ( token == nil )
+    return YES; // Scheme if is only false for #f, ie NO
+  if ( ! [token isKindOfClass: [NSNumber class]] )
+    return YES;
+  NSNumber* value = token;
+  if ( strcmp([value objCType], @encode(BOOL)) != 0 )
+    return YES; // not a BOOL
+
+  return [value boolValue];
 }
 
 @end
@@ -497,7 +511,7 @@ static ObSScope* __globalScope;
 - (id)evaluateList:(NSArray*)list {
 }
 
-- (void)defineMacroNamed:(NSString*)name asProcedure:(ObSProcedure*)procedure {
+- (void)defineMacroNamed:(NSString*)name asInvocation:(ObSInvocation*)procedure {
   [_macros setObject: procedure forKey: name];
 }
 
@@ -505,7 +519,7 @@ static ObSScope* __globalScope;
   return [_macros objectForKey: name] != nil;
 }
 
-- (ObSProcedure*)macroNamed:(NSString*)name {
+- (ObSInvocation*)macroNamed:(NSString*)name {
   return [_macros objectForKey: name];
 }
 
@@ -516,6 +530,49 @@ static ObSScope* __globalScope;
 
 
 @implementation ObSProcedure
-+ (ObSProcedure*)procedureWithBlock:(ObSProcedureBlock)block {
+
+@synthesize scope=_scope, name=_name, parameters=_parameters;
+
+
+- (id)initWithParameterList:(NSArray*)parameters
+             expressionName:(NSString*)expressionName
+                      scope:(ObSScope*)scope {
+
+  if ( (self = [self init]) ) {
+    _parameters = [parameters retain];
+    _name = [expressionName retain];
+    _scope = [scope retain];
+  }
+
+  return self;
 }
+
+@end
+
+
+
+
+
+@implementation ObSInvocation
+
++ (id)fromBlock:(ObSInvocationBlock)block {
+  return [[[ObSInvocation alloc] initWithBlock: block] autorelease];
+}
+
+- (id)initWithBlock:(ObSInvocationBlock)block {
+  if ( ( self = [super init] ) ) {
+    _block = Block_copy(block);
+  }
+  return self;
+}
+
+- (void)dealloc {
+  Block_release(_block);
+  [super dealloc];
+}
+
+- (id)invokeWithArguments:(NSArray*)arguments {
+  _block(arguments);
+}
+
 @end

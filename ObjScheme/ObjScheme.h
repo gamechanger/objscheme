@@ -24,7 +24,7 @@
 @end
 
 
-@class ObSProcedure;
+@class ObSInvocation;
 
 @interface ObSScope : NSMutableDictionary {
   ObSScope* _outerScope;
@@ -40,19 +40,43 @@
 - (id)resolveVariable:(NSString*)variable;
 - (void)bootstrapMacros;
 - (id)evaluateList:(NSArray*)list;
-- (void)defineMacroNamed:(NSString*)name asProcedure:(ObSProcedure*)procedure;
+- (void)defineMacroNamed:(NSString*)name asInvocation:(ObSInvocation*)procedure;
 - (BOOL)hasMacroNamed:(NSString*)name;
-- (ObSProcedure*)macroNamed:(NSString*)name;
+- (ObSInvocation*)macroNamed:(NSString*)name;
 
 @end
 
 
 
-@interface ObSProcedure : NSObject
+
+@interface ObSProcedure : NSObject {
+  NSArray* _parameters;
+  NSString* _name;
+  ObSScope* _scope;
+}
+
+@property (readonly) NSArray* parameters;
+@property (readonly) NSString* name;
+@property (readonly) ObSScope* scope;
+
 - (id)initWithParameterList:(NSArray*)parameters
              expressionName:(NSString*)expressionName
-                    environ:(ObSScope*)environ;
-- (id)invokeWithArguments:(NSArray*)args;
+                      scope:(ObSScope*)scope;
+@end
+
+
+
+
+typedef id (^ObSInvocationBlock)(NSArray*);
+
+@interface ObSInvocation : NSObject {
+  ObSInvocationBlock _block;
+}
+
++ (id)fromBlock:(ObSInvocationBlock)block;
+- (id)initWithBlock:(ObSInvocationBlock)block;
+- (id)invokeWithArguments:(NSArray*)arguments;
+
 @end
 
 
@@ -78,5 +102,3 @@
 
 
 
-
-typedef id (^ObSProcedureBlock)(NSArray*);
