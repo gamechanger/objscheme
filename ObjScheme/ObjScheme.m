@@ -26,13 +26,17 @@ static NSString* S_F = @"#f";
 static NSString* S_T = @"#t";
 
 @interface ObjScheme ()
+
 + (id)atomFromToken:(NSString*)token;
 + (NSString*)unpackStringLiteral:(NSString*)string;
 + (id)expandToken:(id)token atTopLevel:(BOOL)topLevel;
 + (BOOL)isEmptyList:(id)token;
 + (void)assertSyntax:(BOOL)correct elseRaise:(NSString*)message;
 + (id)expandQuasiquote:(id)token;
++ (void)addGlobalsToScope:(ObSScope*)scope;
+
 @end
+
 
 
 
@@ -281,6 +285,101 @@ static ObSScope* __globalScope;
     [NSException raise: @"SyntaxError" format: message];
 }
 
++ (void)addGlobalsToScope:(ObSScope*)scope {
+  [scope setObject: [ObSProcedure procedureWithBlock: ^(NSArray* list) {
+        if ( [list count] == 0 )
+          return [NSNumber numberWithInteger: 0];
+
+        NSNumber* first = [list objectAtIndex: 0];
+        if ( strcmp([first objCType], @encode(int)) == 0 ) {
+          int ret = 0;
+          for ( NSNumber* number in list ) {
+            ret += [number intValue];
+          }
+          return [NSNumber numberWithInteger: ret];
+
+        } else {
+          float ret = 0;
+          for ( NSNumber* number in list ) {
+            ret += [number floatValue];
+          }
+          return [NSNumber numberWithFloat: ret];
+        }
+      }] forKey: @"+"];
+
+  [scope setObject: [ObSProcedure procedureWithBlock: ^(NSArray* list) {
+        NSNumber* first = [list objectAtIndex: 0];
+        NSNumber* second = [list objectAtIndex: 1];
+        if ( strcmp([first objCType], @encode(int)) == 0 ) {
+          return [NSNumber numberWithInteger: [first intValue]-[second intValue]];
+
+        } else {
+          return [NSNumber numberWithFloat: [first floatValue]-[second floatValue]];
+        }
+      }] forKey: @"-"];
+
+  [scope setObject: [ObSProcedure procedureWithBlock: ^(NSArray* list) {
+        if ( [list count] == 0 )
+          return [NSNumber numberWithInteger: 0];
+
+        NSNumber* first = [list objectAtIndex: 0];
+        if ( strcmp([first objCType], @encode(int)) == 0 ) {
+          int ret = 0;
+          for ( NSNumber* number in list ) {
+            ret *= [number intValue];
+          }
+          return [NSNumber numberWithInteger: ret];
+
+        } else {
+          float ret = 0;
+          for ( NSNumber* number in list ) {
+            ret *= [number floatValue];
+          }
+          return [NSNumber numberWithFloat: ret];
+        }
+      }] forKey: @"*"];
+
+  [scope setObject: [ObSProcedure procedureWithBlock: ^(NSArray* list) {
+        NSNumber* first = [list objectAtIndex: 0];
+        NSNumber* second = [list objectAtIndex: 1];
+        if ( strcmp([first objCType], @encode(int)) == 0 ) {
+          return [NSNumber numberWithInteger: [first intValue]/[second intValue]];
+
+        } else {
+          return [NSNumber numberWithFloat: [first floatValue]/[second floatValue]];
+        }
+      }] forKey: @"/"];
+
+  [scope setObject: [ObSProcedure procedureWithBlock: ^(NSArray* list) {
+        NSAssert([list count] == 1, @"not only takes 1 arg");
+        return [ObjScheme isEmptyList: [list objectAtIndex: 0]];
+      }] forKey: @"not"];
+
+  [scope setObject: [ObSProcedure procedureWithBlock: ^(NSArray* list) {
+        NSNumber* first = [list objectAtIndex: 0];
+        NSNumber* second = [list objectAtIndex: 1];
+        return [NSNumber numberWithBool: [first floatValue] > [second floatValue]];
+      }] forKey: @">"];
+
+  [scope setObject: [ObSProcedure procedureWithBlock: ^(NSArray* list) {
+        NSNumber* first = [list objectAtIndex: 0];
+        NSNumber* second = [list objectAtIndex: 1];
+        return [NSNumber numberWithBool: [first floatValue] < [second floatValue]];
+      }] forKey: @"<"];
+
+  [scope setObject: [ObSProcedure procedureWithBlock: ^(NSArray* list) {
+        NSNumber* first = [list objectAtIndex: 0];
+        NSNumber* second = [list objectAtIndex: 1];
+        return [NSNumber numberWithBool: [first floatValue] >= [second floatValue]];
+      }] forKey: @">="];
+
+  [scope setObject: [ObSProcedure procedureWithBlock: ^(NSArray* list) {
+        NSNumber* first = [list objectAtIndex: 0];
+        NSNumber* second = [list objectAtIndex: 1];
+        return [NSNumber numberWithBool: [first floatValue] <= [second floatValue]];
+      }] forKey: @"<="];
+}
+
 @end
 
 
@@ -410,4 +509,13 @@ static ObSScope* __globalScope;
   return [_macros objectForKey: name];
 }
 
+@end
+
+
+
+
+
+@implementation ObSProcedure
++ (ObSProcedure*)procedureWithBlock:(ObSProcedureBlock)block {
+}
 @end

@@ -30,7 +30,9 @@
   ObSScope* _outerScope;
   NSMutableDictionary* _macros;
 }
+
 @property (nonatomic,retain) ObSScope* outer;
+
 - (id)initWithOuterScope:(ObSScope*)outer;
 - (id)initWithOuterScope:(ObSScope*)outer
     paramListNameOrNames:(id)parameters
@@ -41,6 +43,7 @@
 - (void)defineMacroNamed:(NSString*)name asProcedure:(ObSProcedure*)procedure;
 - (BOOL)hasMacroNamed:(NSString*)name;
 - (ObSProcedure*)macroNamed:(NSString*)name;
+
 @end
 
 
@@ -72,3 +75,8 @@
 - (id)car;
 - (id)cdr;
 @end
+
+
+
+
+typedef id (^ObSProcedureBlock)(NSArray*);
