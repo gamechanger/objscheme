@@ -19,8 +19,11 @@
 @end
 
 
-@interface ObSSymbol : NSString
+@interface ObSSymbol : NSObject {
+  NSString* _string;
+}
 + (ObSSymbol*)symbolFromString:(NSString*)string;
+- (id)initWithString:(NSString*)string;
 @end
 
 

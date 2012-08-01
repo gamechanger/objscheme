@@ -51,7 +51,7 @@ static NSString* S_EOF = @"#EOF#";
 @implementation ObjScheme
 
 static NSDictionary* __constants;
-static ObSScope* __globalScope;
+static ObSScope* __globalScope = nil;
 static NSDictionary* __quotes;
 
 + (void)initialize {
@@ -62,8 +62,6 @@ static NSDictionary* __quotes;
                   [NSNumber numberWithInteger: 0], @"0",
                   [NSNumber numberWithFloat: 0.0], @"0.0",
                   nil];
-  __globalScope = [[ObSScope alloc] init];
-  [__globalScope bootstrapMacros];
   __quotes = [[NSDictionary alloc]
                   initWithObjectsAndKeys:
                  S_QUOTE, @"'",
@@ -73,6 +71,10 @@ static NSDictionary* __quotes;
 }
 
 + (ObSScope*)globalScope {
+  if ( __globalScope == nil ) {
+    __globalScope = [[ObSScope alloc] init];
+    [__globalScope bootstrapMacros];
+  }
   return __globalScope;
 }
 
@@ -476,9 +478,39 @@ static NSDictionary* __quotes;
 @implementation ObSSymbol
 
 + (ObSSymbol*)symbolFromString:(NSString*)string {
-  if ( [string isMemberOfClass: [ObSSymbol class]] )
-    return (ObSSymbol*)string;
-  return [[[ObSSymbol alloc] initWithString: string] autorelease];
+  static NSMutableDictionary* __symbols = nil;
+  if ( __symbols == nil ) {
+    __symbols = [[NSMutableDictionary alloc] init];
+  }
+
+  ObSSymbol* symbol = [__symbols objectForKey: string];
+  if ( symbol == nil ) {
+    symbol = [[ObSSymbol alloc] initWithString: string];
+    [__symbols setObject: symbol forKey: string];
+    [symbol release];
+  }
+
+  return symbol;
+}
+
+- (id)initWithString:(NSString*)string {
+  if ( ( self = [super init] ) ) {
+    _string = [string retain];
+  }
+  return self;
+}
+
+- (void)dealloc {
+  [_string release];
+  [super dealloc];
+}
+
+- (BOOL)isEqual:(id)other {
+  return other == self;
+}
+
+- (NSUInteger)hash {
+  return [_string hash];
 }
 
 @end
@@ -559,22 +591,22 @@ static NSDictionary* __quotes;
 }
 
 - (void)bootstrapMacros {
-  static NSString* macros = @"(begin"
+  static NSString* macros = @"(begin\n"
 
-    "(define-macro and (lambda args"
-    "   (if (null? args) #t"
-    "       (if (= (length args) 1) (car args)"
-    "           `(if ,(car args) (and ,@(cdr args)) #f)))))"
+    "(define-macro and (lambda args\n"
+    "   (if (null? args) #t\n"
+    "       (if (= (length args) 1) (car args)\n"
+    "           `(if ,(car args) (and ,@(cdr args)) #f)))))\n"
 
-    "(define-macro or"
-    "  (lambda args"
-    "    (if (null? args) #f"
-    "        (let ((arg (car args)))"
-    "          `(let ((arg ,arg))"
-    "             (if arg arg"
-    "                 (or ,@(cdr args)))))))))"
+    "(define-macro or\n"
+    "  (lambda args\n"
+    "    (if (null? args) #f\n"
+    "        (let ((arg (car args)))\n"
+    "          `(let ((arg ,arg))\n"
+    "             (if arg arg\n"
+    "                 (or ,@(cdr args)))))))))\n"
 
-    ";; More macros can also go here"
+    ";; More macros can also go here\n"
     ")";
 
   ObSScope* global = [ObjScheme globalScope];
@@ -799,8 +831,14 @@ static NSDictionary* __quotes;
   NSRange nextNL = [_data rangeOfString: @"\n"
                                 options: 0
                                   range: NSMakeRange(_cursor, [_data length]-_cursor)];
-  _cursor = nextNL.location + 1; // move us past the newline
-  return [_data substringWithRange: NSMakeRange(_cursor, nextNL.location-_cursor)]; // return everything up to that
+  NSUInteger loc = nextNL.location;
+  if ( loc == NSNotFound ) {
+    loc = [_data length];
+  }
+  NSUInteger start = _cursor;
+  NSUInteger length = loc-_cursor;
+  _cursor = loc + 1; // move us past the newline
+  return [_data substringWithRange: NSMakeRange(start, length)]; // return everything up to that
 }
 
 - (NSString*)readQuoted {
@@ -817,13 +855,15 @@ static NSDictionary* __quotes;
 - (NSString*)readToken {
   NSUInteger start = _cursor-1;
   unichar c = [_data characterAtIndex: _cursor];
-  while ( c != ' ' && c != '\t' && c != '\n' ) {
+  while ( c != ' ' && c != '\t' && c != '\n' && c != ')') {
     c = [_data characterAtIndex: _cursor++];
   }
-  return [_data substringWithRange: NSMakeRange(start, _cursor-start)];
+  return [_data substringWithRange: NSMakeRange(start, _cursor-1-start)];
 }
 
 - (NSString*)nextToken {
+  NSUInteger length = [_data length];
+  NSAssert(_cursor < length, @"Went too far");
   switch ( [_data characterAtIndex: _cursor++] ) {
   case ' ': case '\n': case '\t':
     return [self nextToken];
