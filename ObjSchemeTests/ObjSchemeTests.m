@@ -31,7 +31,7 @@
   STAssertEqualObjects(t, SY(@"("), @"port token initial paren wrong, %@", t);
 
   t = [port nextToken];
-  STAssertEqualObjects(t, SY(@"display"), @"port token initial paren wrong, %@", t);
+  STAssertEqualObjects(t, @"display", @"port token initial paren wrong, %@", t);
 
   t = [port nextToken];
   STAssertEqualObjects(t, @"\"hi\"", @"port token initial paren wrong, %@", t);
@@ -42,7 +42,6 @@
 
 - (void)testGlobalScope {
   ObSScope* global = [ObjScheme globalScope];
-  NSLog( @"%p", global );
   STAssertEquals(global, [ObjScheme globalScope], @"Global scope isn't unique");
   STAssertTrue([global hasMacroNamed: SY(@"or")], @"or macro undefined");
   STAssertTrue([global hasMacroNamed: SY(@"and")], @"or macro undefined");
@@ -64,6 +63,11 @@
   program = [ObjScheme parseString: source];
   returnValue = [[ObjScheme globalScope] evaluate: program];
   STAssertFalse( [ObjScheme isFalse: returnValue], @"return value was false, should be #t %@", returnValue);
+
+  source = @"(+ 1 2)";
+  program = [ObjScheme parseString: source];
+  returnValue = [[ObjScheme globalScope] evaluate: program];
+  STAssertTrue([returnValue isKindOfClass: [NSNumber class]], @"(+ 1 2) isn't a number");
 }
 
 /*

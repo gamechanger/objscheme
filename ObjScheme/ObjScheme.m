@@ -636,8 +636,6 @@ static ObSScope* __globalScope = nil;
 
 - (void)defineFunction:(id<ObSProcedure>)procedure {
   [self define: [procedure name] as: procedure];
-  NSLog( @"defined procedure %@", [procedure name] );
-  NSLog( @"resolves to %@", [self resolveSymbol: [procedure name]] );
 }
 
 - (void)bootstrapMacros {
@@ -977,8 +975,7 @@ static ObSScope* __globalScope = nil;
     return [self readQuoted];
 
   default:
-    return SY([self readToken]);
-
+    return [self readToken];
   }
 }
 
