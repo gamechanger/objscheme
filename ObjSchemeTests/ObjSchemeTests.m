@@ -120,6 +120,8 @@
   OSAssertTrue(@"(<= 3 3)");
 
   OSAssertTrue(@"(= 1 1)");
+  OSAssertTrue(@"(= 1 1.0)");
+  OSAssertFalse(@"(= 2 1)");
 }
 
 /*
