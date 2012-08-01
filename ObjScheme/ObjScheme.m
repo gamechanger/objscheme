@@ -26,8 +26,11 @@ static ObSSymbol* S_FALSE;
 static ObSSymbol* S_TRUE;
 static ObSSymbol* S_OPENPAREN;
 static ObSSymbol* S_CLOSEPAREN;
+static ObSSymbol* S_LIST;
 
 static NSString* _EOF = @"#EOF#";
+
+#define B_LAMBDA(name, block) [ObSNativeBinaryLambda named: SY(name) fromBlock: (block)]
 
 @interface ObjScheme ()
 
@@ -70,6 +73,7 @@ static ObSScope* __globalScope = nil;
   S_TRUE =            SY(@"#t");
   S_OPENPAREN =       SY(@"(");
   S_CLOSEPAREN =      SY(@")");
+  S_LIST =            SY(@"list");
 }
 
 + (void)initialize {
@@ -447,11 +451,8 @@ static ObSScope* __globalScope = nil;
         }
       }]];
 
-  [scope defineFunction: [ObSNativeLambda named: SY(@"not")
-                                      fromBlock: ^(NSArray* list) {
-        NSAssert([list count] == 1, @"not only takes 1 arg");
-        return [list lastObject] == S_FALSE ? S_TRUE : S_FALSE;
-      }]];
+  [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"not")
+                                                 fromBlock: ^(id object) { return object == S_FALSE ? S_TRUE : S_FALSE; }]];
 
   [scope defineFunction: [ObSNativeLambda named: SY(@">")
                                       fromBlock: ^(NSArray* list) {
@@ -481,16 +482,32 @@ static ObSScope* __globalScope = nil;
         return [first floatValue] <= [second floatValue] ? S_TRUE : S_FALSE;
       }]];
 
-  [scope defineFunction: [ObSNativeLambda named: SY(@"=")
-                                      fromBlock: ^(NSArray* list) {
-        NSNumber* first = [list objectAtIndex: 0];
-        NSNumber* second = [list objectAtIndex: 1];
+  [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"=")
+                                            fromBlock: ^(id a, id b) {
+        NSNumber* first = a;
+        NSNumber* second = b;
         return [first isEqualToNumber: second] ? S_TRUE : S_FALSE;
       }]];
 
+
+  [scope defineFunction: B_LAMBDA(@"eq?", ^(id a, id b){ return (a == b) ? S_TRUE : S_FALSE; })];
+
+  [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"null?")
+                                           fromBlock: ^(id object) {
+        if ( ! [object isKindOfClass: [NSArray class]] ) {
+          return S_FALSE;
+        }
+        NSArray* list = object;
+        return [list count] == 0 ? S_TRUE : S_FALSE;
+      }]];
+
+  [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"list?") fromBlock: ^(id object) { return [object isKindOfClass: [NSArray class]] ? S_TRUE : S_FALSE; }]];
+
   // TODO:
   /*
-    - equal? eq?
+    - eq? -> ptr equality
+    - eqv? -> eq? + char & number special cases
+    - equal? -> lists, vectors, strings.
     - length
     - cons, car, cdr, cdar, cadr
     - list
@@ -731,6 +748,9 @@ static ObSScope* __globalScope = nil;
         if ( head == S_QUOTE ) { // (quote exp) -> exp
           return rest; // that's easy- literally the rest of the array is the value
 
+        } else if ( head == S_LIST ) { // (list a b c)
+          return [list subarrayWithRange: NSMakeRange(1, [list count]-1)];
+
         } else if ( head == S_IF ) { // (if test consequence alternate) <- note that full form is enforced by expansion
           id test = [rest objectAtIndex: 0];
           id consequence = [rest objectAtIndex: 1];
@@ -879,6 +899,79 @@ static ObSScope* __globalScope = nil;
 
 - (id)invokeWithArguments:(NSArray*)arguments {
   return _block(arguments);
+}
+
+@end
+
+
+
+
+
+@implementation ObSNativeBinaryLambda
+
++ (id)named:(ObSSymbol*)name fromBlock:(ObSNativeBinaryBlock)block {
+  return [[[ObSNativeBinaryLambda alloc] initWithBlock: block name: name] autorelease];
+}
+
+- (id)initWithBlock:(ObSNativeBinaryBlock)block name:(ObSSymbol*)name {
+  if ( ( self = [super init] ) ) {
+    _block = Block_copy(block);
+    _name = [name retain];
+  }
+  return self;
+}
+
+- (void)dealloc {
+  Block_release(_block);
+  [_name release];
+  [super dealloc];
+}
+
+- (id)invokeWithArguments:(NSArray*)arguments {
+  NSAssert([arguments count] == 2, @"Oops, should pass 2 args to binary lambda %@", _name);
+  id a = [arguments objectAtIndex: 0];
+  id b = [arguments objectAtIndex: 1];
+  return _block(a, b);
+}
+
+- (ObSSymbol*)name {
+  return (_name == nil ? S_LAMBDA : _name);
+}
+
+@end
+
+
+
+
+
+
+@implementation ObSNativeUnaryLambda
+
++ (id)named:(ObSSymbol*)name fromBlock:(ObSNativeUnaryBlock)block {
+  return [[[ObSNativeUnaryLambda alloc] initWithBlock: block name: name] autorelease];
+}
+
+- (id)initWithBlock:(ObSNativeUnaryBlock)block name:(ObSSymbol*)name {
+  if ( ( self = [super init] ) ) {
+    _block = Block_copy(block);
+    _name = [name retain];
+  }
+  return self;
+}
+
+- (void)dealloc {
+  Block_release(_block);
+  [_name release];
+  [super dealloc];
+}
+
+- (id)invokeWithArguments:(NSArray*)arguments {
+  NSAssert([arguments count] == 1, @"Oops, should pass 1 args to unary lambda %@", _name);
+  return _block([arguments lastObject]);
+}
+
+- (ObSSymbol*)name {
+  return (_name == nil ? S_LAMBDA : _name);
 }
 
 @end

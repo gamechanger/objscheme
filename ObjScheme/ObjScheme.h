@@ -107,6 +107,42 @@ typedef id (^ObSNativeBlock)(NSArray*);
 
 
 
+typedef id (^ObSNativeBinaryBlock)(id,id);
+
+@interface ObSNativeBinaryLambda : NSObject <ObSProcedure> {
+  ObSNativeBinaryBlock _block;
+  ObSSymbol* _name;
+}
+
+@property (readonly) ObSSymbol* name;
+
++ (id)named:(ObSSymbol*)name fromBlock:(ObSNativeBinaryBlock)block;
+- (id)initWithBlock:(ObSNativeBinaryBlock)block name:(ObSSymbol*)name;
+- (id)invokeWithArguments:(NSArray*)arguments;
+
+@end
+
+
+
+
+
+typedef id (^ObSNativeUnaryBlock)(id);
+
+@interface ObSNativeUnaryLambda : NSObject <ObSProcedure> {
+  ObSNativeUnaryBlock _block;
+  ObSSymbol* _name;
+}
+
+@property (readonly) ObSSymbol* name;
+
++ (id)named:(ObSSymbol*)name fromBlock:(ObSNativeUnaryBlock)block;
+- (id)initWithBlock:(ObSNativeUnaryBlock)block name:(ObSSymbol*)name;
+- (id)invokeWithArguments:(NSArray*)arguments;
+
+@end
+
+
+
 @interface ObSInPort : NSObject {
   NSString* _data;
   NSUInteger _cursor;

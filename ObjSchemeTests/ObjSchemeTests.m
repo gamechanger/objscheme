@@ -88,10 +88,22 @@
 }
 
 - (void)testBuiltIns {
-  NSString* source = @"(not #f)";
-  id program = [ObjScheme parseString: source];
-  id returnValue = [[ObjScheme globalScope] evaluate: program];
-  STAssertFalse( [ObjScheme isFalse: returnValue], @"return value was false, should be #t %@", returnValue);
+  id source, program, returnValue;
+  OSAssertTrue(@"#t");
+  OSAssertTrue(@"(not #f)");
+
+  OSAssertTrue(@"(list 1 2 3)");
+  OSAssertTrue(@"(list 1 2 #f)");
+  OSAssertTrue(@"(list? (list 1 2 #f))");
+
+  OSAssertFalse(@"(list? #f)");
+  OSAssertFalse(@"(list? #t)");
+  OSAssertTrue(@"(not (list? #t))");
+
+  OSAssertTrue(@"(null? (list))");
+  OSAssertFalse(@"(null? #f)");
+  OSAssertFalse(@"(null? #t)");
+  OSAssertFalse(@"(null? (list #t))");
 }
 
 - (void)testMath {
@@ -122,6 +134,7 @@
   OSAssertTrue(@"(= 1 1)");
   OSAssertTrue(@"(= 1 1.0)");
   OSAssertFalse(@"(= 2 1)");
+  OSAssertTrue(@"(not (= 2 1))");
 }
 
 /*
