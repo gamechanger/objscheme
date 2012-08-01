@@ -775,7 +775,6 @@ static ObSScope* __globalScope = nil;
         } else if ( head == S_LAMBDA ) { // (lambda (argumentNames) body)
           NSArray* argumentNames = [rest objectAtIndex: 0];
           NSArray* body = [rest objectAtIndex: 1];
-          NSLog( @"Constructing lambda with expression %@", body );
           return [[[ObSLambda alloc] initWithArgumentNames: argumentNames
                                                 expression: body
                                                      scope: self
