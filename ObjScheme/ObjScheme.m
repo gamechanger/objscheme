@@ -457,28 +457,28 @@ static ObSScope* __globalScope = nil;
                                       fromBlock: ^(NSArray* list) {
         NSNumber* first = [list objectAtIndex: 0];
         NSNumber* second = [list objectAtIndex: 1];
-        return [NSNumber numberWithBool: [first floatValue] > [second floatValue]];
+        return [first floatValue] > [second floatValue] ? S_TRUE : S_FALSE;
       }]];
 
   [scope defineFunction: [ObSNativeLambda named: SY(@"<")
                                       fromBlock: ^(NSArray* list) {
         NSNumber* first = [list objectAtIndex: 0];
         NSNumber* second = [list objectAtIndex: 1];
-        return [NSNumber numberWithBool: [first floatValue] < [second floatValue]];
+        return [first floatValue] < [second floatValue] ? S_TRUE : S_FALSE;
       }]];
 
   [scope defineFunction: [ObSNativeLambda named: SY(@">=")
                                       fromBlock: ^(NSArray* list) {
         NSNumber* first = [list objectAtIndex: 0];
         NSNumber* second = [list objectAtIndex: 1];
-        return [NSNumber numberWithBool: [first floatValue] >= [second floatValue]];
+        return [first floatValue] >= [second floatValue] ? S_TRUE : S_FALSE;
       }]];
 
   [scope defineFunction: [ObSNativeLambda named: SY(@"<=")
                                       fromBlock: ^(NSArray* list) {
         NSNumber* first = [list objectAtIndex: 0];
         NSNumber* second = [list objectAtIndex: 1];
-        return [NSNumber numberWithBool: [first floatValue] <= [second floatValue]];
+        return [first floatValue] <= [second floatValue] ? S_TRUE : S_FALSE;
       }]];
 
   // TODO:

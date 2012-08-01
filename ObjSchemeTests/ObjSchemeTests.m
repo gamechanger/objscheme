@@ -80,7 +80,6 @@
   STAssertEquals(strcmp([number objCType], @encode(float)), 0, @"%@  isn't a float", source);
   STAssertEquals([number floatValue], 3.0f, @"%@ => %d", source, [number floatValue]);
 
-
   source = @"(* 5 7)";
   program = [ObjScheme parseString: source];
   returnValue = [[ObjScheme globalScope] evaluate: program];
@@ -121,7 +120,40 @@
   STAssertEquals(strcmp([number objCType], @encode(float)), 0, @"%@ isn't a float", source);
   STAssertEqualsWithAccuracy([number floatValue], 2.5f, 0.01, @"%@ => %f", source, [number floatValue]);
 
-  source = @"()";
+  source = @"(> 1 3)";
+  program = [ObjScheme parseString: source];
+  returnValue = [[ObjScheme globalScope] evaluate: program];
+  STAssertTrue([ObjScheme isFalse: returnValue], @"%@ => %@", source, returnValue);
+
+  source = @"(>= 1 3)";
+  program = [ObjScheme parseString: source];
+  returnValue = [[ObjScheme globalScope] evaluate: program];
+  STAssertTrue([ObjScheme isFalse: returnValue], @"%@ => %@", source, returnValue);
+
+  source = @"(> 3 1)";
+  program = [ObjScheme parseString: source];
+  returnValue = [[ObjScheme globalScope] evaluate: program];
+  STAssertFalse([ObjScheme isFalse: returnValue], @"%@ => %@", source, returnValue);
+
+  source = @"(>= 3 1)";
+  program = [ObjScheme parseString: source];
+  returnValue = [[ObjScheme globalScope] evaluate: program];
+  STAssertFalse([ObjScheme isFalse: returnValue], @"%@ => %@", source, returnValue);
+
+  source = @"(>= 1 3)";
+  program = [ObjScheme parseString: source];
+  returnValue = [[ObjScheme globalScope] evaluate: program];
+  STAssertTrue([ObjScheme isFalse: returnValue], @"%@ => %@", source, returnValue);
+
+  source = @"(>= 3 3)";
+  program = [ObjScheme parseString: source];
+  returnValue = [[ObjScheme globalScope] evaluate: program];
+  STAssertFalse([ObjScheme isFalse: returnValue], @"%@ => %@", source, returnValue);
+
+  source = @"(<= 3 3)";
+  program = [ObjScheme parseString: source];
+  returnValue = [[ObjScheme globalScope] evaluate: program];
+  STAssertFalse([ObjScheme isFalse: returnValue], @"%@ => %@", source, returnValue);
 }
 
 /*
