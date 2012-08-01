@@ -250,7 +250,7 @@ static ObSScope* __globalScope = nil;
     NSArray* body = [array subarrayWithRange: NSMakeRange(2, [array count]-2)];
     id expression;
     if ( [body count] == 1 ) {
-      expression = [ObjScheme expandToken: body atTopLevel: NO];
+      expression = [ObjScheme expandToken: [body lastObject] atTopLevel: NO];
 
     } else {
       NSMutableArray* newBody = [[NSMutableArray alloc] initWithArray: body];
@@ -613,7 +613,7 @@ static ObSScope* __globalScope = nil;
     if ( [parameters isKindOfClass: [NSArray class]] ) {
       NSArray* parameterList = parameters;
       NSArray* namedParameters = parameters;
-      NSString* catchAllParameterName = nil;
+      ObSSymbol* catchAllParameterName = nil;
 
       // support for variable arity (lambda (x y . z) ...)
       if ( [parameterList containsObject: S_DOT] ) {
@@ -627,13 +627,15 @@ static ObSScope* __globalScope = nil;
                  @"Syntax Error: Wrong Number of Arguments %@", arguments );
 
       for ( int i = 0; i < numNamed; i++ ) {
-        [_environ setObject: [arguments objectAtIndex: i] forKey: [namedParameters objectAtIndex: i]];
+        ObSSymbol* name = [namedParameters objectAtIndex: i];
+        [_environ setObject: [arguments objectAtIndex: i]
+                     forKey: name.string];
       }
 
       if ( numArgs > numNamed ) {
         int numRemaining = numArgs - numNamed;
         [_environ setObject: [arguments subarrayWithRange: NSMakeRange(numNamed, numRemaining)]
-                     forKey: catchAllParameterName];
+                     forKey: catchAllParameterName.string];
       }
 
     } else {
@@ -699,7 +701,7 @@ static ObSScope* __globalScope = nil;
           [ObjScheme assertSyntax: [binding isKindOfClass: [NSArray class]] elseRaise: @"Illegal let binding list"];
           [ObjScheme assertSyntax: ([binding count] == 2) elseRaise: @"Illegal let binding list item wrong length"];
           [names addObject: [binding objectAtIndex: 0]];
-          [expressions addObject: [ObjScheme expandToken: [bindings objectAtIndex: 1] atTopLevel: YES]];
+          [expressions addObject: [ObjScheme expandToken: [binding objectAtIndex: 1] atTopLevel: YES]];
         }
 
         NSMutableArray* expandedBody = [NSMutableArray arrayWithCapacity: [body count]];
@@ -773,6 +775,7 @@ static ObSScope* __globalScope = nil;
         } else if ( head == S_LAMBDA ) { // (lambda (argumentNames) body)
           NSArray* argumentNames = [rest objectAtIndex: 0];
           NSArray* body = [rest objectAtIndex: 1];
+          NSLog( @"Constructing lambda with expression %@", body );
           return [[[ObSLambda alloc] initWithArgumentNames: argumentNames
                                                 expression: body
                                                      scope: self

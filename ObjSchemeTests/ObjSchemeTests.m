@@ -12,19 +12,19 @@
 #define OSAssertFalse(code) source = (code);       \
  program = [ObjScheme parseString: source];\
  returnValue = [[ObjScheme globalScope] evaluate: program];\
- STAssertTrue([ObjScheme isFalse: returnValue], @"failure on: %@", source);
+ STAssertTrue([ObjScheme isFalse: returnValue], @"%@ => %@", source, returnValue);
 
 #define OSAssertTrue(code) source = (code);       \
  program = [ObjScheme parseString: source];\
  returnValue = [[ObjScheme globalScope] evaluate: program];\
- STAssertTrue(! [ObjScheme isFalse: returnValue], @"failure on: %@", source);
+ STAssertTrue(! [ObjScheme isFalse: returnValue], @"%@ => %@", source, returnValue);
 
 #define OSAssertEqualsInt(code, expected) source = (code);     \
  program = [ObjScheme parseString: source];\
  returnValue = [[ObjScheme globalScope] evaluate: program];\
- STAssertTrue([returnValue isKindOfClass: [NSNumber class]], @"%@ isn't a number", source);\
+ STAssertTrue([returnValue isKindOfClass: [NSNumber class]], @"%@ => %@", source, returnValue); \
  number = returnValue;\
- STAssertEquals(strcmp([number objCType], @encode(int)), 0, @"%@ isn't an int", source);\
+ STAssertEquals(strcmp([number objCType], @encode(int)), 0, @"%@ => %@", source, returnValue); \
  STAssertEquals([number intValue], (expected), @"%@ => %d", source, [number intValue]);
 
 #define OSAssertEqualsFloat(code, expected) source = (code);     \
@@ -104,6 +104,12 @@
   OSAssertFalse(@"(null? #f)");
   OSAssertFalse(@"(null? #t)");
   OSAssertFalse(@"(null? (list #t))");
+
+
+  OSAssertFalse(@"(let ((a #f)) a))")
+  OSAssertTrue(@"(let ((a #t)) a))")
+  OSAssertFalse(@"(null? (let ((x (list #t))) x))");
+  OSAssertTrue(@"(null? (let ((x (list))) x))");
 }
 
 - (void)testMath {
