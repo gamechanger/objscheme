@@ -59,14 +59,19 @@
   returnValue = [[ObjScheme globalScope] evaluate: program];
   STAssertTrue([ObjScheme isFalse: returnValue], @"return value isn't false %@", returnValue);
 
-  source = @"(not #f)";
-  program = [ObjScheme parseString: source];
-  returnValue = [[ObjScheme globalScope] evaluate: program];
-  STAssertFalse( [ObjScheme isFalse: returnValue], @"return value was false, should be #t %@", returnValue);
+}
 
-  source = @"(+ 1 2)";
-  program = [ObjScheme parseString: source];
-  returnValue = [[ObjScheme globalScope] evaluate: program];
+- (void)testBuiltIns {
+  NSString* source = @"(not #f)";
+  id program = [ObjScheme parseString: source];
+  id returnValue = [[ObjScheme globalScope] evaluate: program];
+  STAssertFalse( [ObjScheme isFalse: returnValue], @"return value was false, should be #t %@", returnValue);
+}
+
+- (void)testMath {
+  id source = @"(+ 1 2)";
+  id program = [ObjScheme parseString: source];
+  id returnValue = [[ObjScheme globalScope] evaluate: program];
   STAssertTrue([returnValue isKindOfClass: [NSNumber class]], @"(+ 1 2) isn't a number");
   NSNumber* number = returnValue;
   STAssertEquals(0, strcmp([number objCType], @encode(int)), @"(+ 1 2) isn't an int");
