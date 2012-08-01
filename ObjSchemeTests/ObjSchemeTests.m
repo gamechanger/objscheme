@@ -3,7 +3,7 @@
 //  ObjSchemeTests
 //
 //  Created by Kiril Savino on 7/30/12.
-//  Copyright (c) 2012 Fungo Media / GameChanger. All rights reserved.
+//  Copyright (c) 2012 GameChanger. All rights reserved.
 //
 
 #import "ObjSchemeTests.h"
@@ -47,6 +47,18 @@
   STAssertTrue([global hasMacroNamed: SY(@"or")], @"or macro undefined");
   STAssertTrue([global hasMacroNamed: SY(@"and")], @"or macro undefined");
   STAssertTrue([global hasMacroNamed: SY(@"let")], @"let macro undefined");
+}
+
+- (void)testBasicEvaluation {
+  NSString* source = @"\"hi\"";
+  id program = [ObjScheme parseString: source];
+  id returnValue = [[ObjScheme globalScope] evaluate: program];
+  STAssertEqualObjects(returnValue, @"hi", @"Failed to evaluate a string literal program");
+
+  source = @"#f";
+  program = [ObjScheme parseString: source];
+  returnValue = [[ObjScheme globalScope] evaluate: program];
+  STAssertTrue([ObjScheme isFalse: returnValue], @"return value isn't false %@", returnValue);
 }
 
 /*

@@ -185,7 +185,7 @@ static ObSScope* __globalScope = nil;
       NSString* lambdaName = [lambdaSpec objectAtIndex: 0];
       NSArray* lambdaParameterNames = [lambdaSpec subarrayWithRange: NSMakeRange(1, [lambdaSpec count]-1)];
       // => (f (params) body)
-      NSMutableArray* lambdaDefinition = [NSMutableArray arrayWithObjects: lambdaName, lambdaParameterNames, nil];
+      NSMutableArray* lambdaDefinition = [NSMutableArray arrayWithObjects: S_LAMBDA, lambdaParameterNames, nil];
       [lambdaDefinition addObjectsFromArray: body];
       return [ObjScheme expandToken: [NSArray arrayWithObjects: S_DEFINE, lambdaName, lambdaDefinition, nil]
                          atTopLevel: NO];
@@ -261,7 +261,6 @@ static ObSScope* __globalScope = nil;
     if ( [[ObjScheme globalScope] hasMacroNamed: symbol] ) {
       id macro = [[ObjScheme globalScope] macroNamed: symbol];
       NSArray* macroArguments = [array subarrayWithRange: NSMakeRange(1, [array count]-1)];
-      
       return [ObjScheme expandToken: [macro invokeWithArguments: macroArguments] atTopLevel: NO];
     }
   }
@@ -375,8 +374,8 @@ static ObSScope* __globalScope = nil;
 }
 
 + (void)addGlobalsToScope:(ObSScope*)scope {
-  [scope define: SY(@"+")
-             as: [ObSNativeLambda fromBlock: ^(NSArray* list) {
+  [scope defineFunction: [ObSNativeLambda named: SY(@"+")
+                                      fromBlock: ^(NSArray* list) {
         if ( [list count] == 0 )
           return [NSNumber numberWithInteger: 0];
 
@@ -397,7 +396,8 @@ static ObSScope* __globalScope = nil;
         }
       }]];
 
-  [scope define: SY(@"-") as: [ObSNativeLambda fromBlock: ^(NSArray* list) {
+  [scope defineFunction: [ObSNativeLambda named: SY(@"-")
+                                      fromBlock: ^(NSArray* list) {
         NSNumber* first = [list objectAtIndex: 0];
         NSNumber* second = [list objectAtIndex: 1];
         if ( strcmp([first objCType], @encode(int)) == 0 ) {
@@ -408,7 +408,8 @@ static ObSScope* __globalScope = nil;
         }
       }]];
 
-  [scope define: SY(@"*") as: [ObSNativeLambda fromBlock: ^(NSArray* list) {
+  [scope defineFunction: [ObSNativeLambda named: SY(@"*")
+                                      fromBlock: ^(NSArray* list) {
         if ( [list count] == 0 )
           return [NSNumber numberWithInteger: 0];
 
@@ -429,7 +430,8 @@ static ObSScope* __globalScope = nil;
         }
       }]];
 
-  [scope define: SY(@"/") as: [ObSNativeLambda fromBlock: ^(NSArray* list) {
+  [scope defineFunction: [ObSNativeLambda named: SY(@"/")
+                                      fromBlock: ^(NSArray* list) {
         NSNumber* first = [list objectAtIndex: 0];
         NSNumber* second = [list objectAtIndex: 1];
         if ( strcmp([first objCType], @encode(int)) == 0 ) {
@@ -440,30 +442,35 @@ static ObSScope* __globalScope = nil;
         }
       }]];
 
-  [scope define: SY(@"not") as: [ObSNativeLambda fromBlock: ^(NSArray* list) {
+  [scope defineFunction: [ObSNativeLambda named: SY(@"not")
+                                      fromBlock: ^(NSArray* list) {
         NSAssert([list count] == 1, @"not only takes 1 arg");
         return [NSNumber numberWithBool: [ObjScheme isEmptyList: [list objectAtIndex: 0]]];
       }]];
 
-  [scope define: SY(@">") as: [ObSNativeLambda fromBlock: ^(NSArray* list) {
+  [scope defineFunction: [ObSNativeLambda named: SY(@">")
+                                      fromBlock: ^(NSArray* list) {
         NSNumber* first = [list objectAtIndex: 0];
         NSNumber* second = [list objectAtIndex: 1];
         return [NSNumber numberWithBool: [first floatValue] > [second floatValue]];
       }]];
 
-  [scope define: SY(@"<") as: [ObSNativeLambda fromBlock: ^(NSArray* list) {
+  [scope defineFunction: [ObSNativeLambda named: SY(@"<")
+                                      fromBlock: ^(NSArray* list) {
         NSNumber* first = [list objectAtIndex: 0];
         NSNumber* second = [list objectAtIndex: 1];
         return [NSNumber numberWithBool: [first floatValue] < [second floatValue]];
       }]];
 
-  [scope define: SY(@">=") as: [ObSNativeLambda fromBlock: ^(NSArray* list) {
+  [scope defineFunction: [ObSNativeLambda named: SY(@">=")
+                                      fromBlock: ^(NSArray* list) {
         NSNumber* first = [list objectAtIndex: 0];
         NSNumber* second = [list objectAtIndex: 1];
         return [NSNumber numberWithBool: [first floatValue] >= [second floatValue]];
       }]];
 
-  [scope define: SY(@"<=") as: [ObSNativeLambda fromBlock: ^(NSArray* list) {
+  [scope defineFunction: [ObSNativeLambda named: SY(@"<=")
+                                      fromBlock: ^(NSArray* list) {
         NSNumber* first = [list objectAtIndex: 0];
         NSNumber* second = [list objectAtIndex: 1];
         return [NSNumber numberWithBool: [first floatValue] <= [second floatValue]];
@@ -489,16 +496,8 @@ static ObSScope* __globalScope = nil;
    */
 }
 
-+ (BOOL)IF:(id)token {
-  if ( token == nil )
-    return YES; // Scheme if is only false for #f, ie NO
-  if ( ! [token isKindOfClass: [NSNumber class]] )
-    return YES;
-  NSNumber* value = token;
-  if ( strcmp([value objCType], @encode(BOOL)) != 0 )
-    return YES; // not a BOOL
-
-  return [value boolValue];
++ (BOOL)isFalse:(id)token {
+  return token == S_FALSE;
 }
 
 @end
@@ -540,7 +539,6 @@ static ObSScope* __globalScope = nil;
 }
 
 - (BOOL)isEqual:(id)other {
-  NSLog( @"Comparing %@ / %p to %@ / %p", self, self, other, other);
   return other == self;
 }
 
@@ -635,6 +633,10 @@ static ObSScope* __globalScope = nil;
   [_environ setObject: thing forKey: symbol];
 }
 
+- (void)defineFunction:(id<ObSProcedure>)procedure {
+  [self define: [procedure name] as: procedure];
+}
+
 - (void)bootstrapMacros {
   static NSString* macros = @"(begin\n"
 
@@ -656,8 +658,9 @@ static ObSScope* __globalScope = nil;
 
   ObSScope* global = [ObjScheme globalScope];
   [global evaluate: [ObjScheme parseString: macros]];
-  [global defineMacroNamed: [ObSSymbol symbolFromString: @"let"]
-              asProcedure: [ObSNativeLambda fromBlock: ^(NSArray* list) {
+  [global defineMacroNamed: SY(@"let")
+               asProcedure: [ObSNativeLambda named: SY(@"let")
+                                         fromBlock: ^(NSArray* list) {
         NSArray* bindings = [list objectAtIndex: 0];
         NSArray* body = [list subarrayWithRange: NSMakeRange(1, [list count]-1)];
 
@@ -699,7 +702,10 @@ static ObSScope* __globalScope = nil;
 
   @try {
     while ( 1 ) {
-      if ( [token isKindOfClass: [ObSSymbol class]] ) {
+      if ( token == S_FALSE || token == S_TRUE ) {
+        return token; // constants
+
+      } else if ( [token isKindOfClass: [ObSSymbol class]] ) {
         return [self resolveSymbol: token]; // variable reference
 
       } else if ( ! [token isKindOfClass: [NSArray class]] ) {
@@ -737,7 +743,8 @@ static ObSScope* __globalScope = nil;
           NSArray* body = [rest objectAtIndex: 1];
           return [[[ObSLambda alloc] initWithArgumentNames: argumentNames
                                                 expression: body
-                                                     scope: self] autorelease];
+                                                     scope: self
+                                                      name: S_LAMBDA] autorelease];
 
         } else if ( head == S_BEGIN ) { // (begin expression...)
           id result = [NSNumber numberWithBool: NO];
@@ -788,21 +795,36 @@ static ObSScope* __globalScope = nil;
 
 @implementation ObSLambda
 
-@synthesize scope=_scope, expression=_expression, argumentNames=_argumentNames;
+@synthesize scope=_scope, expression=_expression, argumentNames=_argumentNames, name=_name;
 
 
 - (id)initWithArgumentNames:(NSArray*)argumentNames
                  expression:(id)expression
-                      scope:(ObSScope*)scope {
+                      scope:(ObSScope*)scope
+                       name:(ObSSymbol*)name {
 
   if ( (self = [self init]) ) {
     _argumentNames = [argumentNames retain];
     _expression = [expression retain];
     _scope = [scope retain];
+    _name = [name retain];
   }
 
   return self;
 }
+
+- (void)dealloc {
+  [_argumentNames release];
+  [_expression release];
+  [_scope release];
+  [_name release];
+  [super dealloc];
+}
+
+- (ObSSymbol*)name {
+  return (_name == nil ? S_LAMBDA : _name);
+}
+
 
 - (id)invokeWithArguments:(NSArray*)arguments {
   ObSScope* invocationScope = [[ObSScope alloc] initWithOuterScope: _scope
@@ -821,19 +843,25 @@ static ObSScope* __globalScope = nil;
 
 @implementation ObSNativeLambda
 
-+ (id)fromBlock:(ObSNativeBlock)block {
-  return [[[ObSNativeLambda alloc] initWithBlock: block] autorelease];
++ (id)named:(ObSSymbol*)name fromBlock:(ObSNativeBlock)block {
+  return [[[ObSNativeLambda alloc] initWithBlock: block name: name] autorelease];
 }
 
-- (id)initWithBlock:(ObSNativeBlock)block {
+- (id)initWithBlock:(ObSNativeBlock)block name:(ObSSymbol*)name {
   if ( ( self = [super init] ) ) {
     _block = Block_copy(block);
+    _name = [name retain];
   }
   return self;
 }
 
+- (ObSSymbol*)name {
+  return (_name == nil ? S_LAMBDA : _name);
+}
+
 - (void)dealloc {
   Block_release(_block);
+  [_name release];
   [super dealloc];
 }
 
@@ -898,8 +926,13 @@ static ObSScope* __globalScope = nil;
 
 - (NSString*)readToken {
   NSUInteger start = _cursor-1;
+  NSUInteger length = [_data length];
   unichar c = [_data characterAtIndex: _cursor];
-  while ( c != ' ' && c != '\t' && c != '\n' && c != ')') {
+  while ( c != ' ' && c != '\t' && c != '\n' && c != ')' ) {
+    if ( _cursor == length - 1 ) {
+      _cursor++;
+      break;
+    }
     c = [_data characterAtIndex: ++_cursor];
   }
   return [_data substringWithRange: NSMakeRange(start, _cursor-start)];

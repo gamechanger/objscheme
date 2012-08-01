@@ -13,10 +13,20 @@
 
 
 
-@protocol ObSProcedure <NSObject>
-- (id)invokeWithArguments:(NSArray*)arguments;;
+@interface ObSSymbol : NSObject {
+  NSString* _string;
+}
+@property (nonatomic,readonly) NSString* string;
++ (ObSSymbol*)symbolFromString:(NSString*)string;
+- (id)initWithString:(NSString*)string;
 @end
 
+
+
+@protocol ObSProcedure <NSObject>
+- (id)invokeWithArguments:(NSArray*)arguments;;
+- (ObSSymbol*)name;
+@end
 
 
 
@@ -25,17 +35,9 @@
 + (id)parse:(ObSInPort*)inPort;
 + (id)parseString:(NSString*)string;
 + (id)read:(ObSInPort*)inPort;
++ (BOOL)isFalse:(id)token;
 
 - (NSArray*)mapProcedure:(id<ObSProcedure>)procedure onArray:(NSArray*)array;
-@end
-
-
-@interface ObSSymbol : NSObject {
-  NSString* _string;
-}
-@property (nonatomic,readonly) NSString* string;
-+ (ObSSymbol*)symbolFromString:(NSString*)string;
-- (id)initWithString:(NSString*)string;
 @end
 
 
@@ -55,6 +57,7 @@
 - (id)resolveSymbol:(ObSSymbol*)variable;
 - (void)bootstrapMacros;
 - (id)evaluate:(id)token;
+- (void)defineFunction:(id<ObSProcedure>)function;
 - (void)define:(ObSSymbol*)symbol as:(id)thing;
 - (void)defineMacroNamed:(ObSSymbol*)name asProcedure:(id<ObSProcedure>)procedure;
 - (BOOL)hasMacroNamed:(ObSSymbol*)name;
@@ -69,15 +72,18 @@
   NSArray* _argumentNames;
   id _expression;
   ObSScope* _scope;
+  ObSSymbol* _name;
 }
 
 @property (readonly) NSArray* argumentNames;
 @property (readonly) id expression;
 @property (readonly) ObSScope* scope;
+@property (readonly) ObSSymbol* name;
 
 - (id)initWithArgumentNames:(NSArray*)argumentNames
                  expression:(id)expression
-                      scope:(ObSScope*)scope;
+                      scope:(ObSScope*)scope
+                       name:(ObSSymbol*)name;
 - (id)invokeWithArguments:(NSArray*)arguments;
 @end
 
@@ -88,10 +94,13 @@ typedef id (^ObSNativeBlock)(NSArray*);
 
 @interface ObSNativeLambda : NSObject <ObSProcedure> {
   ObSNativeBlock _block;
+  ObSSymbol* _name;
 }
 
-+ (id)fromBlock:(ObSNativeBlock)block;
-- (id)initWithBlock:(ObSNativeBlock)block;
+@property (readonly) ObSSymbol* name;
+
++ (id)named:(ObSSymbol*)name fromBlock:(ObSNativeBlock)block;
+- (id)initWithBlock:(ObSNativeBlock)block name:(ObSSymbol*)name;
 - (id)invokeWithArguments:(NSArray*)arguments;
 
 @end
