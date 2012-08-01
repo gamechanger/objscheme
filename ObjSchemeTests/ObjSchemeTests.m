@@ -28,16 +28,16 @@
   ObSInPort* port = [[[ObSInPort alloc] initWithString: program] autorelease];
 
   NSString* t = [port nextToken];
-  STAssertEqualObjects(t, @"(", @"port token initial paren wrong, %@", t);
+  STAssertEqualObjects(t, SY(@"("), @"port token initial paren wrong, %@", t);
 
   t = [port nextToken];
-  STAssertEqualObjects(t, @"display", @"port token initial paren wrong, %@", t);
+  STAssertEqualObjects(t, SY(@"display"), @"port token initial paren wrong, %@", t);
 
   t = [port nextToken];
   STAssertEqualObjects(t, @"\"hi\"", @"port token initial paren wrong, %@", t);
 
   t = [port nextToken];
-  STAssertEqualObjects(t, @")", @"port token initial paren wrong, %@", t);
+  STAssertEqualObjects(t, SY(@")"), @"port token initial paren wrong, %@", t);
 }
 
 - (void)testGlobalScope {

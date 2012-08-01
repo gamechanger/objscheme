@@ -29,9 +29,6 @@ static ObSSymbol* S_CLOSEPAREN;
 
 static NSString* _EOF = @"#EOF#";
 
-#define SY(s) [ObSSymbol symbolFromString: (s)]
-#define MAP(p,a) [ObjScheme mapProcedure: (p) onArray: (a)];
-
 @interface ObjScheme ()
 
 + (id)atomFromToken:(NSString*)token;
@@ -961,7 +958,7 @@ static ObSScope* __globalScope = nil;
     return [self readQuoted];
 
   default:
-    return [self readToken];
+    return SY([self readToken]);
 
   }
 }

@@ -122,3 +122,7 @@ typedef id (^ObSNativeBlock)(NSArray*);
 
 
 
+
+
+#define SY(s) [ObSSymbol symbolFromString: (s)]
+#define MAP(p,a) [ObjScheme mapProcedure: (p) onArray: (a)];
