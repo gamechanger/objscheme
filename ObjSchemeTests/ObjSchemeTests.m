@@ -59,6 +59,11 @@
   program = [ObjScheme parseString: source];
   returnValue = [[ObjScheme globalScope] evaluate: program];
   STAssertTrue([ObjScheme isFalse: returnValue], @"return value isn't false %@", returnValue);
+
+  source = @"(not #f)";
+  program = [ObjScheme parseString: source];
+  returnValue = [[ObjScheme globalScope] evaluate: program];
+  STAssertFalse( [ObjScheme isFalse: returnValue], @"return value was false, should be #t %@", returnValue);
 }
 
 /*

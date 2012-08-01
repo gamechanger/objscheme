@@ -93,6 +93,7 @@ static ObSScope* __globalScope = nil;
   if ( __globalScope == nil ) {
     __globalScope = [[ObSScope alloc] initWithOuterScope: nil];
     [__globalScope bootstrapMacros];
+    [ObjScheme addGlobalsToScope: __globalScope];
   }
   return __globalScope;
 }
@@ -445,7 +446,7 @@ static ObSScope* __globalScope = nil;
   [scope defineFunction: [ObSNativeLambda named: SY(@"not")
                                       fromBlock: ^(NSArray* list) {
         NSAssert([list count] == 1, @"not only takes 1 arg");
-        return [NSNumber numberWithBool: [ObjScheme isEmptyList: [list objectAtIndex: 0]]];
+        return [list lastObject] == S_FALSE ? S_TRUE : S_FALSE;
       }]];
 
   [scope defineFunction: [ObSNativeLambda named: SY(@">")
@@ -615,26 +616,28 @@ static ObSScope* __globalScope = nil;
   return self;
 }
 
-- (id)resolveSymbol:(ObSSymbol*)variable {
-  id myValue = [_environ objectForKey: variable];
+- (id)resolveSymbol:(ObSSymbol*)symbol {
+  id myValue = [_environ objectForKey: symbol.string];
   if ( myValue ) {
     return myValue;
   }
 
   if ( _outerScope != nil ) {
-    return [_outerScope resolveSymbol: variable];
+    return [_outerScope resolveSymbol: symbol];
   }
 
-  [NSException raise: @"LookupError" format: @"Symbol %@ not defined", variable];
+  [NSException raise: @"LookupError" format: @"Symbol %@ not defined", symbol];
   return nil;
 }
 
 - (void)define:(ObSSymbol*)symbol as:(id)thing {
-  [_environ setObject: thing forKey: symbol];
+  [_environ setObject: thing forKey: symbol.string];
 }
 
 - (void)defineFunction:(id<ObSProcedure>)procedure {
   [self define: [procedure name] as: procedure];
+  NSLog( @"defined procedure %@", [procedure name] );
+  NSLog( @"resolves to %@", [self resolveSymbol: [procedure name]] );
 }
 
 - (void)bootstrapMacros {
