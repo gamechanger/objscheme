@@ -80,6 +80,30 @@
   number = returnValue;
   STAssertEquals(strcmp([number objCType], @encode(int)), 0, @"%@ isn't an int", source);
   STAssertEquals([number intValue], 35, @"%@ => %d", source, [number intValue]);
+
+  source = @"(/ 5 7)";
+  program = [ObjScheme parseString: source];
+  returnValue = [[ObjScheme globalScope] evaluate: program];
+  STAssertTrue([returnValue isKindOfClass: [NSNumber class]], @"%@ isn't a number", source);
+  number = returnValue;
+  STAssertEquals(strcmp([number objCType], @encode(int)), 0, @"%@ isn't an int", source);
+  STAssertEquals([number intValue], 0, @"%@ => %d", source, [number intValue]);
+
+  source = @"(/ 5 2)";
+  program = [ObjScheme parseString: source];
+  returnValue = [[ObjScheme globalScope] evaluate: program];
+  STAssertTrue([returnValue isKindOfClass: [NSNumber class]], @"%@ isn't a number", source);
+  number = returnValue;
+  STAssertEquals(strcmp([number objCType], @encode(int)), 0, @"%@ isn't an int", source);
+  STAssertEquals([number intValue], 2, @"%@ => %d", source, [number intValue]);
+
+  source = @"(/ 5.0 2)";
+  program = [ObjScheme parseString: source];
+  returnValue = [[ObjScheme globalScope] evaluate: program];
+  STAssertTrue([returnValue isKindOfClass: [NSNumber class]], @"%@ isn't a number", source);
+  number = returnValue;
+  STAssertEquals(strcmp([number objCType], @encode(float)), 0, @"%@ isn't a float", source);
+  STAssertEqualsWithAccuracy([number floatValue], 2.5f, 0.01, @"%@ => %f", source, [number floatValue]);
 }
 
 /*

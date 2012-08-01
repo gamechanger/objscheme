@@ -116,9 +116,13 @@ static ObSScope* __globalScope = nil;
   if ( [string hasPrefix: @"\""] )
     return [ObjScheme unpackStringLiteral: string];
 
-  int intValue = [string intValue];
-  if ( intValue != 0 ) // note that the literal '0' is handled in constants above
-    return [NSNumber numberWithInteger: intValue];
+  NSRange dotLocation = [string rangeOfString: @"."];
+  if ( dotLocation.location == NSNotFound ) {
+    int intValue = [string intValue];
+    if ( intValue != 0 ) { // note that the literal '0' is handled in constants above
+      return [NSNumber numberWithInteger: intValue];
+    }
+  }
 
   float floatValue = [string floatValue];
   if ( floatValue != 0.0 ) // note that the literal '0.0' is handle in constants above
@@ -435,7 +439,7 @@ static ObSScope* __globalScope = nil;
                                       fromBlock: ^(NSArray* list) {
         NSNumber* first = [list objectAtIndex: 0];
         NSNumber* second = [list objectAtIndex: 1];
-        if ( strcmp([first objCType], @encode(int)) == 0 ) {
+        if ( strcmp([first objCType], @encode(int)) == 0 && strcmp([second objCType], @encode(int)) == 0 ) {
           return [NSNumber numberWithInteger: [first intValue]/[second intValue]];
 
         } else {
