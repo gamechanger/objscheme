@@ -9,6 +9,32 @@
 #import "ObjSchemeTests.h"
 #import "ObjScheme.h"
 
+#define OSAssertFalse(code) source = (code);       \
+ program = [ObjScheme parseString: source];\
+ returnValue = [[ObjScheme globalScope] evaluate: program];\
+ STAssertTrue([ObjScheme isFalse: returnValue], @"failure on: %@", source);
+
+#define OSAssertTrue(code) source = (code);       \
+ program = [ObjScheme parseString: source];\
+ returnValue = [[ObjScheme globalScope] evaluate: program];\
+ STAssertTrue(! [ObjScheme isFalse: returnValue], @"failure on: %@", source);
+
+#define OSAssertEqualsInt(code, expected) source = (code);     \
+ program = [ObjScheme parseString: source];\
+ returnValue = [[ObjScheme globalScope] evaluate: program];\
+ STAssertTrue([returnValue isKindOfClass: [NSNumber class]], @"%@ isn't a number", source);\
+ number = returnValue;\
+ STAssertEquals(strcmp([number objCType], @encode(int)), 0, @"%@ isn't an int", source);\
+ STAssertEquals([number intValue], (expected), @"%@ => %d", source, [number intValue]);
+
+#define OSAssertEqualsFloat(code, expected) source = (code);     \
+ program = [ObjScheme parseString: source];\
+ returnValue = [[ObjScheme globalScope] evaluate: program];\
+ STAssertTrue([returnValue isKindOfClass: [NSNumber class]], @"%@ isn't a number", source);\
+ number = returnValue;\
+ STAssertEquals(strcmp([number objCType], @encode(float)), 0, @"%@ isn't a float", source);\
+ STAssertEqualsWithAccuracy([number floatValue], (expected), 0.01, @"%@ => %f", source, [number floatValue]);
+
 @implementation ObjSchemeTests
 
 - (void)setUp
@@ -69,96 +95,31 @@
 }
 
 - (void)testMath {
-  id source = @"(+ 1 2)";
-  id program = [ObjScheme parseString: source];
-  id returnValue = [[ObjScheme globalScope] evaluate: program];
-  STAssertTrue([returnValue isKindOfClass: [NSNumber class]], @"(+ 1 2) isn't a number");
-  NSNumber* number = returnValue;
-  STAssertEquals(0, strcmp([number objCType], @encode(int)), @"(+ 1 2) isn't an int");
-  STAssertEquals([number intValue], 3, @"(+ 1 2) => %d", [number intValue]);
+  id source, program, returnValue;
+  NSNumber* number;
 
-  source = @"(+ 1.0 2.0)";
-  program = [ObjScheme parseString: source];
-  returnValue = [[ObjScheme globalScope] evaluate: program];
-  STAssertTrue([returnValue isKindOfClass: [NSNumber class]], @"%@ isn't a number", source);
-  number = returnValue;
-  STAssertEquals(strcmp([number objCType], @encode(float)), 0, @"%@  isn't a float", source);
-  STAssertEquals([number floatValue], 3.0f, @"%@ => %d", source, [number floatValue]);
+  OSAssertEqualsInt(@"(+ 1 2)", 3);
+  OSAssertEqualsFloat(@"(+ 1.0 2.0)", 3.0f);
 
-  source = @"(* 5 7)";
-  program = [ObjScheme parseString: source];
-  returnValue = [[ObjScheme globalScope] evaluate: program];
-  STAssertTrue([returnValue isKindOfClass: [NSNumber class]], @"%@ isn't a number", source);
-  number = returnValue;
-  STAssertEquals(strcmp([number objCType], @encode(int)), 0, @"%@ isn't an int", source);
-  STAssertEquals([number intValue], 35, @"%@ => %d", source, [number intValue]);
+  OSAssertEqualsInt(@"(* 5 7)", 35);
+  OSAssertEqualsInt(@"(/ 5 7)", 0);
+  OSAssertEqualsInt(@"(/ 5 2)", 2);
 
-  source = @"(/ 5 7)";
-  program = [ObjScheme parseString: source];
-  returnValue = [[ObjScheme globalScope] evaluate: program];
-  STAssertTrue([returnValue isKindOfClass: [NSNumber class]], @"%@ isn't a number", source);
-  number = returnValue;
-  STAssertEquals(strcmp([number objCType], @encode(int)), 0, @"%@ isn't an int", source);
-  STAssertEquals([number intValue], 0, @"%@ => %d", source, [number intValue]);
+  OSAssertEqualsFloat(@"(/ 5.0 2)", 2.5f);
+  OSAssertEqualsFloat(@"(/ 5 2.0)", 2.5f);
 
-  source = @"(/ 5 2)";
-  program = [ObjScheme parseString: source];
-  returnValue = [[ObjScheme globalScope] evaluate: program];
-  STAssertTrue([returnValue isKindOfClass: [NSNumber class]], @"%@ isn't a number", source);
-  number = returnValue;
-  STAssertEquals(strcmp([number objCType], @encode(int)), 0, @"%@ isn't an int", source);
-  STAssertEquals([number intValue], 2, @"%@ => %d", source, [number intValue]);
+  OSAssertFalse(@"(> 1 3)");
+  OSAssertTrue(@"(> 3 1)");
 
-  source = @"(/ 5.0 2)";
-  program = [ObjScheme parseString: source];
-  returnValue = [[ObjScheme globalScope] evaluate: program];
-  STAssertTrue([returnValue isKindOfClass: [NSNumber class]], @"%@ isn't a number", source);
-  number = returnValue;
-  STAssertEquals(strcmp([number objCType], @encode(float)), 0, @"%@ isn't a float", source);
-  STAssertEqualsWithAccuracy([number floatValue], 2.5f, 0.01, @"%@ => %f", source, [number floatValue]);
+  OSAssertFalse(@"(>= 1 3)");
+  OSAssertTrue(@"(>= 3 1)");
+  OSAssertTrue(@"(>= 3 3)");
 
-  source = @"(/ 5 2.0)";
-  program = [ObjScheme parseString: source];
-  returnValue = [[ObjScheme globalScope] evaluate: program];
-  STAssertTrue([returnValue isKindOfClass: [NSNumber class]], @"%@ isn't a number", source);
-  number = returnValue;
-  STAssertEquals(strcmp([number objCType], @encode(float)), 0, @"%@ isn't a float", source);
-  STAssertEqualsWithAccuracy([number floatValue], 2.5f, 0.01, @"%@ => %f", source, [number floatValue]);
+  OSAssertFalse(@"(<= 3 1)");
+  OSAssertTrue(@"(<= 1 3)");
+  OSAssertTrue(@"(<= 3 3)");
 
-  source = @"(> 1 3)";
-  program = [ObjScheme parseString: source];
-  returnValue = [[ObjScheme globalScope] evaluate: program];
-  STAssertTrue([ObjScheme isFalse: returnValue], @"%@ => %@", source, returnValue);
-
-  source = @"(>= 1 3)";
-  program = [ObjScheme parseString: source];
-  returnValue = [[ObjScheme globalScope] evaluate: program];
-  STAssertTrue([ObjScheme isFalse: returnValue], @"%@ => %@", source, returnValue);
-
-  source = @"(> 3 1)";
-  program = [ObjScheme parseString: source];
-  returnValue = [[ObjScheme globalScope] evaluate: program];
-  STAssertFalse([ObjScheme isFalse: returnValue], @"%@ => %@", source, returnValue);
-
-  source = @"(>= 3 1)";
-  program = [ObjScheme parseString: source];
-  returnValue = [[ObjScheme globalScope] evaluate: program];
-  STAssertFalse([ObjScheme isFalse: returnValue], @"%@ => %@", source, returnValue);
-
-  source = @"(>= 1 3)";
-  program = [ObjScheme parseString: source];
-  returnValue = [[ObjScheme globalScope] evaluate: program];
-  STAssertTrue([ObjScheme isFalse: returnValue], @"%@ => %@", source, returnValue);
-
-  source = @"(>= 3 3)";
-  program = [ObjScheme parseString: source];
-  returnValue = [[ObjScheme globalScope] evaluate: program];
-  STAssertFalse([ObjScheme isFalse: returnValue], @"%@ => %@", source, returnValue);
-
-  source = @"(<= 3 3)";
-  program = [ObjScheme parseString: source];
-  returnValue = [[ObjScheme globalScope] evaluate: program];
-  STAssertFalse([ObjScheme isFalse: returnValue], @"%@ => %@", source, returnValue);
+  //OSAssertFalse(@"(= 1 1)");
 }
 
 /*
