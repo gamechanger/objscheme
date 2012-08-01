@@ -42,7 +42,10 @@
 
 - (void)testGlobalScope {
   ObSScope* global = [ObjScheme globalScope];
+  NSLog( @"%p", global );
   STAssertEquals(global, [ObjScheme globalScope], @"Global scope isn't unique");
+  STAssertTrue([global hasMacroNamed: SY(@"or")], @"or macro undefined");
+  STAssertTrue([global hasMacroNamed: SY(@"and")], @"or macro undefined");
 }
 
 /*

@@ -91,7 +91,7 @@ static ObSScope* __globalScope = nil;
 
 + (ObSScope*)globalScope {
   if ( __globalScope == nil ) {
-    __globalScope = [[ObSScope alloc] init];
+    __globalScope = [[ObSScope alloc] initWithOuterScope: nil];
     [__globalScope bootstrapMacros];
   }
   return __globalScope;
@@ -159,12 +159,6 @@ static ObSScope* __globalScope = nil;
       array = longer;
     }
 
-    NSUInteger count = [array count];
-    if ( count != 4 ) {
-      for ( id x in array ) {
-        NSLog( @"** %@", x );
-      }
-    }
     [ObjScheme assertSyntax: ([array count] == 4) elseRaise: @"Invalid 'if' syntax"];
     NSMutableArray* ret = [NSMutableArray arrayWithCapacity: [array count]];
     for ( id subToken in array ) {
@@ -328,19 +322,12 @@ static ObSScope* __globalScope = nil;
 }
 
 + (id)readAheadFromToken:(id)token andPort:(ObSInPort*)inPort {
-  static int depth = 0;
-
   if ( token == S_OPENPAREN ) {
-    depth++;
-    NSLog( @"Depth + %d", depth );
     NSMutableArray* list = [NSMutableArray array];
 
     while ( 1 ) {
-      NSUInteger cursor = inPort.cursor;
       token = [inPort nextToken];
       if ( token == S_CLOSEPAREN ) {
-        depth--;
-        NSLog( @"Depth - %d", depth );
         break;
 
       } else {
@@ -355,11 +342,7 @@ static ObSScope* __globalScope = nil;
     return nil;
 
   } else if ( token == S_QUOTE || token == S_QUASIQUOTE || token == S_UNQUOTE || token == S_UNQUOTESPLICING ) {
-    NSLog( @"reading ahead quoted for '%@'", token );
-    NSLog( @"------------->>" );
-    id ret =  [NSArray arrayWithObjects: token, [ObjScheme read: inPort], nil];
-    NSLog( @"-------------<<" );
-    return ret;
+    return [NSArray arrayWithObjects: token, [ObjScheme read: inPort], nil];
 
   } else if ( token == _EOF ) {
     [NSException raise: @"SyntaxError" format: @"unexpected EOF in list"];
@@ -557,6 +540,7 @@ static ObSScope* __globalScope = nil;
 }
 
 - (BOOL)isEqual:(id)other {
+  NSLog( @"Comparing %@ / %p to %@ / %p", self, self, other, other);
   return other == self;
 }
 
@@ -786,15 +770,15 @@ static ObSScope* __globalScope = nil;
 }
 
 - (void)defineMacroNamed:(ObSSymbol*)name asProcedure:(id<ObSProcedure>)procedure {
-  [_macros setObject: procedure forKey: name];
+  [_macros setObject: procedure forKey: name.string];
 }
 
 - (BOOL)hasMacroNamed:(ObSSymbol*)name {
-  return [_macros objectForKey: name] != nil;
+  return [_macros objectForKey: name.string] != nil;
 }
 
 - (id<ObSProcedure>)macroNamed:(ObSSymbol*)name {
-  return [_macros objectForKey: name];
+  return [_macros objectForKey: name.string];
 }
 
 @end
@@ -921,18 +905,17 @@ static ObSScope* __globalScope = nil;
   return [_data substringWithRange: NSMakeRange(start, _cursor-start)];
 }
 
-- (id)_nextToken {
+- (id)nextToken {
   NSUInteger length = [_data length];
   if ( _cursor == length )
     return _EOF;
 
   NSAssert(_cursor < length, @"Went off the end");
-  NSLog( @"cursor %d", _cursor );
   switch ( [_data characterAtIndex: _cursor++] ) {
   case ' ':
   case '\n':
   case '\t':
-    return [self _nextToken];
+    return [self nextToken];
 
   case '(':  return S_OPENPAREN;
   case ')':  return S_CLOSEPAREN;
@@ -961,12 +944,6 @@ static ObSScope* __globalScope = nil;
     return SY([self readToken]);
 
   }
-}
-
-- (id)nextToken {
-  NSString* t = [self _nextToken];
-  NSLog( @"READ: %@", t );
-  return t;
 }
 
 @end
