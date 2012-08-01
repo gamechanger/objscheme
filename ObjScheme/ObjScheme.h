@@ -11,11 +11,22 @@
 @class ObSScope;
 @class ObSInPort;
 
+
+
+@protocol ObSProcedure <NSObject>
+- (id)invokeWithArguments:(NSArray*)arguments;;
+@end
+
+
+
+
 @interface ObjScheme : NSObject
 + (ObSScope*)globalScope;
 + (id)parse:(ObSInPort*)inPort;
 + (id)parseString:(NSString*)string;
 + (id)read:(ObSInPort*)inPort;
+
+- (NSArray*)mapProcedure:(id<ObSProcedure>)procedure onArray:(NSArray*)array;
 @end
 
 
@@ -28,7 +39,6 @@
 @end
 
 
-@class ObSInvocation;
 
 @interface ObSScope : NSObject {
   ObSScope* _outerScope;
@@ -46,17 +56,16 @@
 - (void)bootstrapMacros;
 - (id)evaluate:(id)token;
 - (void)define:(ObSSymbol*)symbol as:(id)thing;
-- (void)defineMacroNamed:(ObSSymbol*)name asInvocation:(ObSInvocation*)procedure;
+- (void)defineMacroNamed:(ObSSymbol*)name asProcedure:(id<ObSProcedure>)procedure;
 - (BOOL)hasMacroNamed:(ObSSymbol*)name;
-- (ObSInvocation*)macroNamed:(ObSSymbol*)name;
+- (id<ObSProcedure>)macroNamed:(ObSSymbol*)name;
 - (ObSScope*)findScopeOf:(ObSSymbol*)name;
 
 @end
 
 
 
-
-@interface ObSProcedure : NSObject {
+@interface ObSLambda : NSObject <ObSProcedure> {
   NSArray* _argumentNames;
   id _expression;
   ObSScope* _scope;
@@ -69,19 +78,20 @@
 - (id)initWithArgumentNames:(NSArray*)argumentNames
                  expression:(id)expression
                       scope:(ObSScope*)scope;
+- (id)invokeWithArguments:(NSArray*)arguments;
 @end
 
 
 
 
-typedef id (^ObSInvocationBlock)(NSArray*);
+typedef id (^ObSNativeBlock)(NSArray*);
 
-@interface ObSInvocation : NSObject {
-  ObSInvocationBlock _block;
+@interface ObSNativeLambda : NSObject <ObSProcedure> {
+  ObSNativeBlock _block;
 }
 
-+ (id)fromBlock:(ObSInvocationBlock)block;
-- (id)initWithBlock:(ObSInvocationBlock)block;
++ (id)fromBlock:(ObSNativeBlock)block;
+- (id)initWithBlock:(ObSNativeBlock)block;
 - (id)invokeWithArguments:(NSArray*)arguments;
 
 @end

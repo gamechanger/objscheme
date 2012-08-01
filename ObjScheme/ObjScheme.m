@@ -29,7 +29,8 @@ static ObSSymbol* S_CLOSEPAREN;
 
 static NSString* _EOF = @"#EOF#";
 
-#define SY(x) [ObSSymbol symbolFromString: (x)]
+#define SY(s) [ObSSymbol symbolFromString: (s)]
+#define MAP(p,a) [ObjScheme mapProcedure: (p) onArray: (a)];
 
 @interface ObjScheme ()
 
@@ -52,7 +53,6 @@ static NSString* _EOF = @"#EOF#";
 
 static NSDictionary* __constants;
 static ObSScope* __globalScope = nil;
-static NSDictionary* __quotes;
 
 + (void)initializeSymbols {
   S_DOT =             SY(@".");
@@ -81,12 +81,15 @@ static NSDictionary* __quotes;
                   [NSNumber numberWithInteger: 0], @"0",
                   [NSNumber numberWithFloat: 0.0], @"0.0",
                   nil];
-  __quotes = [[NSDictionary alloc]
-                  initWithObjectsAndKeys:
-                 S_QUOTE, @"'",
-               S_QUASIQUOTE, @"`",
-               S_UNQUOTE, @",",
-               S_UNQUOTESPLICING, @",@", nil];
+  [self initializeSymbols];
+}
+
+- (NSArray*)mapProcedure:(id<ObSProcedure>)procedure onArray:(NSArray*)array {
+  NSMutableArray* ret = [NSMutableArray arrayWithCapacity: [array count]];
+  for ( id thing in array ) {
+    [ret addObject: [procedure invokeWithArguments: [NSArray arrayWithObject: thing]]];
+  }
+  return ret;
 }
 
 + (ObSScope*)globalScope {
@@ -150,7 +153,7 @@ static NSDictionary* __quotes;
   if ( head == S_QUOTE ) { // (quote exp)
     [ObjScheme assertSyntax: ([array count] == 2)
                   elseRaise: [NSString stringWithFormat: @"quote should have 1 arg, given %d", [array count]-1]];
-    return [array objectAtIndex: 1];
+    return array;
 
   } else if ( head == S_IF ) { // (if x y) => (if x y #f)
     if ( [array count] == 3 ) { // (if x y)
@@ -159,6 +162,12 @@ static NSDictionary* __quotes;
       array = longer;
     }
 
+    NSUInteger count = [array count];
+    if ( count != 4 ) {
+      for ( id x in array ) {
+        NSLog( @"** %@", x );
+      }
+    }
     [ObjScheme assertSyntax: ([array count] == 4) elseRaise: @"Invalid 'if' syntax"];
     NSMutableArray* ret = [NSMutableArray arrayWithCapacity: [array count]];
     for ( id subToken in array ) {
@@ -202,9 +211,10 @@ static NSDictionary* __quotes;
     [ObjScheme assertSyntax: ([array count] == 3) elseRaise: @"bad define-macro syntax"];
     ObSSymbol* macroName = [array objectAtIndex: 1];
     id body = [ObjScheme expandToken: [array lastObject] atTopLevel: NO];
-    id invocation = [[ObjScheme globalScope] evaluate: body];
-    [ObjScheme assertSyntax: [invocation isKindOfClass: [ObSInvocation class]] elseRaise: @"body of define-macro must be an invocation"];
-    [[ObjScheme globalScope] defineMacroNamed: macroName asInvocation: invocation];
+    id<ObSProcedure> procedure = [[ObjScheme globalScope] evaluate: body];
+    [ObjScheme assertSyntax: [procedure conformsToProtocol: @protocol(ObSProcedure)]
+                  elseRaise: @"body of define-macro must be an invocation"];
+    [[ObjScheme globalScope] defineMacroNamed: macroName asProcedure: procedure];
     return nil;
 
   } else if ( head == S_BEGIN ) {
@@ -214,7 +224,9 @@ static NSDictionary* __quotes;
     } else {
       NSMutableArray* ret = [NSMutableArray arrayWithCapacity: [array count]];
       for ( id subToken in array ) {
-        [ret addObject: [ObjScheme expandToken: subToken atTopLevel: topLevel]];
+        id expanded = [ObjScheme expandToken: subToken atTopLevel: topLevel];
+        if ( expanded != nil ) // define-macro expands to nil
+          [ret addObject: expanded];
       }
       return ret;
     }
@@ -256,8 +268,9 @@ static NSDictionary* __quotes;
   } else if ( [head isKindOfClass: [ObSSymbol class]] ) {
     ObSSymbol* symbol = head;
     if ( [[ObjScheme globalScope] hasMacroNamed: symbol] ) {
-      ObSInvocation* macro = [[ObjScheme globalScope] macroNamed: symbol];
+      id macro = [[ObjScheme globalScope] macroNamed: symbol];
       NSArray* macroArguments = [array subarrayWithRange: NSMakeRange(1, [array count]-1)];
+      
       return [ObjScheme expandToken: [macro invokeWithArguments: macroArguments] atTopLevel: NO];
     }
   }
@@ -269,6 +282,10 @@ static NSDictionary* __quotes;
   return ret;
 }
 
++ (id)quote:(id)token {
+  return [NSArray arrayWithObjects: S_QUOTE, token, nil];
+}
+
 /**
  * `x => 'x
  * `,x => x
@@ -276,19 +293,22 @@ static NSDictionary* __quotes;
  */
 + (id)expandQuasiquote:(id)token {
   if ( ! [token isKindOfClass: [NSArray class]] ) {
-    return [NSArray arrayWithObjects: S_QUOTE, token, nil];
+    return [self quote: token];
 
   } else {
     NSArray* list = token;
+    if ( [list count] == 0 )
+      return [self quote: list];
+
     id first = [list objectAtIndex: 0];
-    [ObjScheme assertSyntax: ! [first isEqual: S_UNQUOTESPLICING] elseRaise: @"can't splice at beginning of quasiquote"];
+    [ObjScheme assertSyntax: (first != S_UNQUOTESPLICING) elseRaise: @"can't splice at beginning of quasiquote"];
     NSArray* remainderOfList = [list subarrayWithRange: NSMakeRange(1, [list count]-1)];
 
-    if ( [first isEqual: S_UNQUOTE] ) {
+    if ( first == S_UNQUOTE ) {
       [ObjScheme assertSyntax: ([list count] == 2) elseRaise: @"invalid unquote phrase, missing operand"];
       return [list lastObject];
 
-    } else if ( [first isKindOfClass: [NSArray class]] && [[(NSArray*)first objectAtIndex: 0] isEqual: S_UNQUOTESPLICING] ) {
+    } else if ( [first isKindOfClass: [NSArray class]] && [(NSArray*)first objectAtIndex: 0] == S_UNQUOTESPLICING ) {
       NSArray* unquoteSplicingSpec = first;
       [ObjScheme assertSyntax: ([unquoteSplicingSpec count] == 2) elseRaise: @"invalid unquote-splicing phrase, missing operand"];
       return [NSArray arrayWithObjects: S_APPEND,
@@ -337,9 +357,12 @@ static NSDictionary* __quotes;
     [NSException raise: @"SyntaxError" format: @"unexpected ')'"];
     return nil;
 
-  } else if ( [__quotes objectForKey: token] != nil ) {
-    NSString* expandedQuote = [__quotes objectForKey: token];
-    return [NSArray arrayWithObjects: expandedQuote, [ObjScheme read: inPort], nil];
+  } else if ( token == S_QUOTE || token == S_QUASIQUOTE || token == S_UNQUOTE || token == S_UNQUOTESPLICING ) {
+    NSLog( @"reading ahead quoted for '%@'", token );
+    NSLog( @"------------->>" );
+    id ret =  [NSArray arrayWithObjects: token, [ObjScheme read: inPort], nil];
+    NSLog( @"-------------<<" );
+    return ret;
 
   } else if ( token == _EOF ) {
     [NSException raise: @"SyntaxError" format: @"unexpected EOF in list"];
@@ -373,7 +396,7 @@ static NSDictionary* __quotes;
 
 + (void)addGlobalsToScope:(ObSScope*)scope {
   [scope define: SY(@"+")
-             as: [ObSInvocation fromBlock: ^(NSArray* list) {
+             as: [ObSNativeLambda fromBlock: ^(NSArray* list) {
         if ( [list count] == 0 )
           return [NSNumber numberWithInteger: 0];
 
@@ -394,7 +417,7 @@ static NSDictionary* __quotes;
         }
       }]];
 
-  [scope define: SY(@"-") as: [ObSInvocation fromBlock: ^(NSArray* list) {
+  [scope define: SY(@"-") as: [ObSNativeLambda fromBlock: ^(NSArray* list) {
         NSNumber* first = [list objectAtIndex: 0];
         NSNumber* second = [list objectAtIndex: 1];
         if ( strcmp([first objCType], @encode(int)) == 0 ) {
@@ -405,7 +428,7 @@ static NSDictionary* __quotes;
         }
       }]];
 
-  [scope define: SY(@"*") as: [ObSInvocation fromBlock: ^(NSArray* list) {
+  [scope define: SY(@"*") as: [ObSNativeLambda fromBlock: ^(NSArray* list) {
         if ( [list count] == 0 )
           return [NSNumber numberWithInteger: 0];
 
@@ -426,7 +449,7 @@ static NSDictionary* __quotes;
         }
       }]];
 
-  [scope define: SY(@"/") as: [ObSInvocation fromBlock: ^(NSArray* list) {
+  [scope define: SY(@"/") as: [ObSNativeLambda fromBlock: ^(NSArray* list) {
         NSNumber* first = [list objectAtIndex: 0];
         NSNumber* second = [list objectAtIndex: 1];
         if ( strcmp([first objCType], @encode(int)) == 0 ) {
@@ -437,30 +460,30 @@ static NSDictionary* __quotes;
         }
       }]];
 
-  [scope define: SY(@"not") as: [ObSInvocation fromBlock: ^(NSArray* list) {
+  [scope define: SY(@"not") as: [ObSNativeLambda fromBlock: ^(NSArray* list) {
         NSAssert([list count] == 1, @"not only takes 1 arg");
         return [NSNumber numberWithBool: [ObjScheme isEmptyList: [list objectAtIndex: 0]]];
       }]];
 
-  [scope define: SY(@">") as: [ObSInvocation fromBlock: ^(NSArray* list) {
+  [scope define: SY(@">") as: [ObSNativeLambda fromBlock: ^(NSArray* list) {
         NSNumber* first = [list objectAtIndex: 0];
         NSNumber* second = [list objectAtIndex: 1];
         return [NSNumber numberWithBool: [first floatValue] > [second floatValue]];
       }]];
 
-  [scope define: SY(@"<") as: [ObSInvocation fromBlock: ^(NSArray* list) {
+  [scope define: SY(@"<") as: [ObSNativeLambda fromBlock: ^(NSArray* list) {
         NSNumber* first = [list objectAtIndex: 0];
         NSNumber* second = [list objectAtIndex: 1];
         return [NSNumber numberWithBool: [first floatValue] < [second floatValue]];
       }]];
 
-  [scope define: SY(@">=") as: [ObSInvocation fromBlock: ^(NSArray* list) {
+  [scope define: SY(@">=") as: [ObSNativeLambda fromBlock: ^(NSArray* list) {
         NSNumber* first = [list objectAtIndex: 0];
         NSNumber* second = [list objectAtIndex: 1];
         return [NSNumber numberWithBool: [first floatValue] >= [second floatValue]];
       }]];
 
-  [scope define: SY(@"<=") as: [ObSInvocation fromBlock: ^(NSArray* list) {
+  [scope define: SY(@"<=") as: [ObSNativeLambda fromBlock: ^(NSArray* list) {
         NSNumber* first = [list objectAtIndex: 0];
         NSNumber* second = [list objectAtIndex: 1];
         return [NSNumber numberWithBool: [first floatValue] <= [second floatValue]];
@@ -653,7 +676,7 @@ static NSDictionary* __quotes;
   ObSScope* global = [ObjScheme globalScope];
   [global evaluate: [ObjScheme parseString: macros]];
   [global defineMacroNamed: [ObSSymbol symbolFromString: @"let"]
-              asInvocation: [ObSInvocation fromBlock: ^(NSArray* list) {
+              asProcedure: [ObSNativeLambda fromBlock: ^(NSArray* list) {
         NSArray* bindings = [list objectAtIndex: 0];
         NSArray* body = [list subarrayWithRange: NSMakeRange(1, [list count]-1)];
 
@@ -682,6 +705,13 @@ static NSDictionary* __quotes;
       }]];
 }
 
+- (id)evaluateArray:(NSArray*)array {
+  NSMutableArray* ret = [NSMutableArray arrayWithCapacity: [array count]];
+  for ( id thing in array ) {
+    [ret addObject: [self evaluate: thing]];
+  }
+  return ret;
+}
 
 - (id)evaluate:(id)token {
   NSAssert(token != nil, @"nil token");
@@ -724,9 +754,9 @@ static NSDictionary* __quotes;
         } else if ( head == S_LAMBDA ) { // (lambda (argumentNames) body)
           NSArray* argumentNames = [rest objectAtIndex: 0];
           NSArray* body = [rest objectAtIndex: 1];
-          return [[[ObSProcedure alloc] initWithArgumentNames: argumentNames
-                                                   expression: body
-                                                        scope: self] autorelease];
+          return [[[ObSLambda alloc] initWithArgumentNames: argumentNames
+                                                expression: body
+                                                     scope: self] autorelease];
 
         } else if ( head == S_BEGIN ) { // (begin expression...)
           id result = [NSNumber numberWithBool: NO];
@@ -736,27 +766,8 @@ static NSDictionary* __quotes;
           return result; // begin evaluates to value of final expression
 
         } else {
-          id executable = [self evaluate: head];
-          NSMutableArray* arguments = [NSMutableArray arrayWithCapacity: [rest count]];
-          for ( id subToken in rest ) {
-            [arguments addObject: [self evaluate: subToken]];
-          }
-
-          if ( [executable isKindOfClass: [ObSProcedure class]] ) {
-            // a named function, which we now will in turn resolve within this scope, and invoke a level deeper
-            ObSProcedure* procedure = executable;
-            ObSScope* invocationScope = [[ObSScope alloc] initWithOuterScope: procedure.scope
-                                                        paramListNameOrNames: procedure.argumentNames
-                                                                   arguments: arguments];
-            id ret = [invocationScope evaluate: procedure.expression];
-            [invocationScope release]; // trying to be conservative with memory in highly recursive environment here
-            return ret;
-
-          } else {
-            // this is the actual executable, and the rest of the details are the arguments
-            ObSInvocation* invocation = executable;
-            return [invocation invokeWithArguments: arguments];
-          }
+          id<ObSProcedure> procedure = [self evaluate: head];
+          return [procedure invokeWithArguments: [self evaluateArray: rest]];
         }
       }
     }
@@ -777,7 +788,7 @@ static NSDictionary* __quotes;
   return nil;
 }
 
-- (void)defineMacroNamed:(ObSSymbol*)name asInvocation:(ObSInvocation*)procedure {
+- (void)defineMacroNamed:(ObSSymbol*)name asProcedure:(id<ObSProcedure>)procedure {
   [_macros setObject: procedure forKey: name];
 }
 
@@ -785,7 +796,7 @@ static NSDictionary* __quotes;
   return [_macros objectForKey: name] != nil;
 }
 
-- (ObSInvocation*)macroNamed:(ObSSymbol*)name {
+- (id<ObSProcedure>)macroNamed:(ObSSymbol*)name {
   return [_macros objectForKey: name];
 }
 
@@ -794,8 +805,7 @@ static NSDictionary* __quotes;
 
 
 
-
-@implementation ObSProcedure
+@implementation ObSLambda
 
 @synthesize scope=_scope, expression=_expression, argumentNames=_argumentNames;
 
@@ -813,19 +823,28 @@ static NSDictionary* __quotes;
   return self;
 }
 
+- (id)invokeWithArguments:(NSArray*)arguments {
+  ObSScope* invocationScope = [[ObSScope alloc] initWithOuterScope: _scope
+                                              paramListNameOrNames: _argumentNames
+                                                         arguments: arguments];
+  id ret = [invocationScope evaluate: _expression];
+  [invocationScope release]; // trying to be conservative with memory in highly recursive environment here
+  return ret;
+}
+
 @end
 
 
 
 
 
-@implementation ObSInvocation
+@implementation ObSNativeLambda
 
-+ (id)fromBlock:(ObSInvocationBlock)block {
-  return [[[ObSInvocation alloc] initWithBlock: block] autorelease];
++ (id)fromBlock:(ObSNativeBlock)block {
+  return [[[ObSNativeLambda alloc] initWithBlock: block] autorelease];
 }
 
-- (id)initWithBlock:(ObSInvocationBlock)block {
+- (id)initWithBlock:(ObSNativeBlock)block {
   if ( ( self = [super init] ) ) {
     _block = Block_copy(block);
   }
