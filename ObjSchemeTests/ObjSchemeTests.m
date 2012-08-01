@@ -119,7 +119,7 @@
   OSAssertTrue(@"(<= 1 3)");
   OSAssertTrue(@"(<= 3 3)");
 
-  //OSAssertFalse(@"(= 1 1)");
+  OSAssertTrue(@"(= 1 1)");
 }
 
 /*

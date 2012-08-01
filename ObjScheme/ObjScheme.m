@@ -481,9 +481,16 @@ static ObSScope* __globalScope = nil;
         return [first floatValue] <= [second floatValue] ? S_TRUE : S_FALSE;
       }]];
 
+  [scope defineFunction: [ObSNativeLambda named: SY(@"=")
+                                      fromBlock: ^(NSArray* list) {
+        NSNumber* first = [list objectAtIndex: 0];
+        NSNumber* second = [list objectAtIndex: 1];
+        return [first isEqualToNumber: second] ? S_TRUE : S_FALSE;
+      }]];
+
   // TODO:
   /*
-    - equal? eq? '=' for non-numbers
+    - equal? eq?
     - length
     - cons, car, cdr, cdar, cadr
     - list
