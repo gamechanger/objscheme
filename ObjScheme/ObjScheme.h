@@ -22,6 +22,7 @@
 @interface ObSSymbol : NSObject {
   NSString* _string;
 }
+@property (nonatomic,readonly) NSString* string;
 + (ObSSymbol*)symbolFromString:(NSString*)string;
 - (id)initWithString:(NSString*)string;
 @end
@@ -29,9 +30,10 @@
 
 @class ObSInvocation;
 
-@interface ObSScope : NSMutableDictionary {
+@interface ObSScope : NSObject {
   ObSScope* _outerScope;
   NSMutableDictionary* _macros;
+  NSMutableDictionary* _environ;
 }
 
 @property (nonatomic,retain) ObSScope* outer;
@@ -40,13 +42,14 @@
 - (id)initWithOuterScope:(ObSScope*)outer
     paramListNameOrNames:(id)parameters
                arguments:(NSArray*)argument;
-- (id)resolveVariable:(NSString*)variable;
+- (id)resolveSymbol:(ObSSymbol*)variable;
 - (void)bootstrapMacros;
 - (id)evaluate:(id)token;
-- (void)defineMacroNamed:(NSString*)name asInvocation:(ObSInvocation*)procedure;
-- (BOOL)hasMacroNamed:(NSString*)name;
-- (ObSInvocation*)macroNamed:(NSString*)name;
-- (ObSScope*)findScopeOf:(NSString*)name;
+- (void)define:(ObSSymbol*)symbol as:(id)thing;
+- (void)defineMacroNamed:(ObSSymbol*)name asInvocation:(ObSInvocation*)procedure;
+- (BOOL)hasMacroNamed:(ObSSymbol*)name;
+- (ObSInvocation*)macroNamed:(ObSSymbol*)name;
+- (ObSScope*)findScopeOf:(ObSSymbol*)name;
 
 @end
 
@@ -89,9 +92,10 @@ typedef id (^ObSInvocationBlock)(NSArray*);
   NSString* _data;
   NSUInteger _cursor;
 }
+@property (nonatomic,readonly) NSUInteger cursor;
 - (id)initWithData:(NSData*)data;
 - (id)initWithString:(NSString*)data;
-- (NSString*)nextToken;
+- (id)nextToken;
 @end
 
 

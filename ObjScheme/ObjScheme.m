@@ -8,28 +8,28 @@
 
 #import "ObjScheme.h"
 
-static NSString* S_DOT = @".";
-static NSString* S_QUOTE = @"quote";
-static NSString* S_IF = @"if";
-static NSString* S_SET = @"set!";
-static NSString* S_DEFINE = @"define";
-static NSString* S_LAMBDA = @"lambda";
-static NSString* S_BEGIN = @"begin";
-static NSString* S_DEFINEMACRO = @"define-macro";
-static NSString* S_QUASIQUOTE = @"quasiquote";
-static NSString* S_UNQUOTE = @"unquote";
-static NSString* S_UNQUOTESPLICING = @"unquote-splicing";
-static NSString* S_APPEND = @"append";
-static NSString* S_CONS = @"cons";
-static NSString* S_LET = @"let";
-static NSString* S_F = @"#f";
-static NSString* S_T = @"#t";
-static NSString* S_OPENPAREN = @"(";
-static NSString* S_CLOSEPAREN = @")";
+static ObSSymbol* S_DOT;
+static ObSSymbol* S_QUOTE;
+static ObSSymbol* S_IF;
+static ObSSymbol* S_SET;
+static ObSSymbol* S_DEFINE;
+static ObSSymbol* S_LAMBDA;
+static ObSSymbol* S_BEGIN;
+static ObSSymbol* S_DEFINEMACRO;
+static ObSSymbol* S_QUASIQUOTE;
+static ObSSymbol* S_UNQUOTE;
+static ObSSymbol* S_UNQUOTESPLICING;
+static ObSSymbol* S_APPEND;
+static ObSSymbol* S_CONS;
+static ObSSymbol* S_LET;
+static ObSSymbol* S_FALSE;
+static ObSSymbol* S_TRUE;
+static ObSSymbol* S_OPENPAREN;
+static ObSSymbol* S_CLOSEPAREN;
 
-static NSString* S_EOF = @"#EOF#";
+static NSString* _EOF = @"#EOF#";
 
-#define IF(x) [ObjScheme IF: (x)]
+#define SY(x) [ObSSymbol symbolFromString: (x)]
 
 @interface ObjScheme ()
 
@@ -54,11 +54,30 @@ static NSDictionary* __constants;
 static ObSScope* __globalScope = nil;
 static NSDictionary* __quotes;
 
++ (void)initializeSymbols {
+  S_DOT =             SY(@".");
+  S_QUOTE =           SY(@"quote");
+  S_IF =              SY(@"if");
+  S_SET =             SY(@"set!");
+  S_DEFINE =          SY(@"define");
+  S_LAMBDA =          SY(@"lambda");
+  S_BEGIN =           SY(@"begin");
+  S_DEFINEMACRO =     SY(@"define-macro");
+  S_QUASIQUOTE =      SY(@"quasiquote");
+  S_UNQUOTE =         SY(@"unquote");
+  S_UNQUOTESPLICING = SY(@"unquote-splicing");
+  S_APPEND =          SY(@"append");
+  S_CONS =            SY(@"cons");
+  S_LET =             SY(@"let");
+  S_FALSE =           SY(@"#f");
+  S_TRUE =            SY(@"#t");
+  S_OPENPAREN =       SY(@"(");
+  S_CLOSEPAREN =      SY(@")");
+}
+
 + (void)initialize {
   __constants = [[NSDictionary alloc]
                   initWithObjectsAndKeys:
-                    [NSNumber numberWithBool: YES], S_T,
-                  [NSNumber numberWithBool: NO], S_F,
                   [NSNumber numberWithInteger: 0], @"0",
                   [NSNumber numberWithFloat: 0.0], @"0.0",
                   nil];
@@ -126,17 +145,17 @@ static NSDictionary* __quotes;
     return token; // constant / value, return as-is
 
   NSArray* array = token;
-  NSString* op = [array objectAtIndex: 0];
+  id head = [array objectAtIndex: 0];
 
-  if ( [op isEqualToString: S_QUOTE] ) { // (quote exp)
+  if ( head == S_QUOTE ) { // (quote exp)
     [ObjScheme assertSyntax: ([array count] == 2)
                   elseRaise: [NSString stringWithFormat: @"quote should have 1 arg, given %d", [array count]-1]];
     return [array objectAtIndex: 1];
 
-  } else if ( [op isEqualToString: S_IF] ) { // (if x y) => (if x y #f)
+  } else if ( head == S_IF ) { // (if x y) => (if x y #f)
     if ( [array count] == 3 ) { // (if x y)
       NSMutableArray* longer = [NSMutableArray arrayWithArray: array];
-      [longer addObject: S_F];
+      [longer addObject: S_FALSE];
       array = longer;
     }
 
@@ -147,7 +166,7 @@ static NSDictionary* __quotes;
     }
     return ret;
 
-  } else if ( [op isEqualToString: S_SET] ) { // (set! thing exp)
+  } else if ( head == S_SET ) { // (set! thing exp)
     [ObjScheme assertSyntax: ([array count] == 3) elseRaise: @"Invalid 'set!' syntax"];
     id var = [array objectAtIndex: 1];
     [ObjScheme assertSyntax: [var isMemberOfClass: [ObSSymbol class]]
@@ -155,7 +174,7 @@ static NSDictionary* __quotes;
     id expression = [ObjScheme expandToken: [array objectAtIndex: 2] atTopLevel: NO];
     return [NSArray arrayWithObjects: S_SET, var, expression, nil];
 
-  } else if ( [op isEqualToString: S_DEFINE] ) { // (define ...)
+  } else if ( head == S_DEFINE ) { // (define ...)
     [ObjScheme assertSyntax: ([array count] >= 3) elseRaise: @"define takes at least 2 args"];
     id defineSpec = [array objectAtIndex: 1];
     NSArray* body = [array subarrayWithRange: NSMakeRange(2, [array count]-2)];
@@ -178,17 +197,17 @@ static NSDictionary* __quotes;
       return [NSArray arrayWithObjects: S_DEFINE, defineSpec, [ObjScheme expandToken: expression atTopLevel: NO], nil];
     }
 
-  } else if ( [op isEqualToString: S_DEFINEMACRO] ) { // (define-macro symbol proc)
+  } else if ( head == S_DEFINEMACRO ) { // (define-macro symbol proc)
     [ObjScheme assertSyntax: topLevel elseRaise: @"define-macro must be invoked at the top level"];
     [ObjScheme assertSyntax: ([array count] == 3) elseRaise: @"bad define-macro syntax"];
-    NSString* macroName = [array objectAtIndex: 1];
+    ObSSymbol* macroName = [array objectAtIndex: 1];
     id body = [ObjScheme expandToken: [array lastObject] atTopLevel: NO];
     id invocation = [[ObjScheme globalScope] evaluate: body];
     [ObjScheme assertSyntax: [invocation isKindOfClass: [ObSInvocation class]] elseRaise: @"body of define-macro must be an invocation"];
     [[ObjScheme globalScope] defineMacroNamed: macroName asInvocation: invocation];
     return nil;
 
-  } else if ( [op isEqualToString: S_BEGIN] ) {
+  } else if ( head == S_BEGIN ) {
     if ( [array count] == 1 ) { // (begin) => nil
       return nil;
 
@@ -200,7 +219,7 @@ static NSDictionary* __quotes;
       return ret;
     }
 
-  } else if ( [op isEqualToString: S_LAMBDA] ) {
+  } else if ( head == S_LAMBDA ) {
     // (lambda (x) a b) => (lambda (x) (begin a b))
     // (lambda x expr) => (lambda (x) expr)
     [ObjScheme assertSyntax: ([array count] >= 3) elseRaise: @"not enough args for lambda"];
@@ -230,22 +249,24 @@ static NSDictionary* __quotes;
 
     return [NSArray arrayWithObjects: S_LAMBDA, parameterList, expression, nil];
 
-  } else if ( [op isEqualToString: S_QUASIQUOTE] ) {
+  } else if ( head == S_QUASIQUOTE ) {
     [ObjScheme assertSyntax: ([array count] == 2) elseRaise: @"invalid quasiquote, wrong arg num"];
     return [ObjScheme expandQuasiquote: [array objectAtIndex: 1]];
 
-  } else if ( [op isMemberOfClass: [ObSSymbol class]] && [[ObjScheme globalScope] hasMacroNamed: op] ) {
-    ObSInvocation* macro = [[ObjScheme globalScope] macroNamed: op];
-    NSArray* macroArguments = [array subarrayWithRange: NSMakeRange(1, [array count]-1)];
-    return [ObjScheme expandToken: [macro invokeWithArguments: macroArguments] atTopLevel: NO];
-
-  } else {
-    NSMutableArray* ret = [NSMutableArray arrayWithCapacity: [array count]];
-    for ( id subToken in array ) {
-      [ret addObject: [ObjScheme expandToken: subToken atTopLevel: NO]];
+  } else if ( [head isKindOfClass: [ObSSymbol class]] ) {
+    ObSSymbol* symbol = head;
+    if ( [[ObjScheme globalScope] hasMacroNamed: symbol] ) {
+      ObSInvocation* macro = [[ObjScheme globalScope] macroNamed: symbol];
+      NSArray* macroArguments = [array subarrayWithRange: NSMakeRange(1, [array count]-1)];
+      return [ObjScheme expandToken: [macro invokeWithArguments: macroArguments] atTopLevel: NO];
     }
-    return ret;
   }
+
+  NSMutableArray* ret = [NSMutableArray arrayWithCapacity: [array count]];
+  for ( id subToken in array ) {
+    [ret addObject: [ObjScheme expandToken: subToken atTopLevel: NO]];
+  }
+  return ret;
 }
 
 /**
@@ -290,12 +311,19 @@ static NSDictionary* __quotes;
 }
 
 + (id)readAheadFromToken:(id)token andPort:(ObSInPort*)inPort {
-  if ( [token isEqual: S_OPENPAREN] ) {
+  static int depth = 0;
+
+  if ( token == S_OPENPAREN ) {
+    depth++;
+    NSLog( @"Depth + %d", depth );
     NSMutableArray* list = [NSMutableArray array];
 
     while ( 1 ) {
+      NSUInteger cursor = inPort.cursor;
       token = [inPort nextToken];
-      if ( [token isEqual: S_CLOSEPAREN] ) {
+      if ( token == S_CLOSEPAREN ) {
+        depth--;
+        NSLog( @"Depth - %d", depth );
         break;
 
       } else {
@@ -305,7 +333,7 @@ static NSDictionary* __quotes;
 
     return list;
 
-  } else if ( [token isEqual: S_CLOSEPAREN] ) {
+  } else if ( token == S_CLOSEPAREN ) {
     [NSException raise: @"SyntaxError" format: @"unexpected ')'"];
     return nil;
 
@@ -313,7 +341,7 @@ static NSDictionary* __quotes;
     NSString* expandedQuote = [__quotes objectForKey: token];
     return [NSArray arrayWithObjects: expandedQuote, [ObjScheme read: inPort], nil];
 
-  } else if ( token == S_EOF ) {
+  } else if ( token == _EOF ) {
     [NSException raise: @"SyntaxError" format: @"unexpected EOF in list"];
     return nil;
 
@@ -325,8 +353,8 @@ static NSDictionary* __quotes;
 + (id)read:(ObSInPort*)inPort {
   id token = [inPort nextToken];
 
-  if ( token == S_EOF ) {
-    return S_EOF;
+  if ( token == _EOF ) {
+    return _EOF;
 
   } else {
     return [ObjScheme readAheadFromToken: token andPort: inPort];
@@ -344,7 +372,8 @@ static NSDictionary* __quotes;
 }
 
 + (void)addGlobalsToScope:(ObSScope*)scope {
-  [scope setObject: [ObSInvocation fromBlock: ^(NSArray* list) {
+  [scope define: SY(@"+")
+             as: [ObSInvocation fromBlock: ^(NSArray* list) {
         if ( [list count] == 0 )
           return [NSNumber numberWithInteger: 0];
 
@@ -363,9 +392,9 @@ static NSDictionary* __quotes;
           }
           return [NSNumber numberWithFloat: ret];
         }
-      }] forKey: @"+"];
+      }]];
 
-  [scope setObject: [ObSInvocation fromBlock: ^(NSArray* list) {
+  [scope define: SY(@"-") as: [ObSInvocation fromBlock: ^(NSArray* list) {
         NSNumber* first = [list objectAtIndex: 0];
         NSNumber* second = [list objectAtIndex: 1];
         if ( strcmp([first objCType], @encode(int)) == 0 ) {
@@ -374,9 +403,9 @@ static NSDictionary* __quotes;
         } else {
           return [NSNumber numberWithFloat: [first floatValue]-[second floatValue]];
         }
-      }] forKey: @"-"];
+      }]];
 
-  [scope setObject: [ObSInvocation fromBlock: ^(NSArray* list) {
+  [scope define: SY(@"*") as: [ObSInvocation fromBlock: ^(NSArray* list) {
         if ( [list count] == 0 )
           return [NSNumber numberWithInteger: 0];
 
@@ -395,9 +424,9 @@ static NSDictionary* __quotes;
           }
           return [NSNumber numberWithFloat: ret];
         }
-      }] forKey: @"*"];
+      }]];
 
-  [scope setObject: [ObSInvocation fromBlock: ^(NSArray* list) {
+  [scope define: SY(@"/") as: [ObSInvocation fromBlock: ^(NSArray* list) {
         NSNumber* first = [list objectAtIndex: 0];
         NSNumber* second = [list objectAtIndex: 1];
         if ( strcmp([first objCType], @encode(int)) == 0 ) {
@@ -406,36 +435,36 @@ static NSDictionary* __quotes;
         } else {
           return [NSNumber numberWithFloat: [first floatValue]/[second floatValue]];
         }
-      }] forKey: @"/"];
+      }]];
 
-  [scope setObject: [ObSInvocation fromBlock: ^(NSArray* list) {
+  [scope define: SY(@"not") as: [ObSInvocation fromBlock: ^(NSArray* list) {
         NSAssert([list count] == 1, @"not only takes 1 arg");
         return [NSNumber numberWithBool: [ObjScheme isEmptyList: [list objectAtIndex: 0]]];
-      }] forKey: @"not"];
+      }]];
 
-  [scope setObject: [ObSInvocation fromBlock: ^(NSArray* list) {
+  [scope define: SY(@">") as: [ObSInvocation fromBlock: ^(NSArray* list) {
         NSNumber* first = [list objectAtIndex: 0];
         NSNumber* second = [list objectAtIndex: 1];
         return [NSNumber numberWithBool: [first floatValue] > [second floatValue]];
-      }] forKey: @">"];
+      }]];
 
-  [scope setObject: [ObSInvocation fromBlock: ^(NSArray* list) {
+  [scope define: SY(@"<") as: [ObSInvocation fromBlock: ^(NSArray* list) {
         NSNumber* first = [list objectAtIndex: 0];
         NSNumber* second = [list objectAtIndex: 1];
         return [NSNumber numberWithBool: [first floatValue] < [second floatValue]];
-      }] forKey: @"<"];
+      }]];
 
-  [scope setObject: [ObSInvocation fromBlock: ^(NSArray* list) {
+  [scope define: SY(@">=") as: [ObSInvocation fromBlock: ^(NSArray* list) {
         NSNumber* first = [list objectAtIndex: 0];
         NSNumber* second = [list objectAtIndex: 1];
         return [NSNumber numberWithBool: [first floatValue] >= [second floatValue]];
-      }] forKey: @">="];
+      }]];
 
-  [scope setObject: [ObSInvocation fromBlock: ^(NSArray* list) {
+  [scope define: SY(@"<=") as: [ObSInvocation fromBlock: ^(NSArray* list) {
         NSNumber* first = [list objectAtIndex: 0];
         NSNumber* second = [list objectAtIndex: 1];
         return [NSNumber numberWithBool: [first floatValue] <= [second floatValue]];
-      }] forKey: @"<="];
+      }]];
 
   // TODO:
   /*
@@ -477,6 +506,8 @@ static NSDictionary* __quotes;
 
 @implementation ObSSymbol
 
+@synthesize string=_string;
+
 + (ObSSymbol*)symbolFromString:(NSString*)string {
   static NSMutableDictionary* __symbols = nil;
   if ( __symbols == nil ) {
@@ -513,6 +544,10 @@ static NSDictionary* __quotes;
   return [_string hash];
 }
 
+- (NSString*)description {
+  return [NSString stringWithFormat: @"Symbol(%@)", _string];
+}
+
 @end
 
 
@@ -527,6 +562,7 @@ static NSDictionary* __quotes;
   if ( (self = [super init]) ) {
     self.outer = outer;
     _macros = [[NSMutableDictionary alloc] init];
+    _environ = [[NSMutableDictionary alloc] init];
   }
   return self;
 }
@@ -534,6 +570,7 @@ static NSDictionary* __quotes;
 - (void)dealloc {
   [_outerScope release];
   [_macros release];
+  [_environ release];
   [super dealloc];
 }
 
@@ -559,35 +596,39 @@ static NSDictionary* __quotes;
                  @"Syntax Error: Wrong Number of Arguments %@", arguments );
 
       for ( int i = 0; i < numNamed; i++ ) {
-        [self setObject: [arguments objectAtIndex: i] forKey: [namedParameters objectAtIndex: i]];
+        [_environ setObject: [arguments objectAtIndex: i] forKey: [namedParameters objectAtIndex: i]];
       }
 
       if ( numArgs > numNamed ) {
         int numRemaining = numArgs - numNamed;
-        [self setObject: [arguments subarrayWithRange: NSMakeRange(numNamed, numRemaining)]
-                 forKey: catchAllParameterName];
+        [_environ setObject: [arguments subarrayWithRange: NSMakeRange(numNamed, numRemaining)]
+                     forKey: catchAllParameterName];
       }
 
     } else {
       NSAssert1( [parameters isKindOfClass: [NSString class]], @"Syntax Error(?): Parameters for scope is %@", parameters );
-      [self setObject: arguments forKey: parameters];
+      [_environ setObject: arguments forKey: parameters];
     }
   }
   return self;
 }
 
-- (id)resolveVariable:(NSString*)variable {
-  id myValue = [self objectForKey: variable];
+- (id)resolveSymbol:(ObSSymbol*)variable {
+  id myValue = [_environ objectForKey: variable];
   if ( myValue ) {
     return myValue;
   }
 
   if ( _outerScope != nil ) {
-    return [_outerScope resolveVariable: variable];
+    return [_outerScope resolveSymbol: variable];
   }
 
-  [NSException raise: @"LookupError" format: @"variable %@ not defined", variable];
+  [NSException raise: @"LookupError" format: @"Symbol %@ not defined", variable];
   return nil;
+}
+
+- (void)define:(ObSSymbol*)symbol as:(id)thing {
+  [_environ setObject: thing forKey: symbol];
 }
 
 - (void)bootstrapMacros {
@@ -604,14 +645,15 @@ static NSDictionary* __quotes;
     "        (let ((arg (car args)))\n"
     "          `(let ((arg ,arg))\n"
     "             (if arg arg\n"
-    "                 (or ,@(cdr args)))))))))\n"
+    "                 (or ,@(cdr args))))))))\n"
 
     ";; More macros can also go here\n"
     ")";
 
   ObSScope* global = [ObjScheme globalScope];
   [global evaluate: [ObjScheme parseString: macros]];
-  [global defineMacroNamed: @"let" asInvocation: [ObSInvocation fromBlock: ^(NSArray* list) {
+  [global defineMacroNamed: [ObSSymbol symbolFromString: @"let"]
+              asInvocation: [ObSInvocation fromBlock: ^(NSArray* list) {
         NSArray* bindings = [list objectAtIndex: 0];
         NSArray* body = [list subarrayWithRange: NSMakeRange(1, [list count]-1)];
 
@@ -647,7 +689,7 @@ static NSDictionary* __quotes;
   @try {
     while ( 1 ) {
       if ( [token isKindOfClass: [ObSSymbol class]] ) {
-        return [self resolveVariable: token]; // variable reference
+        return [self resolveSymbol: token]; // variable reference
 
       } else if ( ! [token isKindOfClass: [NSArray class]] ) {
         return token; // literal
@@ -657,36 +699,36 @@ static NSDictionary* __quotes;
         id head = [list objectAtIndex: 0];
         NSArray* rest = [list subarrayWithRange: NSMakeRange(1, [list count]-1)];
 
-        if ( [head isEqual: S_QUOTE] ) { // (quote exp) -> exp
+        if ( head == S_QUOTE ) { // (quote exp) -> exp
           return rest; // that's easy- literally the rest of the array is the value
 
-        } else if ( [head isEqual: S_IF] ) { // (if test consequence alternate) <- note that full form is enforced by expansion
+        } else if ( head == S_IF ) { // (if test consequence alternate) <- note that full form is enforced by expansion
           id test = [rest objectAtIndex: 0];
           id consequence = [rest objectAtIndex: 1];
           id alternate = [rest objectAtIndex: 2];
-          token = IF([self evaluate: test]) ? consequence : alternate;
+          token = [self evaluate: test] == S_FALSE ? alternate : consequence;
           continue; // I'm being explicit here for clarity, we'll now evaluate this token
 
-        } else if ( [head isEqual: S_SET] ) { // (set! variableName expression)
-          NSString* variableName = [rest objectAtIndex: 0];
+        } else if ( head == S_SET ) { // (set! variableName expression)
+          ObSSymbol* symbol = [rest objectAtIndex: 0];
           id expression = [rest objectAtIndex: 1];
-          ObSScope* definingScope = [self findScopeOf: variableName]; // I do this first, which can fail, so we don't bother executing predicate
+          ObSScope* definingScope = [self findScopeOf: symbol]; // I do this first, which can fail, so we don't bother executing predicate
           id value = [self evaluate: expression];
-          [definingScope setObject: value forKey: variableName];
+          [definingScope define: symbol as: value];
 
-        } else if ( [head isEqual: S_DEFINE] ) { // (define variableName expression)
+        } else if ( head == S_DEFINE ) { // (define variableName expression)
           NSString* variableName = [rest objectAtIndex: 0];
           id expression = [rest objectAtIndex: 1];
-          [self setObject: [self evaluate: expression] forKey: variableName];
+          [_environ setObject: [self evaluate: expression] forKey: variableName];
 
-        } else if ( [head isEqual: S_LAMBDA] ) { // (lambda (argumentNames) body)
+        } else if ( head == S_LAMBDA ) { // (lambda (argumentNames) body)
           NSArray* argumentNames = [rest objectAtIndex: 0];
           NSArray* body = [rest objectAtIndex: 1];
           return [[[ObSProcedure alloc] initWithArgumentNames: argumentNames
                                                    expression: body
                                                         scope: self] autorelease];
 
-        } else if ( [head isEqual: S_BEGIN] ) { // (begin expression...)
+        } else if ( head == S_BEGIN ) { // (begin expression...)
           id result = [NSNumber numberWithBool: NO];
           for ( id expression in rest ) {
             result = [self evaluate: expression];
@@ -725,8 +767,8 @@ static NSDictionary* __quotes;
   }
 }
 
-- (ObSScope*)findScopeOf:(NSString*)name {
-  if ( [self objectForKey: name] != nil )
+- (ObSScope*)findScopeOf:(ObSSymbol*)name {
+  if ( [_environ objectForKey: name] != nil )
     return self;
   if ( _outerScope != nil )
     return [_outerScope findScopeOf: name];
@@ -735,15 +777,15 @@ static NSDictionary* __quotes;
   return nil;
 }
 
-- (void)defineMacroNamed:(NSString*)name asInvocation:(ObSInvocation*)procedure {
+- (void)defineMacroNamed:(ObSSymbol*)name asInvocation:(ObSInvocation*)procedure {
   [_macros setObject: procedure forKey: name];
 }
 
-- (BOOL)hasMacroNamed:(NSString*)name {
+- (BOOL)hasMacroNamed:(ObSSymbol*)name {
   return [_macros objectForKey: name] != nil;
 }
 
-- (ObSInvocation*)macroNamed:(NSString*)name {
+- (ObSInvocation*)macroNamed:(ObSSymbol*)name {
   return [_macros objectForKey: name];
 }
 
@@ -807,6 +849,8 @@ static NSDictionary* __quotes;
 
 @implementation ObSInPort
 
+@synthesize cursor=_cursor;
+
 - (id)initWithString:(NSString*)string {
   if ( (self = [super init]) ) {
     _data = [string retain];
@@ -856,17 +900,23 @@ static NSDictionary* __quotes;
   NSUInteger start = _cursor-1;
   unichar c = [_data characterAtIndex: _cursor];
   while ( c != ' ' && c != '\t' && c != '\n' && c != ')') {
-    c = [_data characterAtIndex: _cursor++];
+    c = [_data characterAtIndex: ++_cursor];
   }
-  return [_data substringWithRange: NSMakeRange(start, _cursor-1-start)];
+  return [_data substringWithRange: NSMakeRange(start, _cursor-start)];
 }
 
-- (NSString*)nextToken {
+- (id)_nextToken {
   NSUInteger length = [_data length];
-  NSAssert(_cursor < length, @"Went too far");
+  if ( _cursor == length )
+    return _EOF;
+
+  NSAssert(_cursor < length, @"Went off the end");
+  NSLog( @"cursor %d", _cursor );
   switch ( [_data characterAtIndex: _cursor++] ) {
-  case ' ': case '\n': case '\t':
-    return [self nextToken];
+  case ' ':
+  case '\n':
+  case '\t':
+    return [self _nextToken];
 
   case '(':  return S_OPENPAREN;
   case ')':  return S_CLOSEPAREN;
@@ -895,6 +945,12 @@ static NSDictionary* __quotes;
     return [self readToken];
 
   }
+}
+
+- (id)nextToken {
+  NSString* t = [self _nextToken];
+  NSLog( @"READ: %@", t );
+  return t;
 }
 
 @end
