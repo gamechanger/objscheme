@@ -416,14 +416,14 @@ static ObSScope* __globalScope = nil;
 
         NSNumber* first = [list objectAtIndex: 0];
         if ( strcmp([first objCType], @encode(int)) == 0 ) {
-          int ret = 0;
+          int ret = 1;
           for ( NSNumber* number in list ) {
             ret *= [number intValue];
           }
           return [NSNumber numberWithInteger: ret];
 
         } else {
-          float ret = 0;
+          float ret = 1.0;
           for ( NSNumber* number in list ) {
             ret *= [number floatValue];
           }

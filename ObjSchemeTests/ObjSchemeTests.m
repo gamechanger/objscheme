@@ -70,7 +70,16 @@
   STAssertTrue([returnValue isKindOfClass: [NSNumber class]], @"(+ 1 2) isn't a number");
   NSNumber* number = returnValue;
   STAssertEquals(0, strcmp([number objCType], @encode(int)), @"(+ 1 2) isn't an int");
-  STAssertEquals(3, [number intValue], @"(+ 1 2) => %d", [number intValue]);
+  STAssertEquals([number intValue], 3, @"(+ 1 2) => %d", [number intValue]);
+
+
+  source = @"(* 5 7)";
+  program = [ObjScheme parseString: source];
+  returnValue = [[ObjScheme globalScope] evaluate: program];
+  STAssertTrue([returnValue isKindOfClass: [NSNumber class]], @"%@ isn't a number", source);
+  number = returnValue;
+  STAssertEquals(strcmp([number objCType], @encode(int)), 0, @"%@ isn't an int", source);
+  STAssertEquals([number intValue], 35, @"%@ => %d", source, [number intValue]);
 }
 
 /*
