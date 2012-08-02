@@ -114,6 +114,12 @@
   OSAssertFalse(@"(eq? 1 2)");
   OSAssertFalse(@"(eq? \"a\" \"a\")");
   OSAssertTrue(@"(let ((a \"a\")) (eq? a a))");
+
+  OSAssertTrue(@"(equal? 1 1)");
+  OSAssertFalse(@"(equal? 1 2)");
+  OSAssertTrue(@"(equal? \"a\" \"a\")");
+  OSAssertFalse(@"(equal? \"a\" \"b\")");
+  OSAssertTrue(@"(let ((a \"a\")) (equal? a a))");
 }
 
 - (void)testMath {
