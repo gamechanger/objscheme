@@ -581,12 +581,11 @@ static ObSScope* __globalScope = nil;
         return [NSNumber numberWithInteger: length];
       }]];
 
+  [scope defineFunction: U_LAMBDA(@"symbol?", ^(id o) { return TRUTH([o isKindOfClass: [ObSSymbol class]]); })];
+
   // TODO:
   /*
-    - length
-    - cons, car, cdr, cdar, cadr
-    - list
-    - list? null? symbol? boolean? pair? port? number? integer? procedure?
+    - symbol? boolean? pair? port? number? integer? procedure?
     - apply
     - eval
     - call/cc
@@ -856,7 +855,8 @@ static ObSScope* __globalScope = nil;
         NSArray* rest = [list subarrayWithRange: NSMakeRange(1, [list count]-1)];
 
         if ( head == S_QUOTE ) { // (quote exp) -> exp
-          return rest; // that's easy- literally the rest of the array is the value
+          NSAssert1([rest count] == 1, @"quote can have only 1 operand, not %@", rest);
+          return [rest objectAtIndex: 0]; // that's easy- literally the rest of the array is the value
 
         } else if ( head == S_LIST ) { // (list a b c)
           return [self list: rest];
@@ -1142,13 +1142,15 @@ static ObSScope* __globalScope = nil;
 - (NSString*)readToken {
   NSUInteger start = _cursor-1;
   NSUInteger length = [_data length];
-  unichar c = [_data characterAtIndex: _cursor];
-  while ( c != ' ' && c != '\t' && c != '\n' && c != ')' ) {
-    if ( _cursor == length - 1 ) {
-      _cursor++;
-      break;
+  if ( _cursor < length ) {
+    unichar c = [_data characterAtIndex: _cursor];
+    while ( c != ' ' && c != '\t' && c != '\n' && c != ')' ) {
+      if ( _cursor == length - 1 ) {
+        _cursor++;
+        break;
+      }
+      c = [_data characterAtIndex: ++_cursor];
     }
-    c = [_data characterAtIndex: ++_cursor];
   }
   return [_data substringWithRange: NSMakeRange(start, _cursor-start)];
 }

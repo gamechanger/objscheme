@@ -139,6 +139,9 @@
 
   OSAssertEqualsInt(@"(length (list))", 0);
   OSAssertEqualsInt(@"(length (list 1 2 3))", 3);
+
+  OSAssertTrue(@"(symbol? 'a)");
+  OSAssertFalse(@"(symbol? \"a\")");
 }
 
 - (void)testMath {
