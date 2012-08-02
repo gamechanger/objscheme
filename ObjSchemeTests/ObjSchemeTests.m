@@ -105,11 +105,15 @@
   OSAssertFalse(@"(null? #t)");
   OSAssertFalse(@"(null? (list #t))");
 
-
   OSAssertFalse(@"(let ((a #f)) a))")
   OSAssertTrue(@"(let ((a #t)) a))")
   OSAssertFalse(@"(null? (let ((x (list #t))) x))");
   OSAssertTrue(@"(null? (let ((x (list))) x))");
+
+  OSAssertTrue(@"(eq? 1 1)");
+  OSAssertFalse(@"(eq? 1 2)");
+  OSAssertFalse(@"(eq? \"a\" \"a\")");
+  OSAssertTrue(@"(let ((a \"a\")) (eq? a a))");
 }
 
 - (void)testMath {

@@ -31,6 +31,9 @@ static ObSSymbol* S_LIST;
 static NSString* _EOF = @"#EOF#";
 
 #define B_LAMBDA(name, block) [ObSNativeBinaryLambda named: SY(name) fromBlock: (block)]
+#define U_LAMBDA(name, block) [ObSNativeUnaryLambda named: SY(name) fromBlock: (block)]
+#define TRUTH(b) (b) ? S_TRUE : S_FALSE;
+#define IF(x) (x) != S_FALSE;
 
 @interface ObjScheme ()
 
@@ -490,7 +493,7 @@ static ObSScope* __globalScope = nil;
       }]];
 
 
-  [scope defineFunction: B_LAMBDA(@"eq?", ^(id a, id b){ return (a == b) ? S_TRUE : S_FALSE; })];
+  [scope defineFunction: U_LAMBDA(@"list?", ^(id object) { return TRUTH([object isKindOfClass: [NSArray class]]) })];
 
   [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"null?")
                                            fromBlock: ^(id object) {
@@ -498,10 +501,30 @@ static ObSScope* __globalScope = nil;
           return S_FALSE;
         }
         NSArray* list = object;
-        return [list count] == 0 ? S_TRUE : S_FALSE;
+        return TRUTH([list count] == 0);
       }]];
 
-  [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"list?") fromBlock: ^(id object) { return [object isKindOfClass: [NSArray class]] ? S_TRUE : S_FALSE; }]];
+  [scope defineFunction: B_LAMBDA(@"eq?", ^(id a, id b){ return (a == b) ? S_TRUE : S_FALSE; })];
+
+  [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"eqv?")
+                                            fromBlock: ^(id a, id b) {
+        if ( [a isKindOfClass: [NSNumber class]] && [b isKindOfClass: [NSNumber class]] ) {
+          NSNumber* n1 = a, *n2 = b;
+          return TRUTH([n1 isEqualToNumber: n2]);
+        } else {
+          return TRUTH(a == b);
+        }
+      }]];
+
+  [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"equal?")
+                                            fromBlock: ^(id a, id b) {
+        if ( [a isKindOfClass: [NSNumber class]] && [b isKindOfClass: [NSNumber class]] ) {
+          NSNumber* n1 = a, *n2 = b;
+          return TRUTH([n1 isEqualToNumber: n2]);
+        } else {
+          return TRUTH([a isEqual: b]);
+        }
+      }]];
 
   // TODO:
   /*
