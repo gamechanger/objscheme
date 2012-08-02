@@ -153,6 +153,12 @@
   OSAssertTrue(@"(pair? (cons 'a (cons 'b (cons 'c 'd))))");
   OSAssertFalse(@"(pair? (list))");
   OSAssertFalse(@"(pair? (cons 'a (cons 'b (list))))");
+
+  OSAssertTrue(@"(list? '())");
+  OSAssertTrue(@"(list? '(1 2))");
+  OSAssertEqualsInt(@"(length '(1 2))", 2);
+  OSAssertTrue(@"(null? '())");
+  OSAssertTrue(@"(equal? (list 1 2) '(1 2))");
 }
 
 - (void)testMath {

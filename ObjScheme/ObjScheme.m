@@ -868,6 +868,20 @@ static ObSScope* __globalScope = nil;
   }
 }
 
+- (id)quote:(id)token {
+  if ( [token isKindOfClass: [NSArray class]] ) {
+    NSArray* tokens = token;
+    NSMutableArray* quoted = [NSMutableArray arrayWithCapacity: [tokens count]];
+    for ( id token in tokens ) {
+      [quoted addObject: [self quote: token]];
+    }
+    return [self list: quoted];
+
+  } else {
+    return token;
+  }
+}
+
 - (id)evaluate:(id)token {
   NSAssert(token != nil, @"nil token");
 
@@ -886,7 +900,7 @@ static ObSScope* __globalScope = nil;
 
         if ( head == S_QUOTE ) { // (quote exp) -> exp
           NSAssert1([rest count] == 1, @"quote can have only 1 operand, not %@", rest);
-          return [rest objectAtIndex: 0]; // that's easy- literally the rest of the array is the value
+          return [self quote: [rest objectAtIndex: 0]];
 
         } else if ( head == S_LIST ) { // (list a b c)
           return [self list: rest];
