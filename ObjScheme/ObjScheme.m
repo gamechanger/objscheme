@@ -681,7 +681,6 @@ static ObSScope* __globalScope = nil;
   // TODO:
   /*
     - display
-    - string-append
     - MAYBE I/O: load, read, write, read-char, open-input-file, close-input-port, open-output-file, close-output-port, eof-object?
     - port?
     - call/cc
