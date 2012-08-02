@@ -89,6 +89,8 @@
 
 - (void)testBuiltIns {
   id source, program, returnValue;
+  NSNumber* number;
+
   OSAssertTrue(@"#t");
   OSAssertTrue(@"(not #f)");
 
@@ -134,6 +136,9 @@
   OSAssertFalse(@"(eq? (list 1 2) (list 1 2))");
   OSAssertFalse(@"(eqv? (list 1 2) (list 1 2))");
   OSAssertTrue(@"(equal? (list 1 2) (list 1 2))");
+
+  OSAssertEqualsInt(@"(length (list))", 0);
+  OSAssertEqualsInt(@"(length (list 1 2 3))", 3);
 }
 
 - (void)testMath {

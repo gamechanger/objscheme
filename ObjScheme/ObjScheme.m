@@ -564,10 +564,25 @@ static ObSScope* __globalScope = nil;
         return [cons2 car];
       }]];
 
+  [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"length")
+                                           fromBlock: ^(id o) {
+        if ( o == S_NULL )
+          return [NSNumber numberWithInteger: 0];
+
+        NSAssert1([o isKindOfClass: [ObSCons class]], @"invalid operand for length, should be list %@", o);
+        int length = 0;
+        id cell = o;
+        while ( cell != S_NULL ) {
+          NSAssert([o isKindOfClass: [ObSCons class]], @"length called on non-list, %@", o);
+          length++;
+          ObSCons* cons = cell;
+          cell = [cons cdr];
+        }
+        return [NSNumber numberWithInteger: length];
+      }]];
+
   // TODO:
   /*
-    - eqv? -> eq? + char & number special cases
-    - equal? -> lists, vectors, strings.
     - length
     - cons, car, cdr, cdar, cadr
     - list
@@ -605,6 +620,7 @@ static ObSScope* __globalScope = nil;
     - round
     - MAYBE: vector support? (is this just an actual list...?) make-vector, vector?, list->vector, vector->list, vector-length, vector-ref, vector-set!
     - write (and something for formatting properly...)
+    - MAYBE: char (#\a) support?
    */
 }
 
