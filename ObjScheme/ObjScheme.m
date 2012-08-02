@@ -27,13 +27,15 @@ static ObSSymbol* S_TRUE;
 static ObSSymbol* S_OPENPAREN;
 static ObSSymbol* S_CLOSEPAREN;
 static ObSSymbol* S_LIST;
+static ObSSymbol* S_NULL;
 
 static NSString* _EOF = @"#EOF#";
 
 #define B_LAMBDA(name, block) [ObSNativeBinaryLambda named: SY(name) fromBlock: (block)]
 #define U_LAMBDA(name, block) [ObSNativeUnaryLambda named: SY(name) fromBlock: (block)]
-#define TRUTH(b) (b) ? S_TRUE : S_FALSE;
-#define IF(x) (x) != S_FALSE;
+#define TRUTH(b) ((b) ? S_TRUE : S_FALSE)
+#define IF(x) ((x) != S_FALSE)
+#define CONS(x,y) [[[ObSCons alloc] initWithCar: (x) cdr: (y)] autorelease]
 
 @interface ObjScheme ()
 
@@ -77,6 +79,7 @@ static ObSScope* __globalScope = nil;
   S_OPENPAREN =       SY(@"(");
   S_CLOSEPAREN =      SY(@")");
   S_LIST =            SY(@"list");
+  S_NULL =            SY(@"()");
 }
 
 + (void)initialize {
@@ -493,16 +496,22 @@ static ObSScope* __globalScope = nil;
       }]];
 
 
-  [scope defineFunction: U_LAMBDA(@"list?", ^(id object) { return TRUTH([object isKindOfClass: [NSArray class]]) })];
+  [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"list?")
+                                           fromBlock: ^(id o) {
+        if ( o == S_NULL ) {
+          return S_TRUE;
 
-  [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"null?")
-                                           fromBlock: ^(id object) {
-        if ( ! [object isKindOfClass: [NSArray class]] ) {
+        } else if ( [o isKindOfClass: [ObSCons class]] ) {
+          ObSCons* cons = o;
+          id cdr = cons.cdr;
+          return TRUTH(cdr == S_NULL || [cdr isKindOfClass: [ObSCons class]]);
+
+        } else {
           return S_FALSE;
         }
-        NSArray* list = object;
-        return TRUTH([list count] == 0);
       }]];
+
+  [scope defineFunction: U_LAMBDA(@"null?", ^(id o) { return TRUTH(o == S_NULL); })];
 
   [scope defineFunction: B_LAMBDA(@"eq?", ^(id a, id b){ return (a == b) ? S_TRUE : S_FALSE; })];
 
@@ -528,7 +537,6 @@ static ObSScope* __globalScope = nil;
 
   // TODO:
   /*
-    - eq? -> ptr equality
     - eqv? -> eq? + char & number special cases
     - equal? -> lists, vectors, strings.
     - length
@@ -751,6 +759,15 @@ static ObSScope* __globalScope = nil;
   return ret;
 }
 
+- (id)list:(NSArray*)tokens {
+  if ( [tokens count] == 0 ) {
+    return S_NULL;
+
+  } else {
+    return CONS(tokens, [self list: [tokens subarrayWithRange: NSMakeRange(1, [tokens count]-1)]]);
+  }
+}
+
 - (id)evaluate:(id)token {
   NSAssert(token != nil, @"nil token");
 
@@ -774,7 +791,7 @@ static ObSScope* __globalScope = nil;
           return rest; // that's easy- literally the rest of the array is the value
 
         } else if ( head == S_LIST ) { // (list a b c)
-          return [list subarrayWithRange: NSMakeRange(1, [list count]-1)];
+          return [self list: rest];
 
         } else if ( head == S_IF ) { // (if test consequence alternate) <- note that full form is enforced by expansion
           id test = [rest objectAtIndex: 0];
@@ -1106,6 +1123,26 @@ static ObSScope* __globalScope = nil;
   default:
     return [self readToken];
   }
+}
+
+@end
+
+
+@implementation ObSCons
+@synthesize car=_car, cdr=_cdr;
+
+- (id)initWithCar:(id)car cdr:(id)cdr {
+  if ( ( self = [super init] ) ) {
+    _car = [car retain];
+    _cdr = [cdr retain];
+  }
+  return self;
+}
+
+- (void)dealloc {
+  [_car release];
+  [_cdr release];
+  [super dealloc];
 }
 
 @end

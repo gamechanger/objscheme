@@ -161,8 +161,7 @@ typedef id (^ObSNativeUnaryBlock)(id);
 }
 @property (nonatomic, retain) id<NSObject> car;
 @property (nonatomic, retain) id<NSObject> cdr;
-- (id)car;
-- (id)cdr;
+- (id)initWithCar:(id)car cdr:(id)cdr;
 @end
 
 
