@@ -159,6 +159,14 @@
   OSAssertEqualsInt(@"(length '(1 2))", 2);
   OSAssertTrue(@"(null? '())");
   OSAssertTrue(@"(equal? (list 1 2) '(1 2))");
+
+  OSAssertTrue(@"(number? 1)");
+  OSAssertTrue(@"(number? -9999)");
+  OSAssertTrue(@"(number? -9999.987856009)");
+  OSAssertTrue(@"(number? '9)");
+  OSAssertFalse(@"(number? \"9\")");
+  OSAssertFalse(@"(number? #t)");
+  OSAssertFalse(@"(number? #f)");
 }
 
 - (void)testMath {

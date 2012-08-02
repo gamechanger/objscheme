@@ -615,9 +615,11 @@ static ObSScope* __globalScope = nil;
         }
       }]];
 
+  [scope defineFunction: U_LAMBDA(@"number?", ^(id o) { return TRUTH([o isKindOfClass: [NSNumber class]]); })];
+
   // TODO:
   /*
-    - pair? port? number? integer? procedure?
+    - port? number? integer? procedure?
     - apply
     - eval
     - call/cc
