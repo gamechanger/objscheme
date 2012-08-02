@@ -27,6 +27,7 @@ static ObSSymbol* S_CLOSEPAREN;
 static ObSSymbol* S_LIST;
 static ObSSymbol* S_NULL;
 static ObSSymbol* S_EVAL;
+static ObSSymbol* S_MAP;
 
 static NSString* B_FALSE;
 static NSString* B_TRUE;
@@ -81,6 +82,8 @@ static ObSScope* __globalScope = nil;
   S_LIST =            SY(@"list");
   S_NULL =            SY(@"()");
   S_EVAL =            SY(@"eval");
+  S_MAP =             SY(@"map");
+
   B_FALSE =           @"#f";
   B_TRUE =            @"#t";
 }
@@ -294,7 +297,30 @@ static ObSScope* __globalScope = nil;
   return ret;
 }
 
++ (id)list:(NSArray*)tokens {
+  if ( [tokens count] == 0 ) {
+    return S_NULL;
+
+  } else {
+    return CONS([tokens objectAtIndex: 0], [self list: [tokens subarrayWithRange: NSMakeRange(1, [tokens count]-1)]]);
+  }
+}
+
 + (id)quote:(id)token {
+  if ( [token isKindOfClass: [NSArray class]] ) {
+    NSArray* tokens = token;
+    NSMutableArray* quoted = [NSMutableArray arrayWithCapacity: [tokens count]];
+    for ( id token in tokens ) {
+      [quoted addObject: [self quote: token]];
+    }
+    return [self list: quoted];
+
+  } else {
+    return token;
+  }
+}
+
++ (id)quoted:(id)token {
   return [NSArray arrayWithObjects: S_QUOTE, token, nil];
 }
 
@@ -305,12 +331,12 @@ static ObSScope* __globalScope = nil;
  */
 + (id)expandQuasiquote:(id)token {
   if ( ! [token isKindOfClass: [NSArray class]] ) {
-    return [self quote: token];
+    return [self quoted: token];
 
   } else {
     NSArray* list = token;
     if ( [list count] == 0 )
-      return [self quote: list];
+      return [self quoted: list];
 
     id first = [list objectAtIndex: 0];
     [ObjScheme assertSyntax: (first != S_UNQUOTESPLICING) elseRaise: @"can't splice at beginning of quasiquote"];
@@ -644,16 +670,14 @@ static ObSScope* __globalScope = nil;
 
   // TODO:
   /*
-    - port?
-    - eval
-    - call/cc
-    - write
     - map
     - display
     - symbol->string
     - string-append
     - display
     - MAYBE I/O: load, read, write, read-char, open-input-file, close-input-port, open-output-file, close-output-port, eof-object?
+    - port?
+    - call/cc
    */
 
   /*
@@ -885,29 +909,6 @@ static ObSScope* __globalScope = nil;
   return ret;
 }
 
-- (id)list:(NSArray*)tokens {
-  if ( [tokens count] == 0 ) {
-    return S_NULL;
-
-  } else {
-    return CONS([tokens objectAtIndex: 0], [self list: [tokens subarrayWithRange: NSMakeRange(1, [tokens count]-1)]]);
-  }
-}
-
-- (id)quote:(id)token {
-  if ( [token isKindOfClass: [NSArray class]] ) {
-    NSArray* tokens = token;
-    NSMutableArray* quoted = [NSMutableArray arrayWithCapacity: [tokens count]];
-    for ( id token in tokens ) {
-      [quoted addObject: [self quote: token]];
-    }
-    return [self list: quoted];
-
-  } else {
-    return token;
-  }
-}
-
 - (id)evaluate:(id)token {
   NSAssert(token != nil, @"nil token");
 
@@ -940,10 +941,23 @@ static ObSScope* __globalScope = nil;
 
         } else if ( head == S_QUOTE ) { // (quote exp) -> exp
           NSAssert1([rest count] == 1, @"quote can have only 1 operand, not %@", rest);
-          return [self quote: [rest objectAtIndex: 0]];
+          return [ObjScheme quote: [rest objectAtIndex: 0]];
 
         } else if ( head == S_LIST ) { // (list a b c)
-          return [self list: [self evaluateArray: rest]];
+          return [ObjScheme list: [self evaluateArray: rest]];
+
+        } else if ( head == S_MAP ) { // (map f arg-list)
+          id<ObSProcedure> proc = [self evaluate: [rest objectAtIndex: 0]];
+          NSAssert1( [proc conformsToProtocol: @protocol(ObSProcedure)], @"proc is %@", proc );
+          ObSCons* arguments = [self evaluate: [rest objectAtIndex: 1]];
+          NSAssert1( [arguments isKindOfClass: [ObSCons class]], @"args is %@", arguments );
+
+          NSMutableArray* results = [NSMutableArray array];
+          for ( id arg in [arguments toArray] ) {
+            [results addObject: [proc invokeWithArguments: [NSArray arrayWithObject: arg]]];
+          }
+
+          return [ObjScheme list: results];
 
         } else if ( head == S_IF ) { // (if test consequence alternate) <- note that full form is enforced by expansion
           id test = [rest objectAtIndex: 0];
