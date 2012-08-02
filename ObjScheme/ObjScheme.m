@@ -668,13 +668,12 @@ static ObSScope* __globalScope = nil;
         return [procedure invokeWithArguments: [arguments toArray]];
       }]];
 
+  [scope defineFunction: U_LAMBDA(@"symbol->string", ^(id o) { ObSSymbol* s = o; return s.string; })];
+
   // TODO:
   /*
-    - map
     - display
-    - symbol->string
     - string-append
-    - display
     - MAYBE I/O: load, read, write, read-char, open-input-file, close-input-port, open-output-file, close-output-port, eof-object?
     - port?
     - call/cc
