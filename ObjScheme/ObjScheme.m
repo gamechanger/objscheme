@@ -22,19 +22,20 @@ static ObSSymbol* S_UNQUOTESPLICING;
 static ObSSymbol* S_APPEND;
 static ObSSymbol* S_CONS;
 static ObSSymbol* S_LET;
-static ObSSymbol* S_FALSE;
-static ObSSymbol* S_TRUE;
 static ObSSymbol* S_OPENPAREN;
 static ObSSymbol* S_CLOSEPAREN;
 static ObSSymbol* S_LIST;
 static ObSSymbol* S_NULL;
 
+static NSString* B_FALSE;
+static NSString* B_TRUE;
+
 static NSString* _EOF = @"#EOF#";
 
 #define B_LAMBDA(name, block) [ObSNativeBinaryLambda named: SY(name) fromBlock: (block)]
 #define U_LAMBDA(name, block) [ObSNativeUnaryLambda named: SY(name) fromBlock: (block)]
-#define TRUTH(b) ((b) ? S_TRUE : S_FALSE)
-#define IF(x) ((x) != S_FALSE)
+#define TRUTH(b) ((b) ? B_TRUE : B_FALSE)
+#define IF(x) ((x) != B_FALSE)
 #define CONS(x,y) [[[ObSCons alloc] initWithCar: (x) cdr: (y)] autorelease]
 
 @interface ObjScheme ()
@@ -56,7 +57,7 @@ static NSString* _EOF = @"#EOF#";
 
 @implementation ObjScheme
 
-static NSDictionary* __constants;
+static NSDictionary* __constants = nil;
 static ObSScope* __globalScope = nil;
 
 + (void)initializeSymbols {
@@ -74,21 +75,25 @@ static ObSScope* __globalScope = nil;
   S_APPEND =          SY(@"append");
   S_CONS =            SY(@"cons");
   S_LET =             SY(@"let");
-  S_FALSE =           SY(@"#f");
-  S_TRUE =            SY(@"#t");
   S_OPENPAREN =       SY(@"(");
   S_CLOSEPAREN =      SY(@")");
   S_LIST =            SY(@"list");
   S_NULL =            SY(@"()");
+  B_FALSE =           @"#f";
+  B_TRUE =            @"#t";
 }
 
 + (void)initialize {
-  __constants = [[NSDictionary alloc]
-                  initWithObjectsAndKeys:
-                  [NSNumber numberWithInteger: 0], @"0",
-                  [NSNumber numberWithFloat: 0.0], @"0.0",
-                  nil];
-  [self initializeSymbols];
+  if ( __constants == nil ) {
+    [self initializeSymbols];
+    __constants = [[NSDictionary alloc]
+                    initWithObjectsAndKeys:
+                      B_FALSE, @"#f",
+                    B_TRUE, @"#t",
+                    [NSNumber numberWithInteger: 0], @"0",
+                    [NSNumber numberWithFloat: 0.0], @"0.0",
+                    nil];
+  }
 }
 
 - (NSArray*)mapProcedure:(id<ObSProcedure>)procedure onArray:(NSArray*)array {
@@ -114,7 +119,6 @@ static ObSScope* __globalScope = nil;
 
 + (id)atomFromToken:(id)token {
   NSAssert(token != nil, @"Nil token not valid");
-
   id constantValue = [__constants objectForKey: token];
   if ( constantValue != nil )
     return constantValue;
@@ -170,7 +174,7 @@ static ObSScope* __globalScope = nil;
   } else if ( head == S_IF ) { // (if x y) => (if x y #f)
     if ( [array count] == 3 ) { // (if x y)
       NSMutableArray* longer = [NSMutableArray arrayWithArray: array];
-      [longer addObject: S_FALSE];
+      [longer addObject: B_FALSE];
       array = longer;
     }
 
@@ -458,48 +462,48 @@ static ObSScope* __globalScope = nil;
       }]];
 
   [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"not")
-                                                 fromBlock: ^(id object) { return object == S_FALSE ? S_TRUE : S_FALSE; }]];
+                                                 fromBlock: ^(id object) { return object == B_FALSE ? B_TRUE : B_FALSE; }]];
 
   [scope defineFunction: [ObSNativeLambda named: SY(@">")
                                       fromBlock: ^(NSArray* list) {
         NSNumber* first = [list objectAtIndex: 0];
         NSNumber* second = [list objectAtIndex: 1];
-        return [first floatValue] > [second floatValue] ? S_TRUE : S_FALSE;
+        return [first floatValue] > [second floatValue] ? B_TRUE : B_FALSE;
       }]];
 
   [scope defineFunction: [ObSNativeLambda named: SY(@"<")
                                       fromBlock: ^(NSArray* list) {
         NSNumber* first = [list objectAtIndex: 0];
         NSNumber* second = [list objectAtIndex: 1];
-        return [first floatValue] < [second floatValue] ? S_TRUE : S_FALSE;
+        return [first floatValue] < [second floatValue] ? B_TRUE : B_FALSE;
       }]];
 
   [scope defineFunction: [ObSNativeLambda named: SY(@">=")
                                       fromBlock: ^(NSArray* list) {
         NSNumber* first = [list objectAtIndex: 0];
         NSNumber* second = [list objectAtIndex: 1];
-        return [first floatValue] >= [second floatValue] ? S_TRUE : S_FALSE;
+        return [first floatValue] >= [second floatValue] ? B_TRUE : B_FALSE;
       }]];
 
   [scope defineFunction: [ObSNativeLambda named: SY(@"<=")
                                       fromBlock: ^(NSArray* list) {
         NSNumber* first = [list objectAtIndex: 0];
         NSNumber* second = [list objectAtIndex: 1];
-        return [first floatValue] <= [second floatValue] ? S_TRUE : S_FALSE;
+        return [first floatValue] <= [second floatValue] ? B_TRUE : B_FALSE;
       }]];
 
   [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"=")
                                             fromBlock: ^(id a, id b) {
         NSNumber* first = a;
         NSNumber* second = b;
-        return [first isEqualToNumber: second] ? S_TRUE : S_FALSE;
+        return [first isEqualToNumber: second] ? B_TRUE : B_FALSE;
       }]];
 
 
   [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"list?")
                                            fromBlock: ^(id o) {
         if ( o == S_NULL ) {
-          return S_TRUE;
+          return B_TRUE;
 
         } else if ( [o isKindOfClass: [ObSCons class]] ) {
           ObSCons* cons = o;
@@ -507,13 +511,13 @@ static ObSScope* __globalScope = nil;
           return TRUTH(cdr == S_NULL || [cdr isKindOfClass: [ObSCons class]]);
 
         } else {
-          return S_FALSE;
+          return B_FALSE;
         }
       }]];
 
   [scope defineFunction: U_LAMBDA(@"null?", ^(id o) { return TRUTH(o == S_NULL); })];
 
-  [scope defineFunction: B_LAMBDA(@"eq?", ^(id a, id b){ return (a == b) ? S_TRUE : S_FALSE; })];
+  [scope defineFunction: B_LAMBDA(@"eq?", ^(id a, id b){ return (a == b) ? B_TRUE : B_FALSE; })];
 
   [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"eqv?")
                                             fromBlock: ^(id a, id b) {
@@ -585,7 +589,7 @@ static ObSScope* __globalScope = nil;
 
   // TODO:
   /*
-    - symbol? boolean? pair? port? number? integer? procedure?
+    - boolean? pair? port? number? integer? procedure?
     - apply
     - eval
     - call/cc
@@ -624,7 +628,7 @@ static ObSScope* __globalScope = nil;
 }
 
 + (BOOL)isFalse:(id)token {
-  return token == S_FALSE;
+  return token == B_FALSE;
 }
 
 @end
@@ -638,6 +642,7 @@ static ObSScope* __globalScope = nil;
 @synthesize string=_string;
 
 + (ObSSymbol*)symbolFromString:(NSString*)string {
+  NSAssert( ! [string isEqual: @"#f"], @"no false fool");
   static NSMutableDictionary* __symbols = nil;
   if ( __symbols == nil ) {
     __symbols = [[NSMutableDictionary alloc] init];
@@ -840,10 +845,7 @@ static ObSScope* __globalScope = nil;
 
   @try {
     while ( 1 ) {
-      if ( token == S_FALSE || token == S_TRUE ) {
-        return token; // constants
-
-      } else if ( [token isKindOfClass: [ObSSymbol class]] ) {
+      if ( [token isKindOfClass: [ObSSymbol class]] ) {
         return [self resolveSymbol: token]; // variable reference
 
       } else if ( ! [token isKindOfClass: [NSArray class]] ) {
@@ -865,7 +867,7 @@ static ObSScope* __globalScope = nil;
           id test = [rest objectAtIndex: 0];
           id consequence = [rest objectAtIndex: 1];
           id alternate = [rest objectAtIndex: 2];
-          token = [self evaluate: test] == S_FALSE ? alternate : consequence;
+          token = [self evaluate: test] == B_FALSE ? alternate : consequence;
           continue; // I'm being explicit here for clarity, we'll now evaluate this token
 
         } else if ( head == S_SET ) { // (set! variableName expression)

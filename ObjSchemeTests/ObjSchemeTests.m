@@ -142,6 +142,7 @@
 
   OSAssertTrue(@"(symbol? 'a)");
   OSAssertFalse(@"(symbol? \"a\")");
+  OSAssertFalse(@"(symbol? #f)");
 }
 
 - (void)testMath {
