@@ -193,6 +193,7 @@
   OSAssertFalse(@"(equal? (list 1 2 3) (map (lambda (x) (+ x 1)) (list 2 3 4)))"); // just because I can't believe the above test passes...
 
   OSAssertTrue(@"(equal? \"frog\" (symbol->string 'frog))");
+  OSAssertTrue(@"(equal? \"abc\" (string-append \"a\" \"b\" \"c\"))");
 }
 
 - (void)testMath {

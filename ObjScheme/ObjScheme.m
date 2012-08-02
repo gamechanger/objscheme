@@ -669,6 +669,14 @@ static ObSScope* __globalScope = nil;
       }]];
 
   [scope defineFunction: U_LAMBDA(@"symbol->string", ^(id o) { ObSSymbol* s = o; return s.string; })];
+  [scope defineFunction: [ObSNativeLambda named: SY(@"string-append")
+                                      fromBlock: ^(NSArray* strings) {
+        NSMutableString* string = [NSMutableString string];
+        for ( NSString* s in strings ) {
+          [string appendString: s];
+        }
+        return string;
+      }]];
 
   // TODO:
   /*
