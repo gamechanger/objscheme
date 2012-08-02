@@ -143,6 +143,11 @@
   OSAssertTrue(@"(symbol? 'a)");
   OSAssertFalse(@"(symbol? \"a\")");
   OSAssertFalse(@"(symbol? #f)");
+
+  OSAssertTrue(@"(boolean? #f)");
+  OSAssertTrue(@"(boolean? #t)");
+  OSAssertFalse(@"(boolean? 1)");
+  OSAssertFalse(@"(boolean? \"#t\")");
 }
 
 - (void)testMath {
