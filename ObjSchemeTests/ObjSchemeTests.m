@@ -167,6 +167,15 @@
   OSAssertFalse(@"(number? \"9\")");
   OSAssertFalse(@"(number? #t)");
   OSAssertFalse(@"(number? #f)");
+
+  OSAssertTrue(@"(integer? 1)");
+  OSAssertTrue(@"(integer? 8888)");
+  OSAssertTrue(@"(integer? -5)");
+  OSAssertTrue(@"(integer? 0)");
+  OSAssertFalse(@"(integer? 1.0)");
+  OSAssertFalse(@"(integer? 6.5)");
+  OSAssertFalse(@"(integer? 0.0)");
+  OSAssertFalse(@"(integer? #t)");
 }
 
 - (void)testMath {

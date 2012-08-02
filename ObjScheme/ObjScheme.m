@@ -616,10 +616,20 @@ static ObSScope* __globalScope = nil;
       }]];
 
   [scope defineFunction: U_LAMBDA(@"number?", ^(id o) { return TRUTH([o isKindOfClass: [NSNumber class]]); })];
+  [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"integer?")
+                                           fromBlock: ^(id o) {
+        if ( ! [o isKindOfClass: [NSNumber class]] ) {
+          return B_FALSE;
+
+        } else {
+          NSNumber* number = o;
+          return TRUTH(strcmp([number objCType], @encode(int)) == 0);
+        }
+      }]];
 
   // TODO:
   /*
-    - port? number? integer? procedure?
+    - port? procedure?
     - apply
     - eval
     - call/cc
