@@ -627,6 +627,11 @@ static ObSScope* __globalScope = nil;
         }
       }]];
 
+  [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"procedure?")
+                                           fromBlock: ^(id o) {
+        return TRUTH([o conformsToProtocol: @protocol(ObSProcedure)]);
+      }]];
+
   // TODO:
   /*
     - port? procedure?

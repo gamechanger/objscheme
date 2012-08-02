@@ -176,6 +176,11 @@
   OSAssertFalse(@"(integer? 6.5)");
   OSAssertFalse(@"(integer? 0.0)");
   OSAssertFalse(@"(integer? #t)");
+
+  OSAssertEqualsInt(@"((lambda (x) (+ x 4)) 7)", 11);
+  OSAssertTrue(@"(procedure? (lambda (x) (+ x 1)))");
+  OSAssertFalse(@"(procedure? (+ 2 1))");
+  OSAssertTrue(@"(procedure? list?)");
 }
 
 - (void)testMath {
