@@ -120,6 +120,20 @@
   OSAssertTrue(@"(equal? \"a\" \"a\")");
   OSAssertFalse(@"(equal? \"a\" \"b\")");
   OSAssertTrue(@"(let ((a \"a\")) (equal? a a))");
+
+  OSAssertTrue(@"(cons 1 2)");
+  OSAssertTrue(@"(= 1 (car (cons 1 2)))");
+  OSAssertTrue(@"(= 2 (cdr (cons 1 2)))");
+  OSAssertTrue(@"(list? (cdr (list 1 2 3)))");
+  OSAssertTrue(@"(null? (cdr (list 1)))");
+  OSAssertTrue(@"(list? (cons 1 (list)))");
+  OSAssertFalse(@"(list? (cons 1 2))");
+  OSAssertFalse(@"(eq? (cons 1 2) (cons 1 2))");
+  OSAssertFalse(@"(eqv? (cons 1 2) (cons 1 2))");
+  OSAssertTrue(@"(equal? (cons 1 2) (cons 1 2))");
+  OSAssertFalse(@"(eq? (list 1 2) (list 1 2))");
+  OSAssertFalse(@"(eqv? (list 1 2) (list 1 2))");
+  OSAssertTrue(@"(equal? (list 1 2) (list 1 2))");
 }
 
 - (void)testMath {

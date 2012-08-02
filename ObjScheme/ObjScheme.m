@@ -535,6 +535,35 @@ static ObSScope* __globalScope = nil;
         }
       }]];
 
+  [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"cons")
+                                            fromBlock: ^(id a, id b) {
+        return [[[ObSCons alloc] initWithCar: a cdr: b] autorelease];
+      }]];
+
+  [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"car")
+                                           fromBlock: ^(id o) {
+        NSAssert1([o isKindOfClass: [ObSCons class]], @"invalid operand for car %@", o);
+        ObSCons* cons = o;
+        return [cons car];
+      }]];
+
+  [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"cdr")
+                                           fromBlock: ^(id o) {
+        NSAssert1([o isKindOfClass: [ObSCons class]], @"invalid operand for car %@", o);
+        ObSCons* cons = o;
+        return [cons cdr];
+      }]];
+
+  [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"cadr")
+                                           fromBlock: ^(id o) {
+        NSAssert1([o isKindOfClass: [ObSCons class]], @"invalid operand for car %@", o);
+        ObSCons* cons = o;
+        id second = [cons cdr];
+        NSAssert1([second isKindOfClass: [ObSCons class]], @"cadr requires cdr to be a cons, but it's %@", second);
+        ObSCons* cons2 = second;
+        return [cons2 car];
+      }]];
+
   // TODO:
   /*
     - eqv? -> eq? + char & number special cases
@@ -542,7 +571,7 @@ static ObSScope* __globalScope = nil;
     - length
     - cons, car, cdr, cdar, cadr
     - list
-    - list? null? symbol? boolean? pair? port?
+    - list? null? symbol? boolean? pair? port? number? integer? procedure?
     - apply
     - eval
     - call/cc
@@ -553,6 +582,29 @@ static ObSScope* __globalScope = nil;
     - string-append
     - display
     - MAYBE I/O: load, read, write, read-char, open-input-file, close-input-port, open-output-file, close-output-port, eof-object?
+   */
+
+  /*
+    MORE:
+    - abs
+    - cond
+    - error <= and replace Exceptions with (error) results which cause a return...? would that work...?
+    - even? odd?
+    - every
+    - expt (first thing to power of second)
+    - filter
+    - first (of either string or list)
+    - floor/ceiling
+    - for-each (for-each proc list)
+    - item (item 3 list)
+    - last
+    - max
+    - member? (member? thing list)
+    - newline (!!!!!)
+    - reduce (reduce combiner list)
+    - round
+    - MAYBE: vector support? (is this just an actual list...?) make-vector, vector?, list->vector, vector->list, vector-length, vector-ref, vector-set!
+    - write (and something for formatting properly...)
    */
 }
 
@@ -1143,6 +1195,16 @@ static ObSScope* __globalScope = nil;
   [_car release];
   [_cdr release];
   [super dealloc];
+}
+
+- (BOOL)isEqual:(id)obj {
+  if ( obj == nil || ! [obj isKindOfClass: [ObSCons class]] ) {
+    return NO;
+
+  } else {
+    ObSCons* cons = obj;
+    return [[cons car] isEqual: _car] && [[cons cdr] isEqual: _cdr];
+  }
 }
 
 @end
