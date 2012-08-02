@@ -148,6 +148,11 @@
   OSAssertTrue(@"(boolean? #t)");
   OSAssertFalse(@"(boolean? 1)");
   OSAssertFalse(@"(boolean? \"#t\")");
+
+  OSAssertTrue(@"(pair? (cons 'a 'b))");
+  OSAssertTrue(@"(pair? (cons 'a (cons 'b (cons 'c 'd))))");
+  OSAssertFalse(@"(pair? (list))");
+  OSAssertFalse(@"(pair? (cons 'a (cons 'b (list))))");
 }
 
 - (void)testMath {

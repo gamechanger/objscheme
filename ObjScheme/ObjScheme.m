@@ -588,9 +588,36 @@ static ObSScope* __globalScope = nil;
   [scope defineFunction: U_LAMBDA(@"symbol?", ^(id o) { return TRUTH([o isKindOfClass: [ObSSymbol class]]); })];
   [scope defineFunction: U_LAMBDA(@"boolean?", ^(id o) { return TRUTH(o == B_TRUE || o == B_FALSE); })];
 
+  [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"pair?")
+                                           fromBlock: ^(id o) {
+        if ( o == S_NULL || ! [o isKindOfClass: [ObSCons class]] ) {
+          return B_FALSE;
+
+        } else {
+          // if anything down the path isn't a CONS or null, then yeah
+          ObSCons* cons = o;
+
+          while ( 1 ) {
+            o = [cons cdr];
+
+            if ( o == S_NULL ) {
+              return B_FALSE; // this is a list, by definition
+            }
+
+            if ( [o isKindOfClass: [ObSCons class]] ) {
+              cons = o;
+              continue;
+
+            } else {
+              return B_TRUE; // we found a non-list CDR
+            }
+          }
+        }
+      }]];
+
   // TODO:
   /*
-    - boolean? pair? port? number? integer? procedure?
+    - pair? port? number? integer? procedure?
     - apply
     - eval
     - call/cc
