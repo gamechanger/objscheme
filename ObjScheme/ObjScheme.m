@@ -632,10 +632,16 @@ static ObSScope* __globalScope = nil;
         return TRUTH([o conformsToProtocol: @protocol(ObSProcedure)]);
       }]];
 
+  [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"apply")
+                                            fromBlock: ^(id a, id b) {
+        id<ObSProcedure> procedure = a;
+        ObSCons* arguments = b;
+        return [procedure invokeWithArguments: [arguments toArray]];
+      }]];
+
   // TODO:
   /*
-    - port? procedure?
-    - apply
+    - port?
     - eval
     - call/cc
     - write
@@ -881,7 +887,7 @@ static ObSScope* __globalScope = nil;
     return S_NULL;
 
   } else {
-    return CONS(tokens, [self list: [tokens subarrayWithRange: NSMakeRange(1, [tokens count]-1)]]);
+    return CONS([tokens objectAtIndex: 0], [self list: [tokens subarrayWithRange: NSMakeRange(1, [tokens count]-1)]]);
   }
 }
 
@@ -920,7 +926,7 @@ static ObSScope* __globalScope = nil;
           return [self quote: [rest objectAtIndex: 0]];
 
         } else if ( head == S_LIST ) { // (list a b c)
-          return [self list: rest];
+          return [self list: [self evaluateArray: rest]];
 
         } else if ( head == S_IF ) { // (if test consequence alternate) <- note that full form is enforced by expansion
           id test = [rest objectAtIndex: 0];
@@ -1284,6 +1290,30 @@ static ObSScope* __globalScope = nil;
     ObSCons* cons = obj;
     return [[cons car] isEqual: _car] && [[cons cdr] isEqual: _cdr];
   }
+}
+
+- (NSString*)description {
+  return [NSString stringWithFormat: @"Cons(%@, %@)", _car, _cdr];
+}
+
+- (void)populateArray:(NSMutableArray*)array {
+  [array addObject: _car];
+
+  if ( _cdr != S_NULL ) {
+    if ( [_cdr isKindOfClass: [ObSCons class]] ) {
+      ObSCons* next = _cdr;
+      [next populateArray: array];
+
+    } else {
+      [array addObject: _cdr];
+    }
+  }
+}
+
+- (NSArray*)toArray {
+  NSMutableArray* array = [NSMutableArray array];
+  [self populateArray: array];
+  return array;
 }
 
 @end

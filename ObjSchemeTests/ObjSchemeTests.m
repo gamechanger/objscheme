@@ -159,6 +159,7 @@
   OSAssertEqualsInt(@"(length '(1 2))", 2);
   OSAssertTrue(@"(null? '())");
   OSAssertTrue(@"(equal? (list 1 2) '(1 2))");
+  OSAssertTrue(@"(equal? (list (list 1 2)) '((1 2)))");
 
   OSAssertTrue(@"(number? 1)");
   OSAssertTrue(@"(number? -9999)");
@@ -181,6 +182,8 @@
   OSAssertTrue(@"(procedure? (lambda (x) (+ x 1)))");
   OSAssertFalse(@"(procedure? (+ 2 1))");
   OSAssertTrue(@"(procedure? list?)");
+
+  OSAssertTrue(@"(equal? '(1 2) (apply cdr (list '(0 1 2))))");
 }
 
 - (void)testMath {
