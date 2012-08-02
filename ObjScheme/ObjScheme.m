@@ -26,6 +26,7 @@ static ObSSymbol* S_OPENPAREN;
 static ObSSymbol* S_CLOSEPAREN;
 static ObSSymbol* S_LIST;
 static ObSSymbol* S_NULL;
+static ObSSymbol* S_EVAL;
 
 static NSString* B_FALSE;
 static NSString* B_TRUE;
@@ -79,6 +80,7 @@ static ObSScope* __globalScope = nil;
   S_CLOSEPAREN =      SY(@")");
   S_LIST =            SY(@"list");
   S_NULL =            SY(@"()");
+  S_EVAL =            SY(@"eval");
   B_FALSE =           @"#f";
   B_TRUE =            @"#t";
 }
@@ -160,8 +162,9 @@ static ObSScope* __globalScope = nil;
 + (id)expandToken:(id)token atTopLevel:(BOOL)topLevel {
   [ObjScheme assertSyntax: ! [ObjScheme isEmptyList: token] elseRaise: @"Empty list is not a program"];
 
-  if ( ! [token isKindOfClass: [NSArray class]] )
-    return token; // constant / value, return as-is
+  if ( ! [token isKindOfClass: [NSArray class]] ) {
+    return token; // an atom
+  }
 
   NSArray* array = token;
   id head = [array objectAtIndex: 0];
@@ -913,15 +916,29 @@ static ObSScope* __globalScope = nil;
       if ( [token isKindOfClass: [ObSSymbol class]] ) {
         return [self resolveSymbol: token]; // variable reference
 
-      } else if ( ! [token isKindOfClass: [NSArray class]] ) {
+      } else if ( ! [token isKindOfClass: [NSArray class]] && ! [token isKindOfClass: [ObSCons class]] ) {
         return token; // literal
 
       } else {
-        NSArray* list = token;
+        NSArray* list = nil;
+        if ( [token isKindOfClass: [NSArray class]] ) {
+          list = token;
+
+        } else {
+          // this is here so that we can support (eval)...
+          ObSCons* cons = token;
+          list = [cons toArray];
+        }
+
         id head = [list objectAtIndex: 0];
         NSArray* rest = [list subarrayWithRange: NSMakeRange(1, [list count]-1)];
 
-        if ( head == S_QUOTE ) { // (quote exp) -> exp
+        if ( head == S_EVAL ) {
+          NSAssert1([rest count] == 1, @"eval can have only 1 operand, not %@", rest);
+          id program = [self evaluate: [rest objectAtIndex: 0]];
+          return [self evaluate: program];
+
+        } else if ( head == S_QUOTE ) { // (quote exp) -> exp
           NSAssert1([rest count] == 1, @"quote can have only 1 operand, not %@", rest);
           return [self quote: [rest objectAtIndex: 0]];
 

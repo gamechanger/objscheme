@@ -184,6 +184,10 @@
   OSAssertTrue(@"(procedure? list?)");
 
   OSAssertTrue(@"(equal? '(1 2) (apply cdr (list '(0 1 2))))");
+  OSAssertTrue(@"(eval #t)");
+  OSAssertFalse(@"(eval #f)");
+  OSAssertEqualsInt(@"(eval 99)", 99);
+  OSAssertTrue(@"(equal? (list 2) (eval '(list 2)))");
 }
 
 - (void)testMath {
