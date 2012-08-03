@@ -698,9 +698,10 @@ static ObSScope* __globalScope = nil;
         return [ObjScheme map: proc on: arguments];
       }]];
 
+  [scope defineFunction: U_LAMBDA(@"display", ^(id x) { NSLog(@"%@", x); return B_FALSE; })];
+
   // TODO:
   /*
-    - display
     - MAYBE I/O: load, read, write, read-char, open-input-file, close-input-port, open-output-file, close-output-port, eof-object?
     - port?
     - call/cc
