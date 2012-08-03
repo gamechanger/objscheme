@@ -297,6 +297,17 @@ static ObSScope* __globalScope = nil;
   return ret;
 }
 
++ (id)map:(id<ObSProcedure>)proc on:(id)list {
+  if ( list == S_NULL ) {
+    return S_NULL;
+
+  } else {
+    ObSCons* cons = list;
+    NSArray* args = [NSArray arrayWithObject: cons.car];
+    return CONS([proc invokeWithArguments: args], [self map: proc on: cons.cdr]);
+  }
+}
+
 + (id)list:(NSArray*)tokens {
   if ( [tokens count] == 0 ) {
     return S_NULL;
@@ -678,6 +689,15 @@ static ObSScope* __globalScope = nil;
         return string;
       }]];
 
+  [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"map")
+                                            fromBlock: ^(id a, id b) {
+        id<ObSProcedure> proc = a;
+        NSAssert1( [proc conformsToProtocol: @protocol(ObSProcedure)], @"proc is %@", proc );
+        ObSCons* arguments = b;
+        NSAssert1( [arguments isKindOfClass: [ObSCons class]], @"args is %@", arguments );
+        return [ObjScheme map: proc on: arguments];
+      }]];
+
   // TODO:
   /*
     - display
@@ -951,19 +971,6 @@ static ObSScope* __globalScope = nil;
 
         } else if ( head == S_LIST ) { // (list a b c)
           return [ObjScheme list: [self evaluateArray: rest]];
-
-        } else if ( head == S_MAP ) { // (map f arg-list)
-          id<ObSProcedure> proc = [self evaluate: [rest objectAtIndex: 0]];
-          NSAssert1( [proc conformsToProtocol: @protocol(ObSProcedure)], @"proc is %@", proc );
-          ObSCons* arguments = [self evaluate: [rest objectAtIndex: 1]];
-          NSAssert1( [arguments isKindOfClass: [ObSCons class]], @"args is %@", arguments );
-
-          NSMutableArray* results = [NSMutableArray array];
-          for ( id arg in [arguments toArray] ) {
-            [results addObject: [proc invokeWithArguments: [NSArray arrayWithObject: arg]]];
-          }
-
-          return [ObjScheme list: results];
 
         } else if ( head == S_IF ) { // (if test consequence alternate) <- note that full form is enforced by expansion
           id test = [rest objectAtIndex: 0];
