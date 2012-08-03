@@ -241,6 +241,9 @@
   OSAssertTrue(@"(odd? 96593)");
   OSAssertFalse(@"(odd? 2)");
   OSAssertFalse(@"(odd? 78)");
+
+  OSAssertEqualsInt(@"(expt 2 2)", 4);
+  OSAssertEqualsInt(@"(expt 2 3)", 8);
 }
 
 /*

@@ -39,6 +39,8 @@ static NSString* _EOF = @"#EOF#";
 #define TRUTH(b) ((b) ? B_TRUE : B_FALSE)
 #define IF(x) ((x) != B_FALSE)
 #define CONS(x,y) [[[ObSCons alloc] initWithCar: (x) cdr: (y)] autorelease]
+#define ISINT(n) (strcmp([(n) objCType], @encode(int)) == 0)
+#define ISFLOAT(n) (strcmp([(n) objCType], @encode(float)) == 0)
 
 @interface ObjScheme ()
 
@@ -726,6 +728,22 @@ static ObSScope* __globalScope = nil;
                                            fromBlock: ^(id n) {
         NSNumber* number = n;
         return TRUTH([number intValue] % 2 == 1);
+      }]];
+
+  [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"expt")
+                                            fromBlock: ^(id a, id b) {
+        NSNumber *n1 = a, *n2 = b;
+        if ( ISFLOAT(n1) || ISFLOAT(n2) ) {
+          return [NSNumber numberWithFloat: pow([n1 floatValue], [n2 floatValue])];
+        } else {
+          NSInteger power = [n2 intValue];
+          if ( power < 0 ) {
+            return [NSNumber numberWithFloat: pow([n1 floatValue], power)];
+
+          } else {
+            return [NSNumber numberWithInteger: pow([n1 intValue], power)];
+          }
+        }
       }]];
 
   // TODO:
