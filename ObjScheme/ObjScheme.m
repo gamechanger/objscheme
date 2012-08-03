@@ -32,6 +32,8 @@ static ObSSymbol* S_MAP;
 static NSString* B_FALSE;
 static NSString* B_TRUE;
 
+static NSString* UNSPECIFIED;
+
 static NSString* _EOF = @"#EOF#";
 
 #define B_LAMBDA(name, block) [ObSNativeBinaryLambda named: SY(name) fromBlock: (block)]
@@ -88,6 +90,8 @@ static ObSScope* __globalScope = nil;
 
   B_FALSE =           @"#f";
   B_TRUE =            @"#t";
+
+  UNSPECIFIED =       @"#<unspecified>";
 }
 
 + (void)initialize {
@@ -784,6 +788,44 @@ static ObSScope* __globalScope = nil;
         return max;
       }]];
 
+  [scope defineFunction: [ObSNativeLambda named: SY(@"make-vector")
+                                      fromBlock: ^(NSArray* args) {
+        int size = [(NSNumber*)[args objectAtIndex: 0] intValue];
+        NSMutableArray* vector = [NSMutableArray arrayWithCapacity: size];
+
+        id fill = UNSPECIFIED;
+        if ( [args count] > 1 ) {
+          fill = [args objectAtIndex: 1];
+        }
+
+        for ( int i = 0; i < size; i++ ) {
+          [vector addObject: fill];
+        }
+
+        return vector;
+      }]];
+
+  [scope defineFunction: [ObSNativeLambda named: SY(@"vector")
+                                      fromBlock: ^(NSArray* args) {
+        return args;
+      }]];
+
+  [scope defineFunction: U_LAMBDA(@"vector-length", ^(id a) { NSArray* arr = a; return [NSNumber numberWithInteger: [arr count]]; })];
+  [scope defineFunction: U_LAMBDA(@"vector?", ^(id a) { return TRUTH([a isKindOfClass: [NSArray class]]); })];
+  [scope defineFunction: U_LAMBDA(@"vector->list", ^(id a) { return [ObjScheme list: (NSArray*)a]; })];
+  [scope defineFunction: U_LAMBDA(@"list->vector", ^(id a) { if ( a == S_NULL ) { return [NSArray array]; } else { return [(ObSCons*)a toArray]; } })];
+  [scope defineFunction: B_LAMBDA(@"vector-ref", ^(id a, id b) {return [(NSArray*)a objectAtIndex: [(NSNumber*)b intValue]]; })];
+  [scope defineFunction: [ObSNativeLambda named: SY(@"vector-set!")
+                                      fromBlock: ^(NSArray* args) {
+        NSMutableArray* vector = [args objectAtIndex: 0];
+        int index = [(NSNumber*)[args objectAtIndex: 1] intValue];
+        id value = [args objectAtIndex: 2];
+        [vector replaceObjectAtIndex: index withObject: value];
+        return UNSPECIFIED;
+      }]];
+
+  [scope defineFunction: U_LAMBDA(@"unspecified?", ^(id a) { return TRUTH(a == UNSPECIFIED); })];
+
   // TODO:
   /*
     - MAYBE I/O: load, read, write, read-char, open-input-file, close-input-port, open-output-file, close-output-port, eof-object?
@@ -803,7 +845,6 @@ static ObSScope* __globalScope = nil;
     - member? (member? thing list)
     - reduce (reduce combiner list)
     - round
-    - MAYBE: vector support? (is this just an actual list...?) make-vector, vector?, list->vector, vector->list, vector-length, vector-ref, vector-set!
     - write (and something for formatting properly...)
     - MAYBE: char (#\a) support?
    */

@@ -35,6 +35,8 @@
  STAssertEquals(strcmp([number objCType], @encode(double)), 0, @"%@ isn't a double", source);\
  STAssertEqualsWithAccuracy([number doubleValue], (expected), 0.0001, @"%@ => %f not %f, off by %f", source, [number doubleValue], (expected), (expected)-[number doubleValue]);
 
+#define EXEC(source) [[ObjScheme globalScope] evaluate: [ObjScheme parseString: (source)]]
+
 @implementation ObjSchemeTests
 
 - (void)setUp
@@ -198,6 +200,23 @@
 
   OSAssertTrue(@"(equal? '(1 2) (filter (lambda x #t) '(1 2)))");
   OSAssertTrue(@"(equal? '(1 2) (filter (lambda x (< x 3)) '(1 2 3)))");
+}
+
+- (void)testVectors {
+  id source, program, returnValue;
+
+  OSAssertTrue(@"(make-vector 3)");
+  OSAssertTrue(@"(make-vector 3 'a)");
+  OSAssertTrue(@"(vector 1 2 3)");
+  OSAssertTrue(@"(equal? 'a (vector-ref (make-vector 3 'a) 0))");
+  OSAssertTrue(@"(equal? 3 (vector-length (make-vector 3 'a)))");
+  OSAssertTrue(@"(unspecified? (vector-ref (make-vector 3) 0))");
+  OSAssertTrue(@"(equal? 'b (let ((v (make-vector 3 'a))) (vector-set! v 0 'b) (vector-ref v 0)))");
+  OSAssertTrue(@"(equal? (make-vector 3 'a) (vector 'a 'a 'a)))");
+  OSAssertTrue(@"(equal? '(a b c) (vector->list (vector 'a 'b 'c))))");
+  OSAssertTrue(@"(equal? (vector 'a 'b) (vector 'a 'b))");
+  OSAssertFalse(@"(equal? (vector 'a 'b) (vector 'a 'c))");
+  OSAssertTrue(@"(equal? (vector 'a 'b) (list->vector '(a b)))");
 }
 
 - (void)testMath {
