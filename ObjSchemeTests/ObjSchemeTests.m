@@ -217,6 +217,7 @@
   OSAssertTrue(@"(equal? (vector 'a 'b) (vector 'a 'b))");
   OSAssertFalse(@"(equal? (vector 'a 'b) (vector 'a 'c))");
   OSAssertTrue(@"(equal? (vector 'a 'b) (list->vector '(a b)))");
+  OSAssertTrue(@"(unspecified? (vector-ref (make-vector 3) 0))"); // yeah, I learned something here...
 }
 
 - (void)testMath {
