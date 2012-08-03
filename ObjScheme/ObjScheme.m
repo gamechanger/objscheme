@@ -716,6 +716,18 @@ static ObSScope* __globalScope = nil;
         }
       }]];
 
+  [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"even?")
+                                           fromBlock: ^(id n) {
+        NSNumber* number = n;
+        return TRUTH([number intValue] % 2 == 0);
+      }]];
+
+  [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"odd?")
+                                           fromBlock: ^(id n) {
+        NSNumber* number = n;
+        return TRUTH([number intValue] % 2 == 1);
+      }]];
+
   // TODO:
   /*
     - MAYBE I/O: load, read, write, read-char, open-input-file, close-input-port, open-output-file, close-output-port, eof-object?
@@ -725,10 +737,8 @@ static ObSScope* __globalScope = nil;
 
   /*
     MORE:
-    - abs
     - cond
     - error <= and replace Exceptions with (error) results which cause a return...? would that work...?
-    - even? odd?
     - every
     - expt (first thing to power of second)
     - filter

@@ -195,9 +195,7 @@
   OSAssertTrue(@"(equal? \"frog\" (symbol->string 'frog))");
   OSAssertTrue(@"(equal? \"abc\" (string-append \"a\" \"b\" \"c\"))");
 
-  OSAssertEqualsInt(@"(abs 1)", 1);
-  OSAssertEqualsInt(@"(abs -1)", 1);
-  OSAssertEqualsFloat(@"(abs -1.0)", 1.0f);
+
 }
 
 - (void)testMath {
@@ -229,6 +227,20 @@
   OSAssertTrue(@"(= 1 1.0)");
   OSAssertFalse(@"(= 2 1)");
   OSAssertTrue(@"(not (= 2 1))");
+
+  OSAssertEqualsInt(@"(abs 1)", 1);
+  OSAssertEqualsInt(@"(abs -1)", 1);
+  OSAssertEqualsFloat(@"(abs -1.0)", 1.0f);
+
+  OSAssertTrue(@"(even? 2)");
+  OSAssertTrue(@"(even? 78)");
+  OSAssertTrue(@"(even? 0)");
+  OSAssertFalse(@"(even? 1)");
+  OSAssertFalse(@"(even? 96593)");
+  OSAssertTrue(@"(odd? 1)");
+  OSAssertTrue(@"(odd? 96593)");
+  OSAssertFalse(@"(odd? 2)");
+  OSAssertFalse(@"(odd? 78)");
 }
 
 /*
