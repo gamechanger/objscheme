@@ -27,13 +27,13 @@
  STAssertEquals(strcmp([number objCType], @encode(int)), 0, @"%@ => %@", source, returnValue); \
  STAssertEquals([number intValue], (expected), @"%@ => %d", source, [number intValue]);
 
-#define OSAssertEqualsFloat(code, expected) source = (code);     \
+#define OSAssertEqualsDouble(code, expected) source = (code);     \
  program = [ObjScheme parseString: source];\
  returnValue = [[ObjScheme globalScope] evaluate: program];\
  STAssertTrue([returnValue isKindOfClass: [NSNumber class]], @"%@ isn't a number", source);\
  number = returnValue;\
- STAssertEquals(strcmp([number objCType], @encode(float)), 0, @"%@ isn't a float", source);\
- STAssertEqualsWithAccuracy([number floatValue], (expected), 0.0001, @"%@ => %f not %f, off by %f", source, [number floatValue], (expected), (expected)-[number floatValue]);
+ STAssertEquals(strcmp([number objCType], @encode(double)), 0, @"%@ isn't a double", source);\
+ STAssertEqualsWithAccuracy([number doubleValue], (expected), 0.0001, @"%@ => %f not %f, off by %f", source, [number doubleValue], (expected), (expected)-[number doubleValue]);
 
 @implementation ObjSchemeTests
 
@@ -205,14 +205,14 @@
   NSNumber* number;
 
   OSAssertEqualsInt(@"(+ 1 2)", 3);
-  OSAssertEqualsFloat(@"(+ 1.0 2.0)", 3.0f);
+  OSAssertEqualsDouble(@"(+ 1.0 2.0)", 3.0);
 
   OSAssertEqualsInt(@"(* 5 7)", 35);
   OSAssertEqualsInt(@"(/ 5 7)", 0);
   OSAssertEqualsInt(@"(/ 5 2)", 2);
 
-  OSAssertEqualsFloat(@"(/ 5.0 2)", 2.5f);
-  OSAssertEqualsFloat(@"(/ 5 2.0)", 2.5f);
+  OSAssertEqualsDouble(@"(/ 5.0 2)", 2.5);
+  OSAssertEqualsDouble(@"(/ 5 2.0)", 2.5);
 
   OSAssertFalse(@"(> 1 3)");
   OSAssertTrue(@"(> 3 1)");
@@ -232,7 +232,7 @@
 
   OSAssertEqualsInt(@"(abs 1)", 1);
   OSAssertEqualsInt(@"(abs -1)", 1);
-  OSAssertEqualsFloat(@"(abs -1.0)", 1.0f);
+  OSAssertEqualsDouble(@"(abs -1.0)", 1.0);
 
   OSAssertTrue(@"(even? 2)");
   OSAssertTrue(@"(even? 78)");
@@ -246,6 +246,11 @@
 
   OSAssertEqualsInt(@"(expt 2 2)", 4);
   OSAssertEqualsInt(@"(expt 2 3)", 8);
+
+  OSAssertEqualsInt(@"(max 1 2 3 4 5 6 88 9)", 88);
+  OSAssertEqualsInt(@"(max -20 6)", 6);
+  OSAssertEqualsInt(@"(max -20.0 6)", 6);
+  OSAssertEqualsDouble(@"(max 2.0 2.1)", 2.1);
 }
 
 /*

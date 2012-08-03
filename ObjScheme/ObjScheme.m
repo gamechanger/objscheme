@@ -40,7 +40,7 @@ static NSString* _EOF = @"#EOF#";
 #define IF(x) ((x) != B_FALSE)
 #define CONS(x,y) [[[ObSCons alloc] initWithCar: (x) cdr: (y)] autorelease]
 #define ISINT(n) (strcmp([(n) objCType], @encode(int)) == 0)
-#define ISFLOAT(n) (strcmp([(n) objCType], @encode(float)) == 0)
+#define ISDOUBLE(n) (strcmp([(n) objCType], @encode(double)) == 0)
 
 @interface ObjScheme ()
 
@@ -98,7 +98,7 @@ static ObSScope* __globalScope = nil;
                       B_FALSE, @"#f",
                     B_TRUE, @"#t",
                     [NSNumber numberWithInteger: 0], @"0",
-                    [NSNumber numberWithFloat: 0.0], @"0.0",
+                    [NSNumber numberWithDouble: 0.0], @"0.0",
                     nil];
   }
 }
@@ -145,9 +145,9 @@ static ObSScope* __globalScope = nil;
     }
   }
 
-  float floatValue = [string floatValue];
-  if ( floatValue != 0.0 ) // note that the literal '0.0' is handle in constants above
-    return [NSNumber numberWithFloat: floatValue];
+  double doubleValue = [string doubleValue];
+  if ( doubleValue != 0.0 ) // note that the literal '0.0' is handle in constants above
+    return [NSNumber numberWithDouble: doubleValue];
 
   return [ObSSymbol symbolFromString: string];
 }
@@ -465,11 +465,11 @@ static ObSScope* __globalScope = nil;
           return [NSNumber numberWithInteger: ret];
 
         } else {
-          float ret = 0;
+          double ret = 0;
           for ( NSNumber* number in list ) {
-            ret += [number floatValue];
+            ret += [number doubleValue];
           }
-          return [NSNumber numberWithFloat: ret];
+          return [NSNumber numberWithDouble: ret];
         }
       }]];
 
@@ -481,7 +481,7 @@ static ObSScope* __globalScope = nil;
           return [NSNumber numberWithInteger: [first intValue]-[second intValue]];
 
         } else {
-          return [NSNumber numberWithFloat: [first floatValue]-[second floatValue]];
+          return [NSNumber numberWithDouble: [first doubleValue]-[second doubleValue]];
         }
       }]];
 
@@ -499,11 +499,11 @@ static ObSScope* __globalScope = nil;
           return [NSNumber numberWithInteger: ret];
 
         } else {
-          float ret = 1.0;
+          double ret = 1.0;
           for ( NSNumber* number in list ) {
-            ret *= [number floatValue];
+            ret *= [number doubleValue];
           }
-          return [NSNumber numberWithFloat: ret];
+          return [NSNumber numberWithDouble: ret];
         }
       }]];
 
@@ -515,7 +515,7 @@ static ObSScope* __globalScope = nil;
           return [NSNumber numberWithInteger: [first intValue]/[second intValue]];
 
         } else {
-          return [NSNumber numberWithFloat: [first floatValue]/[second floatValue]];
+          return [NSNumber numberWithDouble: [first doubleValue]/[second doubleValue]];
         }
       }]];
 
@@ -526,28 +526,28 @@ static ObSScope* __globalScope = nil;
                                       fromBlock: ^(NSArray* list) {
         NSNumber* first = [list objectAtIndex: 0];
         NSNumber* second = [list objectAtIndex: 1];
-        return [first floatValue] > [second floatValue] ? B_TRUE : B_FALSE;
+        return [first doubleValue] > [second doubleValue] ? B_TRUE : B_FALSE;
       }]];
 
   [scope defineFunction: [ObSNativeLambda named: SY(@"<")
                                       fromBlock: ^(NSArray* list) {
         NSNumber* first = [list objectAtIndex: 0];
         NSNumber* second = [list objectAtIndex: 1];
-        return [first floatValue] < [second floatValue] ? B_TRUE : B_FALSE;
+        return [first doubleValue] < [second doubleValue] ? B_TRUE : B_FALSE;
       }]];
 
   [scope defineFunction: [ObSNativeLambda named: SY(@">=")
                                       fromBlock: ^(NSArray* list) {
         NSNumber* first = [list objectAtIndex: 0];
         NSNumber* second = [list objectAtIndex: 1];
-        return [first floatValue] >= [second floatValue] ? B_TRUE : B_FALSE;
+        return [first doubleValue] >= [second doubleValue] ? B_TRUE : B_FALSE;
       }]];
 
   [scope defineFunction: [ObSNativeLambda named: SY(@"<=")
                                       fromBlock: ^(NSArray* list) {
         NSNumber* first = [list objectAtIndex: 0];
         NSNumber* second = [list objectAtIndex: 1];
-        return [first floatValue] <= [second floatValue] ? B_TRUE : B_FALSE;
+        return [first doubleValue] <= [second doubleValue] ? B_TRUE : B_FALSE;
       }]];
 
   [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"=")
@@ -730,7 +730,7 @@ static ObSScope* __globalScope = nil;
           return [NSNumber numberWithInteger: abs([number intValue])];
 
         } else {
-          return [NSNumber numberWithFloat: fabs([number floatValue])];
+          return [NSNumber numberWithDouble: fabs([number doubleValue])];
         }
       }]];
 
@@ -749,12 +749,12 @@ static ObSScope* __globalScope = nil;
   [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"expt")
                                             fromBlock: ^(id a, id b) {
         NSNumber *n1 = a, *n2 = b;
-        if ( ISFLOAT(n1) || ISFLOAT(n2) ) {
-          return [NSNumber numberWithFloat: pow([n1 floatValue], [n2 floatValue])];
+        if ( ISDOUBLE(n1) || ISDOUBLE(n2) ) {
+          return [NSNumber numberWithDouble: pow([n1 doubleValue], [n2 doubleValue])];
         } else {
           NSInteger power = [n2 intValue];
           if ( power < 0 ) {
-            return [NSNumber numberWithFloat: pow([n1 floatValue], power)];
+            return [NSNumber numberWithDouble: pow([n1 doubleValue], power)];
 
           } else {
             return [NSNumber numberWithInteger: pow([n1 intValue], power)];
@@ -765,6 +765,23 @@ static ObSScope* __globalScope = nil;
   [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"filter")
                                             fromBlock: ^(id a, id b) {
         return [ObjScheme filterList: b with: a];
+      }]];
+
+  [scope defineFunction: [ObSNativeLambda named: SY(@"max")
+                                      fromBlock: ^(NSArray* args) {
+        NSNumber* max = nil;
+        double maxDouble = 0.0;
+
+        for ( NSNumber* n in args ) {
+          double d = [n doubleValue];
+
+          if ( max == nil || d > maxDouble ) {
+            max = n;
+            maxDouble = d;
+          }
+        }
+
+        return max;
       }]];
 
   // TODO:
@@ -779,15 +796,11 @@ static ObSScope* __globalScope = nil;
     - cond
     - error <= and replace Exceptions with (error) results which cause a return...? would that work...?
     - every
-    - filter
-    - first (of either string or list)
     - floor/ceiling
     - for-each (for-each proc list)
     - item (item 3 list)
-    - last
     - max
     - member? (member? thing list)
-    - newline (!!!!!)
     - reduce (reduce combiner list)
     - round
     - MAYBE: vector support? (is this just an actual list...?) make-vector, vector?, list->vector, vector->list, vector-length, vector-ref, vector-set!
