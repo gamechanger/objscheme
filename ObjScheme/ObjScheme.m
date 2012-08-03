@@ -310,6 +310,22 @@ static ObSScope* __globalScope = nil;
   }
 }
 
++ (id)filterList:(id)list with:(id<ObSProcedure>)proc {
+  if ( list == S_NULL ) {
+    return S_NULL;
+
+  } else {
+    ObSCons* cell = list;
+    NSArray* args = [NSArray arrayWithObject: cell.car];
+    if ( [proc invokeWithArguments: args] != B_FALSE ) {
+      return CONS(cell.car, [self filterList: cell.cdr with: proc]);
+
+    } else {
+      return [self filterList: cell.cdr with: proc];
+    }
+  }
+}
+
 + (id)list:(NSArray*)tokens {
   if ( [tokens count] == 0 ) {
     return S_NULL;
@@ -746,6 +762,11 @@ static ObSScope* __globalScope = nil;
         }
       }]];
 
+  [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"filter")
+                                            fromBlock: ^(id a, id b) {
+        return [ObjScheme filterList: b with: a];
+      }]];
+
   // TODO:
   /*
     - MAYBE I/O: load, read, write, read-char, open-input-file, close-input-port, open-output-file, close-output-port, eof-object?
@@ -758,7 +779,6 @@ static ObSScope* __globalScope = nil;
     - cond
     - error <= and replace Exceptions with (error) results which cause a return...? would that work...?
     - every
-    - expt (first thing to power of second)
     - filter
     - first (of either string or list)
     - floor/ceiling

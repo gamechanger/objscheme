@@ -196,6 +196,8 @@
   OSAssertTrue(@"(equal? \"abc\" (string-append \"a\" \"b\" \"c\"))");
 
 
+  OSAssertTrue(@"(equal? '(1 2) (filter (lambda x #t) '(1 2)))");
+  OSAssertTrue(@"(equal? '(1 2) (filter (lambda x (< x 3)) '(1 2 3)))");
 }
 
 - (void)testMath {
