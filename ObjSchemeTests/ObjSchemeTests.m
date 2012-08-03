@@ -200,6 +200,9 @@
 
   OSAssertTrue(@"(equal? '(1 2) (filter (lambda x #t) '(1 2)))");
   OSAssertTrue(@"(equal? '(1 2) (filter (lambda x (< x 3)) '(1 2 3)))");
+
+  OSAssertFalse(@"(unspecified? #f)");
+  OSAssertFalse(@"(unspecified? '())");
 }
 
 - (void)testVectors {
