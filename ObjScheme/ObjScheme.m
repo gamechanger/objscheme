@@ -828,6 +828,11 @@ static ObSScope* __globalScope = nil;
 
   // TODO:
   /*
+    - (vector-fill! v thing)
+    - (vector-copy! dest dest-start src [src-start src-end])
+    - (vector->immutable-vector v)
+    - (vector-immutable <things>)
+    - (immutable?)
     - MAYBE I/O: load, read, write, read-char, open-input-file, close-input-port, open-output-file, close-output-port, eof-object?
     - port?
     - call/cc
