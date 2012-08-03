@@ -699,6 +699,10 @@ static ObSScope* __globalScope = nil;
       }]];
 
   [scope defineFunction: U_LAMBDA(@"display", ^(id x) { NSLog(@"%@", x); return B_FALSE; })];
+  [scope defineFunction: [ObSNativeLambda named: SY(@"newline")
+                                      fromBlock: ^(NSArray* array) {
+        NSLog(@"");
+        return B_FALSE; }]];
 
   // TODO:
   /*
