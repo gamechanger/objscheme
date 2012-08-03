@@ -699,10 +699,22 @@ static ObSScope* __globalScope = nil;
       }]];
 
   [scope defineFunction: U_LAMBDA(@"display", ^(id x) { NSLog(@"%@", x); return B_FALSE; })];
+
   [scope defineFunction: [ObSNativeLambda named: SY(@"newline")
                                       fromBlock: ^(NSArray* array) {
         NSLog(@"");
         return B_FALSE; }]];
+
+  [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"abs")
+                                           fromBlock: ^(id n) {
+        NSNumber* number = n;
+        if ( strcmp([number objCType], @encode(int)) == 0 ) {
+          return [NSNumber numberWithInteger: abs([number intValue])];
+
+        } else {
+          return [NSNumber numberWithFloat: fabs([number floatValue])];
+        }
+      }]];
 
   // TODO:
   /*

@@ -33,7 +33,7 @@
  STAssertTrue([returnValue isKindOfClass: [NSNumber class]], @"%@ isn't a number", source);\
  number = returnValue;\
  STAssertEquals(strcmp([number objCType], @encode(float)), 0, @"%@ isn't a float", source);\
- STAssertEqualsWithAccuracy([number floatValue], (expected), 0.01, @"%@ => %f", source, [number floatValue]);
+ STAssertEqualsWithAccuracy([number floatValue], (expected), 0.0001, @"%@ => %f not %f, off by %f", source, [number floatValue], (expected), (expected)-[number floatValue]);
 
 @implementation ObjSchemeTests
 
@@ -194,6 +194,10 @@
 
   OSAssertTrue(@"(equal? \"frog\" (symbol->string 'frog))");
   OSAssertTrue(@"(equal? \"abc\" (string-append \"a\" \"b\" \"c\"))");
+
+  OSAssertEqualsInt(@"(abs 1)", 1);
+  OSAssertEqualsInt(@"(abs -1)", 1);
+  OSAssertEqualsFloat(@"(abs -1.0)", 1.0f);
 }
 
 - (void)testMath {
