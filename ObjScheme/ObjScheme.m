@@ -844,6 +844,8 @@ static ObSScope* __globalScope = nil;
 
   [scope defineFunction: U_LAMBDA(@"unspecified?", ^(id a) { return TRUTH(a == UNSPECIFIED); })];
 
+  [scope defineFunction: U_LAMBDA(@"string?", ^(id x) { return TRUTH([x isKindOfClass: [NSString class]]); })];
+
   // TODO:
   /*
     - (vector-fill! v thing)

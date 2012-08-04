@@ -96,6 +96,10 @@
   OSAssertTrue(@"#t");
   OSAssertTrue(@"(not #f)");
 
+  OSAssertTrue(@"(string? \"hello\")");
+  OSAssertFalse(@"(string? #f)");
+  OSAssertFalse(@"(string? 'hello)");
+
   OSAssertTrue(@"(list 1 2 3)");
   OSAssertTrue(@"(list 1 2 #f)");
   OSAssertTrue(@"(list? (list 1 2 #f))");
