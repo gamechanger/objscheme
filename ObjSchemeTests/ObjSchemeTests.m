@@ -275,6 +275,11 @@
   OSAssertEqualsInt(@"(max -20 6)", 6);
   OSAssertEqualsInt(@"(max -20.0 6)", 6);
   OSAssertEqualsDouble(@"(max 2.0 2.1)", 2.1);
+
+  OSAssertEqualsInt(@"(min 1 2 3 4 5 6 88 9)", 1);
+  OSAssertEqualsInt(@"(min -20 6)", -20);
+  OSAssertEqualsDouble(@"(min -20.0 6)", -20.0);
+  OSAssertEqualsDouble(@"(min 2.0 2.1)", 2.0);
 }
 
 /*

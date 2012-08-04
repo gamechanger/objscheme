@@ -788,6 +788,23 @@ static ObSScope* __globalScope = nil;
         return max;
       }]];
 
+  [scope defineFunction: [ObSNativeLambda named: SY(@"min")
+                                      fromBlock: ^(NSArray* args) {
+        NSNumber* min = nil;
+        double minDouble = 0.0;
+
+        for ( NSNumber* n in args ) {
+          double d = [n doubleValue];
+
+          if ( min == nil || d < minDouble ) {
+            min = n;
+            minDouble = d;
+          }
+        }
+
+        return min;
+      }]];
+
   [scope defineFunction: [ObSNativeLambda named: SY(@"make-vector")
                                       fromBlock: ^(NSArray* args) {
         int size = [(NSNumber*)[args objectAtIndex: 0] intValue];
@@ -845,8 +862,6 @@ static ObSScope* __globalScope = nil;
     - every
     - floor/ceiling
     - for-each (for-each proc list)
-    - item (item 3 list)
-    - max
     - member? (member? thing list)
     - reduce (reduce combiner list)
     - round
