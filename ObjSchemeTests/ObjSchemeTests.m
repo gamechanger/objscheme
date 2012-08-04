@@ -269,6 +269,7 @@
 
   OSAssertEqualsInt(@"(expt 2 2)", 4);
   OSAssertEqualsInt(@"(expt 2 3)", 8);
+  OSAssertEqualsDouble(@"(expt 2 1.5)", 2.828427124746)
 
   OSAssertEqualsInt(@"(max 1 2 3 4 5 6 88 9)", 88);
   OSAssertEqualsInt(@"(max -20 6)", 6);
