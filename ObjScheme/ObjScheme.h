@@ -167,6 +167,14 @@ typedef id (^ObSNativeUnaryBlock)(id);
 
 
 
+@interface ObSConstant : NSObject {
+  NSString* _name;
+}
+@property (nonatomic,readonly) NSString* name;
+- (id)initWithName:(NSString*)name;
+@end
+
+
 
 
 #define SY(s) [ObSSymbol symbolFromString: (s)]

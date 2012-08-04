@@ -29,10 +29,10 @@ static ObSSymbol* S_NULL;
 static ObSSymbol* S_EVAL;
 static ObSSymbol* S_MAP;
 
-static NSString* B_FALSE;
-static NSString* B_TRUE;
+static ObSConstant* B_FALSE;
+static ObSConstant* B_TRUE;
 
-static NSString* UNSPECIFIED;
+static ObSConstant* UNSPECIFIED;
 
 static NSString* _EOF = @"#EOF#";
 
@@ -43,6 +43,7 @@ static NSString* _EOF = @"#EOF#";
 #define CONS(x,y) [[[ObSCons alloc] initWithCar: (x) cdr: (y)] autorelease]
 #define ISINT(n) (strcmp([(n) objCType], @encode(int)) == 0)
 #define ISDOUBLE(n) (strcmp([(n) objCType], @encode(double)) == 0)
+#define CONST(s) [[ObSConstant alloc] initWithName: (s)]
 
 @interface ObjScheme ()
 
@@ -88,10 +89,10 @@ static ObSScope* __globalScope = nil;
   S_EVAL =            SY(@"eval");
   S_MAP =             SY(@"map");
 
-  B_FALSE =           @"#f";
-  B_TRUE =            @"#t";
+  B_FALSE =           CONST(@"#f");
+  B_TRUE =            CONST(@"#t");
 
-  UNSPECIFIED =       @"#<unspecified>";
+  UNSPECIFIED =       CONST(@"#<unspecified>");
 }
 
 + (void)initialize {
@@ -1497,6 +1498,29 @@ static ObSScope* __globalScope = nil;
   NSMutableArray* array = [NSMutableArray array];
   [self populateArray: array];
   return array;
+}
+
+@end
+
+
+
+@implementation ObSConstant
+
+@synthesize name=_name;
+- (id)initWithName:(NSString*)name {
+  if ( ( self = [super init] ) ) {
+    _name = [name retain];
+  }
+  return self;
+}
+
+- (void)dealloc {
+  [_name release];
+  [super dealloc];
+}
+
+- (NSString*)description {
+  return _name;
 }
 
 @end
