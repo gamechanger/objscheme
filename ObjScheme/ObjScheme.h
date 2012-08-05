@@ -155,7 +155,7 @@ typedef id (^ObSNativeUnaryBlock)(id);
 
 
 
-@interface ObSCons : NSObject {
+@interface ObSCons : NSObject <NSFastEnumeration> {
   id<NSObject> _car;
   id<NSObject> _cdr;
 }

@@ -22,15 +22,17 @@ static ObSSymbol* S_UNQUOTESPLICING;
 static ObSSymbol* S_APPEND;
 static ObSSymbol* S_CONS;
 static ObSSymbol* S_LET;
+static ObSSymbol* S_LET_STAR;
 static ObSSymbol* S_OPENPAREN;
 static ObSSymbol* S_CLOSEPAREN;
 static ObSSymbol* S_LIST;
-static ObSSymbol* S_NULL;
 static ObSSymbol* S_EVAL;
 static ObSSymbol* S_MAP;
 
 static ObSConstant* B_FALSE;
 static ObSConstant* B_TRUE;
+
+static ObSConstant* C_NULL;
 
 static ObSConstant* UNSPECIFIED;
 
@@ -82,15 +84,17 @@ static ObSScope* __globalScope = nil;
   S_APPEND =          SY(@"append");
   S_CONS =            SY(@"cons");
   S_LET =             SY(@"let");
+  S_LET_STAR =        SY(@"let*");
   S_OPENPAREN =       SY(@"(");
   S_CLOSEPAREN =      SY(@")");
   S_LIST =            SY(@"list");
-  S_NULL =            SY(@"()");
   S_EVAL =            SY(@"eval");
   S_MAP =             SY(@"map");
 
   B_FALSE =           CONST(@"#f");
   B_TRUE =            CONST(@"#t");
+
+  C_NULL =            CONST(@"()");
 
   UNSPECIFIED =       CONST(@"#<unspecified>");
 }
@@ -305,8 +309,8 @@ static ObSScope* __globalScope = nil;
 }
 
 + (id)map:(id<ObSProcedure>)proc on:(id)list {
-  if ( list == S_NULL ) {
-    return S_NULL;
+  if ( list == C_NULL ) {
+    return C_NULL;
 
   } else {
     ObSCons* cons = list;
@@ -316,8 +320,8 @@ static ObSScope* __globalScope = nil;
 }
 
 + (id)filterList:(id)list with:(id<ObSProcedure>)proc {
-  if ( list == S_NULL ) {
-    return S_NULL;
+  if ( list == C_NULL ) {
+    return C_NULL;
 
   } else {
     ObSCons* cell = list;
@@ -333,7 +337,7 @@ static ObSScope* __globalScope = nil;
 
 + (id)list:(NSArray*)tokens {
   if ( [tokens count] == 0 ) {
-    return S_NULL;
+    return C_NULL;
 
   } else {
     return CONS([tokens objectAtIndex: 0], [self list: [tokens subarrayWithRange: NSMakeRange(1, [tokens count]-1)]]);
@@ -565,20 +569,20 @@ static ObSScope* __globalScope = nil;
 
   [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"list?")
                                            fromBlock: ^(id o) {
-        if ( o == S_NULL ) {
+        if ( o == C_NULL ) {
           return B_TRUE;
 
         } else if ( [o isKindOfClass: [ObSCons class]] ) {
           ObSCons* cons = o;
           id cdr = cons.cdr;
-          return TRUTH(cdr == S_NULL || [cdr isKindOfClass: [ObSCons class]]);
+          return TRUTH(cdr == C_NULL || [cdr isKindOfClass: [ObSCons class]]);
 
         } else {
           return B_FALSE;
         }
       }]];
 
-  [scope defineFunction: U_LAMBDA(@"null?", ^(id o) { return TRUTH(o == S_NULL); })];
+  [scope defineFunction: U_LAMBDA(@"null?", ^(id o) { return TRUTH(o == C_NULL); })];
 
   [scope defineFunction: B_LAMBDA(@"eq?", ^(id a, id b){ return (a == b) ? B_TRUE : B_FALSE; })];
 
@@ -633,13 +637,13 @@ static ObSScope* __globalScope = nil;
 
   [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"length")
                                            fromBlock: ^(id o) {
-        if ( o == S_NULL )
+        if ( o == C_NULL )
           return [NSNumber numberWithInteger: 0];
 
         NSAssert1([o isKindOfClass: [ObSCons class]], @"invalid operand for length, should be list %@", o);
         int length = 0;
         id cell = o;
-        while ( cell != S_NULL ) {
+        while ( cell != C_NULL ) {
           NSAssert([o isKindOfClass: [ObSCons class]], @"length called on non-list, %@", o);
           length++;
           ObSCons* cons = cell;
@@ -653,7 +657,7 @@ static ObSScope* __globalScope = nil;
 
   [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"pair?")
                                            fromBlock: ^(id o) {
-        if ( o == S_NULL || ! [o isKindOfClass: [ObSCons class]] ) {
+        if ( o == C_NULL || ! [o isKindOfClass: [ObSCons class]] ) {
           return B_FALSE;
 
         } else {
@@ -663,7 +667,7 @@ static ObSScope* __globalScope = nil;
           while ( 1 ) {
             o = [cons cdr];
 
-            if ( o == S_NULL ) {
+            if ( o == C_NULL ) {
               return B_FALSE; // this is a list, by definition
             }
 
@@ -831,7 +835,7 @@ static ObSScope* __globalScope = nil;
   [scope defineFunction: U_LAMBDA(@"vector-length", ^(id a) { NSArray* arr = a; return [NSNumber numberWithInteger: [arr count]]; })];
   [scope defineFunction: U_LAMBDA(@"vector?", ^(id a) { return TRUTH([a isKindOfClass: [NSArray class]]); })];
   [scope defineFunction: U_LAMBDA(@"vector->list", ^(id a) { return [ObjScheme list: (NSArray*)a]; })];
-  [scope defineFunction: U_LAMBDA(@"list->vector", ^(id a) { if ( a == S_NULL ) { return [NSArray array]; } else { return [(ObSCons*)a toArray]; } })];
+  [scope defineFunction: U_LAMBDA(@"list->vector", ^(id a) { if ( a == C_NULL ) { return [NSArray array]; } else { return [(ObSCons*)a toArray]; } })];
   [scope defineFunction: B_LAMBDA(@"vector-ref", ^(id a, id b) {return [(NSArray*)a objectAtIndex: [(NSNumber*)b intValue]]; })];
   [scope defineFunction: [ObSNativeLambda named: SY(@"vector-set!")
                                       fromBlock: ^(NSArray* args) {
@@ -845,7 +849,17 @@ static ObSScope* __globalScope = nil;
   [scope defineFunction: U_LAMBDA(@"unspecified?", ^(id a) { return TRUTH(a == UNSPECIFIED); })];
 
   [scope defineFunction: U_LAMBDA(@"string?", ^(id x) { return TRUTH([x isKindOfClass: [NSString class]]); })];
+  [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"for-each")
+                                            fromBlock: ^(id a, id b) {
+        id<ObSProcedure> proc = a;
+        ObSCons* list = b;
+        for ( id item in list ) {
+          [proc invokeWithArguments: [NSArray arrayWithObject: item]];
+        }
+        return UNSPECIFIED;
+      }]];
 
+  // TODO: (lambda x ...) makes 'x' the LIST of args.
   // TODO:
   /*
     - (vector-fill! v thing)
@@ -1038,35 +1052,6 @@ static ObSScope* __globalScope = nil;
 
   ObSScope* global = [ObjScheme globalScope];
   [global evaluate: [ObjScheme parseString: macros]];
-  [global defineMacroNamed: SY(@"let")
-               asProcedure: [ObSNativeLambda named: SY(@"let")
-                                         fromBlock: ^(NSArray* list) {
-        NSArray* bindings = [list objectAtIndex: 0];
-        NSArray* body = [list subarrayWithRange: NSMakeRange(1, [list count]-1)];
-
-        NSMutableArray* names = [NSMutableArray arrayWithCapacity: [bindings count]];
-        NSMutableArray* expressions = [NSMutableArray arrayWithCapacity: [bindings count]];
-        for ( NSArray* binding in bindings) {
-          [ObjScheme assertSyntax: [binding isKindOfClass: [NSArray class]] elseRaise: @"Illegal let binding list"];
-          [ObjScheme assertSyntax: ([binding count] == 2) elseRaise: @"Illegal let binding list item wrong length"];
-          [names addObject: [binding objectAtIndex: 0]];
-          [expressions addObject: [ObjScheme expandToken: [binding objectAtIndex: 1] atTopLevel: YES]];
-        }
-
-        NSMutableArray* expandedBody = [NSMutableArray arrayWithCapacity: [body count]];
-        for ( id token in body ) {
-          [expandedBody addObject: [ObjScheme expandToken: token atTopLevel: YES]];
-        }
-
-        // expands to ((lambda (names) body) expressions)
-        NSMutableArray* lambdaExpression = [NSMutableArray arrayWithObjects: S_LAMBDA, names, nil];
-        [lambdaExpression addObjectsFromArray: expandedBody];
-
-        NSMutableArray* resultExpression = [NSMutableArray arrayWithObject: lambdaExpression];
-        [resultExpression addObjectsFromArray: expressions];
-
-        return resultExpression;
-      }]];
 }
 
 - (id)evaluateArray:(NSArray*)array {
@@ -1107,6 +1092,44 @@ static ObSScope* __globalScope = nil;
           id program = [self evaluate: [rest objectAtIndex: 0]];
           return [self evaluate: program];
 
+        } else if ( head == S_LET ) {
+          NSLog( @"Let..." );
+          NSArray* definitions = [rest objectAtIndex: 0];
+          NSArray* body = [rest subarrayWithRange: NSMakeRange(1, [rest count]-1)];
+          ObSScope* letScope = [[ObSScope alloc] initWithOuterScope: self];
+
+          for ( NSArray* definition in definitions ) {
+            ObSSymbol* name = [definition objectAtIndex: 0];
+            id expression = [definition objectAtIndex: 1];
+            NSLog( @"defining %@ in let", name );
+            [letScope define: name as: [self evaluate: expression]];
+          }
+
+          id result = nil;
+          for ( id expression in body ) {
+            NSLog( @"evaluate %@", expression );
+            result = [letScope evaluate: expression];
+          }
+          NSLog( @"Returning from Let..." );
+          return result;
+
+        } else if ( head == S_LET_STAR ) {
+          NSArray* definitions = [rest objectAtIndex: 0];
+          NSArray* body = [rest subarrayWithRange: NSMakeRange(1, [rest count]-1)];
+          ObSScope* letScope = [[ObSScope alloc] initWithOuterScope: self];
+
+          for ( NSArray* definition in definitions ) {
+            ObSSymbol* name = [definition objectAtIndex: 0];
+            id expression = [definition objectAtIndex: 1];
+            [letScope define: name as: [letScope evaluate: expression]];
+          }
+
+          id result = nil;
+          for ( id expression in body ) {
+            result = [letScope evaluate: expression];
+          }
+          return result;
+
         } else if ( head == S_QUOTE ) { // (quote exp) -> exp
           NSAssert1([rest count] == 1, @"quote can have only 1 operand, not %@", rest);
           return [ObjScheme quote: [rest objectAtIndex: 0]];
@@ -1127,6 +1150,7 @@ static ObSScope* __globalScope = nil;
           ObSScope* definingScope = [self findScopeOf: symbol]; // I do this first, which can fail, so we don't bother executing predicate
           id value = [self evaluate: expression];
           [definingScope define: symbol as: value];
+          return UNSPECIFIED;
 
         } else if ( head == S_DEFINE ) { // (define variableName expression)
           NSString* variableName = [rest objectAtIndex: 0];
@@ -1162,10 +1186,13 @@ static ObSScope* __globalScope = nil;
 }
 
 - (ObSScope*)findScopeOf:(ObSSymbol*)name {
-  if ( [_environ objectForKey: name] != nil )
+  if ( [_environ objectForKey: name.string] != nil ) {
     return self;
-  if ( _outerScope != nil )
+  }
+
+  if ( _outerScope != nil ) {
     return [_outerScope findScopeOf: name];
+  }
 
   [NSException raise: @"LookupError" format: @"Couldn't find defining scope of %@", name];
   return nil;
@@ -1485,14 +1512,56 @@ static ObSScope* __globalScope = nil;
 - (void)populateArray:(NSMutableArray*)array {
   [array addObject: _car];
 
-  if ( _cdr != S_NULL ) {
+  if ( _cdr != C_NULL ) {
     if ( [_cdr isKindOfClass: [ObSCons class]] ) {
-      ObSCons* next = _cdr;
+      ObSCons* next = (ObSCons*)_cdr;
       [next populateArray: array];
 
     } else {
       [array addObject: _cdr];
     }
+  }
+}
+
+- (NSUInteger)countByEnumeratingWithState:(NSFastEnumerationState*)state objects:(id*)stackbuf count:(NSUInteger)len {
+  id current = (id)state->state;
+  if ( current == 0 ){
+    NSLog(@"initializing enumeration");
+    current = self;
+    state->mutationsPtr = &state->extra[0];
+
+  } else {
+    if ( ! [current isKindOfClass: [ObSCons class]] ) {
+      // should this fail here?
+      NSLog( @"Ending, hit non-cons" );
+      return 0; // tail is not a list
+    }
+
+    NSLog( @"moving to next cons" );
+    ObSCons* cell = current;
+    current = cell.cdr;
+  }
+
+  state->state = (unsigned long)current;
+  state->itemsPtr = stackbuf;
+
+  if ( current == C_NULL ) {
+    NSLog( @"Hit end of list");
+    return 0;
+
+  } else if ( ! [current isKindOfClass: [ObSCons class]] ) {
+    NSLog( @"non-list tail... returning it" );
+    // list tail... should this fail?
+    *stackbuf = current;
+    return 1;
+
+  } else {
+    NSLog( @"returning car, yay" );
+    ObSCons* cell = current;
+    NSLog( @"cell is %@", cell );
+    NSLog( @"car is  %@", cell.car );
+    stackbuf[0] = cell.car;
+    return 1;
   }
 }
 

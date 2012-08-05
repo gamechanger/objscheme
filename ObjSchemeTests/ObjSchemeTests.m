@@ -36,6 +36,7 @@
  STAssertEqualsWithAccuracy([number doubleValue], (expected), 0.0001, @"%@ => %f not %f, off by %f", source, [number doubleValue], (expected), (expected)-[number doubleValue]);
 
 #define EXEC(source) [[ObjScheme globalScope] evaluate: [ObjScheme parseString: (source)]]
+#define COMPILE(source) [ObjScheme parseString: (source)]
 
 @implementation ObjSchemeTests
 
@@ -73,7 +74,6 @@
   STAssertEquals(global, [ObjScheme globalScope], @"Global scope isn't unique");
   STAssertTrue([global hasMacroNamed: SY(@"or")], @"or macro undefined");
   STAssertTrue([global hasMacroNamed: SY(@"and")], @"or macro undefined");
-  STAssertTrue([global hasMacroNamed: SY(@"let")], @"let macro undefined");
 }
 
 - (void)testBasicEvaluation {
@@ -207,6 +207,9 @@
 
   OSAssertFalse(@"(unspecified? #f)");
   OSAssertFalse(@"(unspecified? '())");
+
+  OSAssertTrue(@"(let ((x 1)) (set! x 2))");
+  OSAssertTrue(@"(equal? (let ((x 1)) (for-each (lambda (n) (set! x (+ x n))) '(1 1)) x) 3)");
 }
 
 - (void)testVectors {
