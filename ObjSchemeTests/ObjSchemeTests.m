@@ -287,6 +287,9 @@
   OSAssertEqualsInt(@"(min -20 6)", -20);
   OSAssertEqualsDouble(@"(min -20.0 6)", -20.0);
   OSAssertEqualsDouble(@"(min 2.0 2.1)", 2.0);
+
+  OSAssertEqualsDouble(@"(round 2.2)", 2.0);
+  OSAssertEqualsDouble(@"(round 2.5)", 3.0);
 }
 
 /*

@@ -859,6 +859,8 @@ static ObSScope* __globalScope = nil;
         return UNSPECIFIED;
       }]];
 
+  [scope defineFunction: U_LAMBDA(@"round", ^(id a) { return [NSNumber numberWithDouble: round([(NSNumber*)a doubleValue])]; })];
+
   // TODO: (lambda x ...) makes 'x' the LIST of args.
   // TODO:
   /*
@@ -878,10 +880,8 @@ static ObSScope* __globalScope = nil;
     - error <= and replace Exceptions with (error) results which cause a return...? would that work...?
     - every
     - floor/ceiling
-    - for-each (for-each proc list)
     - member? (member? thing list)
     - reduce (reduce combiner list)
-    - round
     - write (and something for formatting properly...)
     - MAYBE: char (#\a) support?
    */
