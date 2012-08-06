@@ -189,7 +189,13 @@ static ObSScope* __globalScope = nil;
 
   } else {
     ObSCons* list = arg;
-    return CONS([self expandToken: list.car atTopLevel: topLevel], [self expandTokenList: list.cdr atTopLevel: topLevel]);
+    id token = [self expandToken: list.car atTopLevel: topLevel];
+    if ( token != UNSPECIFIED ) {
+      return CONS(token, [self expandTokenList: list.cdr atTopLevel: topLevel]);
+
+    } else {
+      return [self expandTokenList: list.cdr atTopLevel: topLevel];
+    }
   }
 }
 
@@ -1018,7 +1024,7 @@ static ObSScope* __globalScope = nil;
         ObSCons* list = token;
         id head = [list car];
         ObSCons* rest = [list cdr];
-        NSUInteger argCount = [rest count];
+        NSUInteger argCount = (id)rest == C_NULL ? 0 : [rest count];
 
         if ( head == S_EVAL ) {
           NSAssert1(argCount == 1, @"eval can have only 1 operand, not %@", rest);
