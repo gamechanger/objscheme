@@ -235,6 +235,7 @@
   OSAssertTrue(@"(let ((x '(a b c))) (list? x))");
   OSAssertTrue(@"(let ((x '(a b c))) (set-cdr! x #f) (not (list? x)))");
   OSAssertTrue(@"(equal? (cons 'a #f) (let ((x '(a b c))) (set-cdr! x #f) x))");
+  OSAssertTrue(@"(equal? (list 'z 'b 'c) (let ((x '(a b c))) (set-car! x 'z) x))");
 }
 
 - (void)testVectors {
