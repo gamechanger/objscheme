@@ -10,7 +10,7 @@
 
 @class ObSScope;
 @class ObSInPort;
-
+@class ObSCons;
 
 
 @interface ObSSymbol : NSObject {
@@ -37,7 +37,8 @@
 + (id)read:(ObSInPort*)inPort;
 + (BOOL)isFalse:(id)token;
 
-- (NSArray*)map:(id<ObSProcedure>)procedure on:(ObSCons*)list;
++ (id)map:(id<ObSProcedure>)procedure on:(id)list;
++ (NSArray*)filter:(ObSCons*)list with:(id<ObSProcedure>)procedure;
 @end
 
 
@@ -51,9 +52,6 @@
 @property (nonatomic,retain) ObSScope* outer;
 
 - (id)initWithOuterScope:(ObSScope*)outer;
-- (id)initWithOuterScope:(ObSScope*)outer
-    paramListNameOrNames:(id)parameters
-               arguments:(NSArray*)argument;
 - (id)resolveSymbol:(ObSSymbol*)variable;
 - (void)bootstrapMacros;
 - (id)evaluate:(id)token;
@@ -69,22 +67,24 @@
 
 
 @interface ObSLambda : NSObject <ObSProcedure> {
-  NSArray* _argumentNames;
+  ObSSymbol* _listParameter;
+  ObSCons* _parameters;
   id _expression;
   ObSScope* _scope;
   ObSSymbol* _name;
 }
 
-@property (readonly) NSArray* argumentNames;
+@property (readonly) ObSSymbol* listParameter;
+@property (readonly) ObSCons* parameters;
 @property (readonly) id expression;
 @property (readonly) ObSScope* scope;
 @property (readonly) ObSSymbol* name;
 
-- (id)initWithArgumentNames:(NSArray*)argumentNames
-                 expression:(id)expression
-                      scope:(ObSScope*)scope
-                       name:(ObSSymbol*)name;
-- (id)invokeWithArguments:(NSArray*)arguments;
+- (id)initWithParameters:(id)parameters
+              expression:(id)expression
+                   scope:(ObSScope*)scope
+                    name:(ObSSymbol*)name;
+- (id)callWith:(ObSCons*)arguments;
 @end
 
 
@@ -101,7 +101,7 @@ typedef id (^ObSNativeBlock)(NSArray*);
 
 + (id)named:(ObSSymbol*)name fromBlock:(ObSNativeBlock)block;
 - (id)initWithBlock:(ObSNativeBlock)block name:(ObSSymbol*)name;
-- (id)invokeWithArguments:(NSArray*)arguments;
+- (id)callWith:(ObSCons*)arguments;
 
 @end
 
@@ -118,7 +118,7 @@ typedef id (^ObSNativeBinaryBlock)(id,id);
 
 + (id)named:(ObSSymbol*)name fromBlock:(ObSNativeBinaryBlock)block;
 - (id)initWithBlock:(ObSNativeBinaryBlock)block name:(ObSSymbol*)name;
-- (id)invokeWithArguments:(NSArray*)arguments;
+- (id)callWith:(ObSCons*)arguments;
 
 @end
 
@@ -137,7 +137,7 @@ typedef id (^ObSNativeUnaryBlock)(id);
 
 + (id)named:(ObSSymbol*)name fromBlock:(ObSNativeUnaryBlock)block;
 - (id)initWithBlock:(ObSNativeUnaryBlock)block name:(ObSSymbol*)name;
-- (id)invokeWithArguments:(NSArray*)arguments;
+- (id)callWith:(ObSCons*)arguments;
 
 @end
 
@@ -156,16 +156,17 @@ typedef id (^ObSNativeUnaryBlock)(id);
 
 
 @interface ObSCons : NSObject <NSFastEnumeration> {
-  id<NSObject> _car;
-  id<NSObject> _cdr;
+  id _car;
+  id _cdr;
 }
-@property (nonatomic, retain) id<NSObject> car;
-@property (nonatomic, retain) id<NSObject> cdr;
+@property (nonatomic, retain) id car;
+@property (nonatomic, retain) id cdr;
 - (id)initWithCar:(id)car cdr:(id)cdr;
 - (id)cadr;
 - (id)caddr;
 - (id)cddr;
 - (NSArray*)toArray;
+- (NSUInteger)count;
 @end
 
 
