@@ -96,6 +96,8 @@
   OSAssertTrue(@"#t");
   OSAssertTrue(@"(not #f)");
 
+  OSAssertTrue(@"(begin (define x 128) (= x 128))");
+
   OSAssertTrue(@"(string? \"hello\")");
   OSAssertFalse(@"(string? #f)");
   OSAssertFalse(@"(string? 'hello)");
@@ -328,6 +330,40 @@
 
   OSAssertEqualsDouble(@"(round 2.2)", 2.0);
   OSAssertEqualsDouble(@"(round 2.5)", 3.0);
+}
+
+- (void)testNSDictionaryBridge {
+  id source, program, returnValue;
+
+  OSAssertTrue(@"(NSDictionary:containsKey (NSDictionary:dictionaryWithObjectsAndKeys 3 \"age\") \"age\")");
+  OSAssertTrue(@"(equal? 3 (NSDictionary:objectForKey (NSDictionary:dictionaryWithObjectsAndKeys 3 \"age\") \"age\"))");
+  OSAssertTrue(@"(equal? 7 (begin (define d (NSMutableDictionary:dictionary)) (NSMutableDictionary:setObjectForKey d 7 \"height\") (NSDictionary:objectForKey d \"height\")))");
+  OSAssertTrue(@"(equal? '(\"age\") (NSDictionary:keys (NSDictionary:dictionaryWithObjectsAndKeys 3 \"age\")))");
+}
+
+- (void)testNSArrayBridge {
+  id source, program, returnValue;
+
+  OSAssertTrue(@"(NSArray:array)");
+  OSAssertTrue(@"(equal? 0 (NSArray:count (NSArray:array)))");
+  OSAssertTrue(@"(equal? 1 (NSArray:count (NSArray:array 'a)))");
+  OSAssertTrue(@"(equal? 2 (NSArray:count (NSMutableArray:array 6 7)))");
+  OSAssertTrue(@"(equal? 6 (NSArray:objectAtIndex (NSArray:array 6 7) 0))");
+  OSAssertTrue(@"(equal? 7 (NSArray:objectAtIndex (NSArray:array 6 7) 1))");
+  OSAssertTrue(@"(equal? 9 (let ((a (NSMutableArray:array 6 7))) (NSMutableArray:setObjectAtIndex a 9 1) (NSArray:objectAtIndex a 1)))");
+
+  OSAssertTrue(@"(equal? (list 56 7) (NSArray->list (NSArray:array 56 7)))");
+  OSAssertTrue(@"(equal? (NSArray:array 56 7) (list->NSArray (list 56 7)))");
+  OSAssertTrue(@"(equal? (NSArray:array 56 7) (list->NSMutableArray (list 56 7)))");
+}
+
+- (void)testStatEngine {
+  NSError* error;
+  NSString* engineSource = [[NSString alloc] initWithContentsOfFile: @"/Users/kiril/code/gc/gcstatengine/scheme/engine.scm"
+                                                           encoding: NSUTF8StringEncoding
+                                                              error: &error];
+  id engine = [ObjScheme parseString: engineSource];
+  [[ObjScheme globalScope] evaluate: engine];
 }
 
 /*

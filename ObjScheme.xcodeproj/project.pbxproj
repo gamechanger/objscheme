@@ -24,6 +24,7 @@
 
 /* Begin PBXBuildFile section */
 		FBC68B0C15D047AC0051A1BA /* ObjScheme.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = FBE147F915C6D22A000B79FD /* ObjScheme.h */; };
+		FBC68B3D15D05CD50051A1BA /* ObSNS.m in Sources */ = {isa = PBXBuildFile; fileRef = FBC68B3A15D05CD50051A1BA /* ObSNS.m */; };
 		FBE147F515C6D22A000B79FD /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FBE147F415C6D22A000B79FD /* Foundation.framework */; };
 		FBE147FB15C6D22A000B79FD /* ObjScheme.m in Sources */ = {isa = PBXBuildFile; fileRef = FBE147FA15C6D22A000B79FD /* ObjScheme.m */; };
 		FBE1480315C6D22A000B79FD /* SenTestingKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FBE1480215C6D22A000B79FD /* SenTestingKit.framework */; };
@@ -57,6 +58,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		FBC68B3915D05CD50051A1BA /* ObSNS.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ObSNS.h; sourceTree = "<group>"; };
+		FBC68B3A15D05CD50051A1BA /* ObSNS.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ObSNS.m; sourceTree = "<group>"; };
 		FBE147F115C6D22A000B79FD /* libObjScheme.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libObjScheme.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		FBE147F415C6D22A000B79FD /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		FBE147F815C6D22A000B79FD /* ObjScheme-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "ObjScheme-Prefix.pch"; sourceTree = "<group>"; };
@@ -126,6 +129,8 @@
 				FBE147F915C6D22A000B79FD /* ObjScheme.h */,
 				FBE147FA15C6D22A000B79FD /* ObjScheme.m */,
 				FBE147F715C6D22A000B79FD /* Supporting Files */,
+				FBC68B3915D05CD50051A1BA /* ObSNS.h */,
+				FBC68B3A15D05CD50051A1BA /* ObSNS.m */,
 			);
 			path = ObjScheme;
 			sourceTree = "<group>";
@@ -213,7 +218,7 @@
 			isa = PBXProject;
 			attributes = {
 				LastUpgradeCheck = 0430;
-				ORGANIZATIONNAME = "Fungo Media / GameChanger";
+				ORGANIZATIONNAME = GameChanger;
 			};
 			buildConfigurationList = FBE147EB15C6D229000B79FD /* Build configuration list for PBXProject "ObjScheme" */;
 			compatibilityVersion = "Xcode 3.2";
@@ -295,6 +300,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				FBE147FB15C6D22A000B79FD /* ObjScheme.m in Sources */,
+				FBC68B3D15D05CD50051A1BA /* ObSNS.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

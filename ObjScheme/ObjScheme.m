@@ -7,6 +7,7 @@
 //
 
 #import "ObjScheme.h"
+#import "ObSNS.h"
 
 static ObSSymbol* S_DOT;
 static ObSSymbol* S_QUOTE;
@@ -52,7 +53,6 @@ static NSString* _EOF = @"#EOF#";
 + (id)atomFromToken:(NSString*)token;
 + (NSString*)unpackStringLiteral:(NSString*)string;
 + (id)expandToken:(id)token atTopLevel:(BOOL)topLevel;
-+ (BOOL)isEmptyList:(id)token;
 + (void)assertSyntax:(BOOL)correct elseRaise:(NSString*)message;
 + (id)expandQuasiquote:(id)token;
 + (void)addGlobalsToScope:(ObSScope*)scope;
@@ -127,6 +127,7 @@ static ObSScope* __globalScope = nil;
     __globalScope = [[ObSScope alloc] initWithOuterScope: nil];
     [__globalScope bootstrapMacros];
     [ObjScheme addGlobalsToScope: __globalScope];
+    [ObSNS initializeBridgeFunctions: __globalScope];
   }
   return __globalScope;
 }
@@ -276,11 +277,11 @@ static ObSScope* __globalScope = nil;
     id parameters = [list cadr];
     if ( [parameters isKindOfClass: [ObSCons class]] ) {
       for ( id paramName in (ObSCons*)parameters ) {
-        [ObjScheme assertSyntax: [paramName isKindOfClass: [ObSSymbol class]] elseRaise: @"invalid lambda argument"];
+        [ObjScheme assertSyntax: [paramName isKindOfClass: [ObSSymbol class]] elseRaise: [NSString stringWithFormat: @"invalid lambda parameter %@ in %@", paramName, parameters]];
       }
 
     } else {
-      [ObjScheme assertSyntax: [parameters isKindOfClass: [ObSSymbol class]] elseRaise: @"invalid lambda argument"];
+      [ObjScheme assertSyntax: parameters == C_NULL || [parameters isKindOfClass: [ObSSymbol class]] elseRaise: [NSString stringWithFormat: @"invalid lambda parameter %@", parameters]];
     }
 
     ObSCons* body = [list cddr];
@@ -912,6 +913,14 @@ static ObSScope* __globalScope = nil;
   return token == B_FALSE;
 }
 
++ (id)boolToTruth:(BOOL)b {
+  return b ? B_TRUE : B_FALSE;
+}
+
++ (id)unspecified {
+  return UNSPECIFIED;
+}
+
 @end
 
 
@@ -1137,7 +1146,8 @@ static ObSScope* __globalScope = nil;
         } else if ( head == S_DEFINE ) { // (define variableName expression)
           ObSSymbol* variableName = [rest car];
           id expression = [rest cadr];
-          [_environ setObject: [self evaluate: expression] forKey: variableName];
+          [_environ setObject: [self evaluate: expression] forKey: variableName.string];
+          return UNSPECIFIED;
 
         } else if ( head == S_LAMBDA ) { // (lambda (argumentNames) body)
           ObSCons* parameters = [rest car];
@@ -1232,7 +1242,7 @@ static ObSScope* __globalScope = nil;
         cell = [cell cdr];
       }
 
-    } else {
+    } else if ( parameters != C_NULL ) {
       _listParameter = [parameters retain];
     }
 
@@ -1271,7 +1281,7 @@ static ObSScope* __globalScope = nil;
       [invocationScope define: _listParameter as: arguments];
     }
 
-  } else {
+  } else if ( _listParameter != nil ) {
     [invocationScope define: _listParameter as: arguments];
   }
 
@@ -1311,7 +1321,12 @@ static ObSScope* __globalScope = nil;
 }
 
 - (id)callWith:(ObSCons*)arguments {
-  return _block([arguments toArray]);
+  if ( (id)arguments == C_NULL ) {
+    return _block([NSArray array]);
+
+  } else {
+    return _block([arguments toArray]);
+  }
 }
 
 @end
@@ -1379,6 +1394,40 @@ static ObSScope* __globalScope = nil;
 - (id)callWith:(ObSCons*)list {
   NSAssert([list count] == 1, @"Oops, should pass 1 args to unary lambda %@", _name);
   return _block([list car]);
+}
+
+- (ObSSymbol*)name {
+  return (_name == nil ? S_LAMBDA : _name);
+}
+
+@end
+
+
+
+
+@implementation ObSNativeThunkLambda
+
++ (id)named:(ObSSymbol*)name fromBlock:(ObSNativeThunkBlock)block {
+  return [[[ObSNativeThunkLambda alloc] initWithBlock: block name: name] autorelease];
+}
+
+- (id)initWithBlock:(ObSNativeThunkBlock)block name:(ObSSymbol*)name {
+  if ( ( self = [super init] ) ) {
+    _block = Block_copy(block);
+    _name = [name retain];
+  }
+  return self;
+}
+
+- (void)dealloc {
+  Block_release(_block);
+  [_name release];
+  [super dealloc];
+}
+
+- (id)callWith:(ObSCons*)list {
+  NSAssert((id)list == C_NULL, @"Oops, should pass 0 args to thunk lambda %@", _name);
+  return _block();
 }
 
 - (ObSSymbol*)name {

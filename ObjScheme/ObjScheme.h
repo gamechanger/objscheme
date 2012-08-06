@@ -13,6 +13,7 @@
 @class ObSCons;
 
 
+
 @interface ObSSymbol : NSObject {
   NSString* _string;
 }
@@ -39,6 +40,10 @@
 
 + (id)map:(id<ObSProcedure>)procedure on:(id)list;
 + (NSArray*)filter:(ObSCons*)list with:(id<ObSProcedure>)procedure;
++ (ObSCons*)list:(NSArray*)array;
++ (id)boolToTruth:(BOOL)b;
++ (BOOL)isEmptyList:(id)token;
++ (id)unspecified;
 @end
 
 
@@ -140,6 +145,25 @@ typedef id (^ObSNativeUnaryBlock)(id);
 - (id)callWith:(ObSCons*)arguments;
 
 @end
+
+
+
+
+typedef id (^ObSNativeThunkBlock)();
+
+@interface ObSNativeThunkLambda : NSObject <ObSProcedure> {
+  ObSNativeThunkBlock _block;
+  ObSSymbol* _name;
+}
+
+@property (readonly) ObSSymbol* name;
+
++ (id)named:(ObSSymbol*)name fromBlock:(ObSNativeThunkBlock)block;
+- (id)initWithBlock:(ObSNativeThunkBlock)block name:(ObSSymbol*)name;
+- (id)callWith:(ObSCons*)arguments;
+
+@end
+
 
 
 
