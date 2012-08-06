@@ -238,6 +238,12 @@
   OSAssertTrue(@"(equal? (list 'z 'b 'c) (let ((x '(a b c))) (set-car! x 'z) x))");
 }
 
+- (void)testCond {
+  id source, program, returnValue;
+
+  OSAssertTrue(@"(equal? 2 ((lambda (x) (cond ((= x 3) 1) ((= x 7) 2) )) 7))");
+}
+
 - (void)testVectors {
   id source, program, returnValue;
 

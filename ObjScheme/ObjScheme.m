@@ -190,12 +190,8 @@ static ObSScope* __globalScope = nil;
   } else {
     ObSCons* list = arg;
     id token = [self expandToken: list.car atTopLevel: topLevel];
-    if ( token != UNSPECIFIED ) {
-      return CONS(token, [self expandTokenList: list.cdr atTopLevel: topLevel]);
-
-    } else {
-      return [self expandTokenList: list.cdr atTopLevel: topLevel];
-    }
+    id tail = [self expandTokenList: list.cdr atTopLevel: topLevel];
+    return ( token == UNSPECIFIED ? tail : CONS(token, tail) );
   }
 }
 
@@ -213,7 +209,7 @@ static ObSScope* __globalScope = nil;
 
   ObSCons* list = token;
   id head = list.car;
-  NSUInteger length = [self listLength: list];
+  NSUInteger length = [list count];
 
   if ( head == S_QUOTE ) { // (quote exp)
     [ObjScheme assertSyntax: (length == 2)
@@ -221,12 +217,7 @@ static ObSScope* __globalScope = nil;
     return list;
 
   } else if ( head == S_IF ) {
-    if ( length == 3 ) { // (if x y) => (if x y #f)
-      [self tailCons: list].cdr = CONS(B_FALSE, C_NULL);
-      length++;
-    }
-
-    [ObjScheme assertSyntax: (length == 4) elseRaise: @"Invalid 'if' syntax"];
+    [ObjScheme assertSyntax: (length == 4 || length == 3) elseRaise: @"Invalid 'if' syntax"];
     return [self expandTokenList: list atTopLevel: topLevel];
 
   } else if ( head == S_SET ) { // (set! thing exp)
@@ -275,7 +266,7 @@ static ObSScope* __globalScope = nil;
       return C_NULL;
 
     } else {
-      return [self expandTokenList: [list cdr] atTopLevel: topLevel];
+      return CONS(S_BEGIN, [self expandTokenList: [list cdr] atTopLevel: topLevel]);
     }
 
   } else if ( head == S_LAMBDA ) {
@@ -293,7 +284,7 @@ static ObSScope* __globalScope = nil;
     }
 
     ObSCons* body = [list cddr];
-    id expression = [self expandToken: ([self listLength: body] == 1 ? [body car] : CONS(S_BEGIN, body))
+    id expression = [self expandToken: ([body count] == 1 ? [body car] : CONS(S_BEGIN, body))
                            atTopLevel: NO];
 
     return CONS(S_LAMBDA, CONS(parameters, CONS(expression, C_NULL)));
@@ -874,11 +865,31 @@ static ObSScope* __globalScope = nil;
         return UNSPECIFIED;
       }]];
 
+  [scope defineFunction: [ObSNativeLambda named: S_APPEND
+                                      fromBlock: ^(NSArray* array) {
+        ObSCons* list = nil;
+        for ( id thing in array ) {
+          if ( thing == C_NULL ) {
+            if ( list == nil ) {
+              return (id)C_NULL;
+            }
+            break;
+          }
+
+          ObSCons* subList = thing;
+          if ( list == nil ) {
+            list = subList;
+
+          } else {
+            [[ObjScheme tailCons: list] setCdr: subList];
+          }
+        }
+        return (id)list;
+      }]];
+
   // TODO:
   /*
     - (vector-copy! dest dest-start src [src-start src-end])
-    - (set-car! cell value)
-    - (set-cdr! cell value)
     - cond
     - error <= and replace Exceptions with (error) results which cause a return...? would that work...?
     - every
@@ -951,7 +962,7 @@ static ObSScope* __globalScope = nil;
 }
 
 - (NSString*)description {
-  return [NSString stringWithFormat: @"Symbol(%@)", _string];
+  return _string;
 }
 
 @end
@@ -1017,6 +1028,18 @@ static ObSScope* __globalScope = nil;
     "          `(let ((arg ,arg))\n"
     "             (if arg arg\n"
     "                 (or ,@(cdr args))))))))\n"
+
+    "(define-macro cond\n"
+    "  (lambda conditions\n"
+    "    (if (not (null? conditions))\n"
+    "        (let* ((condition (car conditions)) (test (car condition)) (result-exprs (cdr condition)))\n"
+    "          (if (eq? test 'else)\n"
+    "              `(begin ,@result-exprs)"
+    "              (if (null? result-exprs)\n"
+    "                  `(let ((r ,test)) (if r r (cond ,@(cdr conditions))))\n"
+    "                  `(if ,test\n"
+    "                       (begin ,@result-exprs)\n"
+    "                       (cond ,@(cdr conditions)))))))))\n"
 
     ";; More macros can also go here\n"
     ")";
@@ -1101,7 +1124,7 @@ static ObSScope* __globalScope = nil;
         } else if ( head == S_IF ) { // (if test consequence alternate) <- note that full form is enforced by expansion
           id test = [rest car];
           id consequence = [rest cadr];
-          id alternate = [rest caddr];
+          id alternate = argCount == 3 ? [rest caddr] : UNSPECIFIED;
           token = [self evaluate: test] == B_FALSE ? alternate : consequence;
           continue; // I'm being explicit here for clarity, we'll now evaluate this token
 
@@ -1128,6 +1151,10 @@ static ObSScope* __globalScope = nil;
 
         } else if ( head == S_BEGIN ) { // (begin expression...)
           id result = [NSNumber numberWithBool: NO];
+          if ( (id)rest == C_NULL ) {
+            return UNSPECIFIED;
+          }
+
           for ( id expression in rest ) {
             result = [self evaluate: expression];
           }
@@ -1501,8 +1528,38 @@ static ObSScope* __globalScope = nil;
   }
 }
 
+- (BOOL)isList {
+  id cdr = [self cdr];
+  while ( cdr != C_NULL ) {
+    if ( ! [cdr isKindOfClass: [ObSCons class]] )
+      return NO;
+  }
+  return YES;
+}
+
 - (NSString*)description {
-  return [NSString stringWithFormat: @"Cons(%@, %@)", _car, _cdr];
+  NSMutableString* d = [NSMutableString string];
+  [d appendString: @"("];
+  id cell = self;
+
+  while ( cell != C_NULL ) {
+    if ( [d length] > 1 ) {
+      [d appendString: @" "];
+    }
+
+    if ( [cell isKindOfClass: [ObSCons class]] ) {
+      ObSCons* next = cell;
+      [d appendFormat: @"%@", [next car]];
+      cell = [next cdr];
+
+    } else {
+      [d appendFormat: @". %@", cell];
+      break;
+    }
+  }
+
+  [d appendString: @")"];
+  return d;
 }
 
 - (void)populateArray:(NSMutableArray*)array {
