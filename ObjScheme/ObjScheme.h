@@ -24,7 +24,7 @@
 
 
 @protocol ObSProcedure <NSObject>
-- (id)invokeWithArguments:(NSArray*)arguments;;
+- (id)callWith:(ObSCons*)args;
 - (ObSSymbol*)name;
 @end
 
@@ -37,7 +37,7 @@
 + (id)read:(ObSInPort*)inPort;
 + (BOOL)isFalse:(id)token;
 
-- (NSArray*)mapProcedure:(id<ObSProcedure>)procedure onArray:(NSArray*)array;
+- (NSArray*)map:(id<ObSProcedure>)procedure on:(ObSCons*)list;
 @end
 
 
@@ -162,6 +162,9 @@ typedef id (^ObSNativeUnaryBlock)(id);
 @property (nonatomic, retain) id<NSObject> car;
 @property (nonatomic, retain) id<NSObject> cdr;
 - (id)initWithCar:(id)car cdr:(id)cdr;
+- (id)cadr;
+- (id)caddr;
+- (id)cddr;
 - (NSArray*)toArray;
 @end
 

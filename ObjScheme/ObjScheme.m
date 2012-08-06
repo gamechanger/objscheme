@@ -112,12 +112,13 @@ static ObSScope* __globalScope = nil;
   }
 }
 
-- (NSArray*)mapProcedure:(id<ObSProcedure>)procedure onArray:(NSArray*)array {
-  NSMutableArray* ret = [NSMutableArray arrayWithCapacity: [array count]];
-  for ( id thing in array ) {
-    [ret addObject: [procedure invokeWithArguments: [NSArray arrayWithObject: thing]]];
+- (ObSCons*)map:(id<ObSProcedure>)proc on:(ObSCons*)list {
+  if ( list == C_NULL ) {
+    return C_NULL:
+
+  } else {
+    return CONS([procedure callWith: CONS(list.car, C_NULL)], [self map: proc on: list.cdr]);
   }
-  return ret;
 }
 
 + (ObSScope*)globalScope {
@@ -162,10 +163,32 @@ static ObSScope* __globalScope = nil;
 }
 
 + (BOOL)isEmptyList:(id)token {
-  if ( ! [token isKindOfClass: [NSArray class]] )
-    return NO;
-  NSArray* array = token;
-  return [array count] == 0;
+  return token == C_NULL;
+}
+
++ (NSUInteger)listLength:(ObSCons*)list {
+  NSUInteger length = 0;
+  while ( list != C_NULL ) {
+    length++;
+    list = list.cdr;
+  }
+  return length;
+}
+
++ (ObSCons*)tailCons:(ObSCons*)list {
+  while ( list.cdr != C_NULL ) {
+    list = list.cdr;
+  }
+  return list;
+}
+
++ (ObSCons*)expandTokenList:(ObSCons*)list atTopLevel:(BOOL)topLevel {
+  if ( cons == C_NULL ) {
+    return C_NULL;
+
+  } else {
+    return CONS([self expandToken: list.car atTopLevel: topLevel], [self expandTokenList: list.cdr atTopLevel: topLevel]);
+  }
 }
 
 /**
@@ -174,152 +197,119 @@ static ObSScope* __globalScope = nil;
  * @param  topLevel  Whether this is the top-level scope.
  */
 + (id)expandToken:(id)token atTopLevel:(BOOL)topLevel {
-  [ObjScheme assertSyntax: ! [ObjScheme isEmptyList: token] elseRaise: @"Empty list is not a program"];
+  [ObjScheme assertSyntax: token != C_NULL elseRaise: @"Empty list is not a program"];
 
-  if ( ! [token isKindOfClass: [NSArray class]] ) {
+  if ( ! [token isKindOfClass: [ObSCons class]] ) {
     return token; // an atom
   }
 
-  NSArray* array = token;
-  id head = [array objectAtIndex: 0];
+  ObSCons* list = token;
+  id head = list.car;
+  NSUInteger length = [self listLength: list];
 
   if ( head == S_QUOTE ) { // (quote exp)
-    [ObjScheme assertSyntax: ([array count] == 2)
+    [ObjScheme assertSyntax: (length == 2)
                   elseRaise: [NSString stringWithFormat: @"quote should have 1 arg, given %d", [array count]-1]];
-    return array;
+    return list;
 
-  } else if ( head == S_IF ) { // (if x y) => (if x y #f)
-    if ( [array count] == 3 ) { // (if x y)
-      NSMutableArray* longer = [NSMutableArray arrayWithArray: array];
-      [longer addObject: B_FALSE];
-      array = longer;
+  } else if ( head == S_IF ) {
+    if ( length == 3 ) { // (if x y) => (if x y #f)
+      [self tailCons: list].cdr = CONS(B_FALSE, C_NULL);
+      length++;
     }
 
-    [ObjScheme assertSyntax: ([array count] == 4) elseRaise: @"Invalid 'if' syntax"];
-    NSMutableArray* ret = [NSMutableArray arrayWithCapacity: [array count]];
-    for ( id subToken in array ) {
-      [ret addObject: [ObjScheme expandToken: subToken atTopLevel: NO]];
-    }
-    return ret;
+    [ObjScheme assertSyntax: (length == 4) elseRaise: @"Invalid 'if' syntax"];
+    return [self expandTokenList: list atTopLevel: topLevel];
 
   } else if ( head == S_SET ) { // (set! thing exp)
-    [ObjScheme assertSyntax: ([array count] == 3) elseRaise: @"Invalid 'set!' syntax"];
-    id var = [array objectAtIndex: 1];
+    [ObjScheme assertSyntax: (length == 3) elseRaise: @"Invalid 'set!' syntax"];
+    id var = [list cadr];
     [ObjScheme assertSyntax: [var isMemberOfClass: [ObSSymbol class]]
                   elseRaise: @"First arg of 'set!' should be a Symbol"];
-    id expression = [ObjScheme expandToken: [array objectAtIndex: 2] atTopLevel: NO];
-    return [NSArray arrayWithObjects: S_SET, var, expression, nil];
+    id expression = [self expandToken: [list caddr] atTopLevel: NO];
+    return CONS(S_SET, CONS(var, CONS(expression, C_NULL)));
 
   } else if ( head == S_DEFINE ) { // (define ...)
-    [ObjScheme assertSyntax: ([array count] >= 3) elseRaise: @"define takes at least 2 args"];
-    id defineSpec = [array objectAtIndex: 1];
-    NSArray* body = [array subarrayWithRange: NSMakeRange(2, [array count]-2)];
+    [ObjScheme assertSyntax: (length >= 3) elseRaise: @"define takes at least 2 args"];
+    id defineSpec = [list cadr];
+    ObSCons* body = [list cddr];
 
-    if ( [defineSpec isKindOfClass: [NSArray class]] ) {
+    if ( [defineSpec isKindOfClass: [ObSCons class]] ) {
       // we're going to change (define (f args) body) => (define f (lambda (args) body)) for simplicity
-      NSArray* lambdaSpec = defineSpec;
-      NSString* lambdaName = [lambdaSpec objectAtIndex: 0];
-      NSArray* lambdaParameterNames = [lambdaSpec subarrayWithRange: NSMakeRange(1, [lambdaSpec count]-1)];
+      ObSCons* lambdaSpec = defineSpec;
+      ObSSymbol* lambdaName = [lambdaSpec car];
+      ObSCons* params = [lambdaSpec cdr];
       // => (f (params) body)
-      NSMutableArray* lambdaDefinition = [NSMutableArray arrayWithObjects: S_LAMBDA, lambdaParameterNames, nil];
-      [lambdaDefinition addObjectsFromArray: body];
-      return [ObjScheme expandToken: [NSArray arrayWithObjects: S_DEFINE, lambdaName, lambdaDefinition, nil]
+      ObSCons* lambda = CONS(S_LAMBDA, CONS(lambdaParameterNames, body));
+      return [ObjScheme expandToken: CONS(S_DEFINE, CONS(lambdaName, CONS(lambda, C_NULL)))
                          atTopLevel: NO];
 
     } else {
       [ObjScheme assertSyntax: [defineSpec isMemberOfClass: [ObSSymbol class]]
                     elseRaise: @"define second param must be symbol"];
-      id expression = [body lastObject];
-      return [NSArray arrayWithObjects: S_DEFINE, defineSpec, [ObjScheme expandToken: expression atTopLevel: NO], nil];
+      id expression = [body car];
+      return CONS(S_DEFINE, CONS(defineSpec, CONS([ObjScheme expandToken: expression atTopLevel: NO], C_NULL)));
     }
 
   } else if ( head == S_DEFINEMACRO ) { // (define-macro symbol proc)
     [ObjScheme assertSyntax: topLevel elseRaise: @"define-macro must be invoked at the top level"];
-    [ObjScheme assertSyntax: ([array count] == 3) elseRaise: @"bad define-macro syntax"];
-    ObSSymbol* macroName = [array objectAtIndex: 1];
-    id body = [ObjScheme expandToken: [array lastObject] atTopLevel: NO];
+    [ObjScheme assertSyntax: (length == 3) elseRaise: @"bad define-macro syntax"];
+    ObSSymbol* macroName = [list cadr];
+    id body = [ObjScheme expandToken: [list caddr] atTopLevel: NO];
     id<ObSProcedure> procedure = [[ObjScheme globalScope] evaluate: body];
     [ObjScheme assertSyntax: [procedure conformsToProtocol: @protocol(ObSProcedure)]
                   elseRaise: @"body of define-macro must be an invocation"];
     [[ObjScheme globalScope] defineMacroNamed: macroName asProcedure: procedure];
-    return nil;
+    return UNSPECIFIED;
 
   } else if ( head == S_BEGIN ) {
-    if ( [array count] == 1 ) { // (begin) => nil
-      return nil;
+    if ( length == 1 ) { // (begin) => nil
+      return C_NULL;
 
     } else {
-      NSMutableArray* ret = [NSMutableArray arrayWithCapacity: [array count]];
-      for ( id subToken in array ) {
-        id expanded = [ObjScheme expandToken: subToken atTopLevel: topLevel];
-        if ( expanded != nil ) // define-macro expands to nil
-          [ret addObject: expanded];
-      }
-      return ret;
+      return [self expandTokenList: [list cdr] atTopLevel: topLevel];
     }
 
   } else if ( head == S_LAMBDA ) {
     // (lambda (x) a b) => (lambda (x) (begin a b))
     // (lambda x expr) => (lambda (x) expr)
-    [ObjScheme assertSyntax: ([array count] >= 3) elseRaise: @"not enough args for lambda"];
-    NSArray* parameterList = nil;
-    id parameterToken = [array objectAtIndex: 1];
-    if ( [parameterToken isKindOfClass: [NSArray class]] ) {
+    [ObjScheme assertSyntax: (length >= 3) elseRaise: @"not enough args for lambda"];
+    ObSCons* parameterList = nil;
+    id parameterToken = [list cadr];
+    if ( [parameterToken isKindOfClass: [ObSCons class]] ) {
       parameterList = parameterToken;
+
     } else {
-      parameterList = [NSArray arrayWithObject: parameterToken];
+      parameterList = CONS(parameterToken, C_NULL);
     }
 
     for ( id paramName in parameterList ) {
       [ObjScheme assertSyntax: [paramName isKindOfClass: [ObSSymbol class]] elseRaise: @"invalid lambda argument"];
     }
 
-    NSArray* body = [array subarrayWithRange: NSMakeRange(2, [array count]-2)];
-    id expression;
-    if ( [body count] == 1 ) {
-      expression = [ObjScheme expandToken: [body lastObject] atTopLevel: NO];
+    ObSCons* body = [list cddr];
+    id expression = [self expandToken: ([self listLength: body] == 1 ? [body car] : CONS(S_BEGIN, body))
+                           atTopLevel: NO];
 
-    } else {
-      NSMutableArray* newBody = [[NSMutableArray alloc] initWithArray: body];
-      [newBody insertObject: S_BEGIN atIndex: 0];
-      expression = [ObjScheme expandToken: newBody atTopLevel: NO];
-      [newBody release];
-    }
-
-    return [NSArray arrayWithObjects: S_LAMBDA, parameterList, expression, nil];
+    return CONS(S_LAMBDA, CONS(paramterList, CONS(expression, C_NULL)));
 
   } else if ( head == S_QUASIQUOTE ) {
-    [ObjScheme assertSyntax: ([array count] == 2) elseRaise: @"invalid quasiquote, wrong arg num"];
-    return [ObjScheme expandQuasiquote: [array objectAtIndex: 1]];
+    [ObjScheme assertSyntax: (length == 2) elseRaise: @"invalid quasiquote, wrong arg num"];
+    return [ObjScheme expandQuasiquote: [list cadr]];
 
   } else if ( [head isKindOfClass: [ObSSymbol class]] ) {
     ObSSymbol* symbol = head;
     if ( [[ObjScheme globalScope] hasMacroNamed: symbol] ) {
       id macro = [[ObjScheme globalScope] macroNamed: symbol];
-      NSArray* macroArguments = [array subarrayWithRange: NSMakeRange(1, [array count]-1)];
-      return [ObjScheme expandToken: [macro invokeWithArguments: macroArguments] atTopLevel: NO];
+      ObSCons* args = [list cdr];
+      return [ObjScheme expandToken: [macro callWith: args] atTopLevel: NO];
     }
   }
 
-  NSMutableArray* ret = [NSMutableArray arrayWithCapacity: [array count]];
-  for ( id subToken in array ) {
-    [ret addObject: [ObjScheme expandToken: subToken atTopLevel: NO]];
-  }
-  return ret;
+  return [self expandTokenList: list atTopLevel: NO];
 }
 
-+ (id)map:(id<ObSProcedure>)proc on:(id)list {
-  if ( list == C_NULL ) {
-    return C_NULL;
-
-  } else {
-    ObSCons* cons = list;
-    NSArray* args = [NSArray arrayWithObject: cons.car];
-    return CONS([proc invokeWithArguments: args], [self map: proc on: cons.cdr]);
-  }
-}
-
-+ (id)filterList:(id)list with:(id<ObSProcedure>)proc {
++ (id)filter:(id)list with:(id<ObSProcedure>)proc {
   if ( list == C_NULL ) {
     return C_NULL;
 
@@ -327,10 +317,10 @@ static ObSScope* __globalScope = nil;
     ObSCons* cell = list;
     NSArray* args = [NSArray arrayWithObject: cell.car];
     if ( [proc invokeWithArguments: args] != B_FALSE ) {
-      return CONS(cell.car, [self filterList: cell.cdr with: proc]);
+      return CONS(cell.car, [self filter: cell.cdr with: proc]);
 
     } else {
-      return [self filterList: cell.cdr with: proc];
+      return [self filter: cell.cdr with: proc];
     }
   }
 }
@@ -344,22 +334,8 @@ static ObSScope* __globalScope = nil;
   }
 }
 
-+ (id)quote:(id)token {
-  if ( [token isKindOfClass: [NSArray class]] ) {
-    NSArray* tokens = token;
-    NSMutableArray* quoted = [NSMutableArray arrayWithCapacity: [tokens count]];
-    for ( id token in tokens ) {
-      [quoted addObject: [self quote: token]];
-    }
-    return [self list: quoted];
-
-  } else {
-    return token;
-  }
-}
-
 + (id)quoted:(id)token {
-  return [NSArray arrayWithObjects: S_QUOTE, token, nil];
+  return CONS(S_QUOTE, CONS(token, C_NULL));
 }
 
 /**
@@ -368,33 +344,28 @@ static ObSScope* __globalScope = nil;
  * `(,@x y)
  */
 + (id)expandQuasiquote:(id)token {
-  if ( ! [token isKindOfClass: [NSArray class]] ) {
+  if ( ! [token isKindOfClass: [ObSCons class]] ) {
     return [self quoted: token];
 
   } else {
-    NSArray* list = token;
-    if ( [list count] == 0 )
-      return [self quoted: list];
+    ObSCons* list = token;
+    NSUInteger length = [ObjScheme listLength: list];
 
-    id first = [list objectAtIndex: 0];
+    id first = [list car];
     [ObjScheme assertSyntax: (first != S_UNQUOTESPLICING) elseRaise: @"can't splice at beginning of quasiquote"];
-    NSArray* remainderOfList = [list subarrayWithRange: NSMakeRange(1, [list count]-1)];
+    ObSCons* remainderOfList = [list cdr];
 
     if ( first == S_UNQUOTE ) {
-      [ObjScheme assertSyntax: ([list count] == 2) elseRaise: @"invalid unquote phrase, missing operand"];
-      return [list lastObject];
+      [ObjScheme assertSyntax: (length == 2) elseRaise: @"invalid unquote phrase, missing operand"];
+      return [list cadr];
 
-    } else if ( [first isKindOfClass: [NSArray class]] && [(NSArray*)first objectAtIndex: 0] == S_UNQUOTESPLICING ) {
-      NSArray* unquoteSplicingSpec = first;
-      [ObjScheme assertSyntax: ([unquoteSplicingSpec count] == 2) elseRaise: @"invalid unquote-splicing phrase, missing operand"];
-      return [NSArray arrayWithObjects: S_APPEND,
-                      [unquoteSplicingSpec objectAtIndex: 1],
-                      [ObjScheme expandQuasiquote: remainderOfList], nil];
+    } else if ( [first isKindOfClass: [ObSCons class]] && [(ObSCons*)first car] == S_UNQUOTESPLICING ) {
+      ObSCons* unquoteSplicingSpec = first;
+      [ObjScheme assertSyntax: ([ObjScheme listLength: unquoteSplicingSpec] == 2) elseRaise: @"invalid unquote-splicing phrase, missing operand"];
+      return CONS(S_APPEND, CONS([unquoteSplicingSpec cadr], CONS([ObjScheme expandQuasiquote: remainderOfList], C_NULL)));
 
     } else {
-      return [NSArray arrayWithObjects: S_CONS,
-                      [ObjScheme expandQuasiquote: first],
-                      [ObjScheme expandQuasiquote: remainderOfList], nil];
+      return CONS(S_CONS, CONS([ObjScheme expandQuasiquote: first], CONS([ObjScheme expandQuasiquote: remainderOfList], C_NULL)));
     }
   }
 }
@@ -408,7 +379,8 @@ static ObSScope* __globalScope = nil;
 
 + (id)readAheadFromToken:(id)token andPort:(ObSInPort*)inPort {
   if ( token == S_OPENPAREN ) {
-    NSMutableArray* list = [NSMutableArray array];
+    id list = C_NULL;
+    ObSCons* lastCons = nil;
 
     while ( 1 ) {
       token = [inPort nextToken];
@@ -416,7 +388,15 @@ static ObSScope* __globalScope = nil;
         break;
 
       } else {
-        [list addObject: [ObjScheme readAheadFromToken: token andPort: inPort]];
+        id next = [ObjScheme readAheadFromToken: token andPort: inPort];
+        ObSCons* cell = CONS(next, C_NULL);
+
+        if ( lastCons == nil ) {
+          list = lastCons = cell;
+        } else {
+          lastCons.cdr = cell;
+          lastCons = cell;
+        }
       }
     }
 
@@ -427,7 +407,7 @@ static ObSScope* __globalScope = nil;
     return nil;
 
   } else if ( token == S_QUOTE || token == S_QUASIQUOTE || token == S_UNQUOTE || token == S_UNQUOTESPLICING ) {
-    return [NSArray arrayWithObjects: token, [ObjScheme read: inPort], nil];
+    return CONS(token, CONS([ObjScheme read: inPort], C_NULL));
 
   } else if ( token == _EOF ) {
     [NSException raise: @"SyntaxError" format: @"unexpected EOF in list"];
@@ -771,10 +751,7 @@ static ObSScope* __globalScope = nil;
         }
       }]];
 
-  [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"filter")
-                                            fromBlock: ^(id a, id b) {
-        return [ObjScheme filterList: b with: a];
-      }]];
+  [scope defineFunction: B_LAMBDA(@"filter", ^(id a, id b) { return [ObjScheme filter: b with: a]; })];
 
   [scope defineFunction: [ObSNativeLambda named: SY(@"max")
                                       fromBlock: ^(NSArray* args) {
@@ -832,7 +809,7 @@ static ObSScope* __globalScope = nil;
         return args;
       }]];
 
-  [scope defineFunction: U_LAMBDA(@"vector-length", ^(id a) { NSArray* arr = a; return [NSNumber numberWithInteger: [arr count]]; })];
+  [scope defineFunction: U_LAMBDA(@"vector-length", ^(id a) { return [NSNumber numberWithInteger: [(NSArray*)arr count]]; })];
   [scope defineFunction: U_LAMBDA(@"vector?", ^(id a) { return TRUTH([a isKindOfClass: [NSArray class]]); })];
   [scope defineFunction: U_LAMBDA(@"vector->list", ^(id a) { return [ObjScheme list: (NSArray*)a]; })];
   [scope defineFunction: U_LAMBDA(@"list->vector", ^(id a) { if ( a == C_NULL ) { return [NSArray array]; } else { return [(ObSCons*)a toArray]; } })];
@@ -1132,7 +1109,7 @@ static ObSScope* __globalScope = nil;
 
         } else if ( head == S_QUOTE ) { // (quote exp) -> exp
           NSAssert1([rest count] == 1, @"quote can have only 1 operand, not %@", rest);
-          return [ObjScheme quote: [rest objectAtIndex: 0]];
+          return [rest car];
 
         } else if ( head == S_LIST ) { // (list a b c)
           return [ObjScheme list: [self evaluateArray: rest]];
