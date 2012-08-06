@@ -113,38 +113,14 @@
   OSAssertFalse(@"(null? #t)");
   OSAssertFalse(@"(null? (list #t))");
 
-  OSAssertFalse(@"(let ((a #f)) a))")
-  OSAssertTrue(@"(let ((a #t)) a))")
-  OSAssertFalse(@"(null? (let ((x (list #t))) x))");
-  OSAssertTrue(@"(null? (let ((x (list))) x))");
-
   OSAssertTrue(@"(eq? 1 1)");
   OSAssertFalse(@"(eq? 1 2)");
   OSAssertFalse(@"(eq? \"a\" \"a\")");
-  OSAssertTrue(@"(let ((a \"a\")) (eq? a a))");
 
   OSAssertTrue(@"(equal? 1 1)");
   OSAssertFalse(@"(equal? 1 2)");
   OSAssertTrue(@"(equal? \"a\" \"a\")");
   OSAssertFalse(@"(equal? \"a\" \"b\")");
-  OSAssertTrue(@"(let ((a \"a\")) (equal? a a))");
-
-  OSAssertTrue(@"(cons 1 2)");
-  OSAssertTrue(@"(= 1 (car (cons 1 2)))");
-  OSAssertTrue(@"(= 2 (cdr (cons 1 2)))");
-  OSAssertTrue(@"(list? (cdr (list 1 2 3)))");
-  OSAssertTrue(@"(null? (cdr (list 1)))");
-  OSAssertTrue(@"(list? (cons 1 (list)))");
-  OSAssertFalse(@"(list? (cons 1 2))");
-  OSAssertFalse(@"(eq? (cons 1 2) (cons 1 2))");
-  OSAssertFalse(@"(eqv? (cons 1 2) (cons 1 2))");
-  OSAssertTrue(@"(equal? (cons 1 2) (cons 1 2))");
-  OSAssertFalse(@"(eq? (list 1 2) (list 1 2))");
-  OSAssertFalse(@"(eqv? (list 1 2) (list 1 2))");
-  OSAssertTrue(@"(equal? (list 1 2) (list 1 2))");
-
-  OSAssertEqualsInt(@"(length (list))", 0);
-  OSAssertEqualsInt(@"(length (list 1 2 3))", 3);
 
   OSAssertTrue(@"(symbol? 'a)");
   OSAssertFalse(@"(symbol? \"a\")");
@@ -159,13 +135,6 @@
   OSAssertTrue(@"(pair? (cons 'a (cons 'b (cons 'c 'd))))");
   OSAssertFalse(@"(pair? (list))");
   OSAssertFalse(@"(pair? (cons 'a (cons 'b (list))))");
-
-  OSAssertTrue(@"(list? '())");
-  OSAssertTrue(@"(list? '(1 2))");
-  OSAssertEqualsInt(@"(length '(1 2))", 2);
-  OSAssertTrue(@"(null? '())");
-  OSAssertTrue(@"(equal? (list 1 2) '(1 2))");
-  OSAssertTrue(@"(equal? (list (list 1 2)) '((1 2)))");
 
   OSAssertTrue(@"(number? 1)");
   OSAssertTrue(@"(number? -9999)");
@@ -208,8 +177,50 @@
   OSAssertFalse(@"(unspecified? #f)");
   OSAssertFalse(@"(unspecified? '())");
 
-  OSAssertTrue(@"(let ((x 1)) (set! x 2))");
   OSAssertTrue(@"(equal? (let ((x 1)) (for-each (lambda (n) (set! x (+ x n))) '(1 1)) x) 3)");
+}
+
+- (void)testLets {
+  id source, program, returnValue;
+
+  OSAssertFalse(@"(let ((a #f)) a))");
+  OSAssertTrue(@"(let ((a #t)) a))");
+  OSAssertFalse(@"(null? (let ((x (list #t))) x))");
+  OSAssertTrue(@"(null? (let ((x (list))) x))");
+  OSAssertTrue(@"(let ((x 1)) (set! x 2))");
+  OSAssertTrue(@"(let ((a \"a\")) (equal? a a))");
+  OSAssertTrue(@"(let ((a \"a\")) (eq? a a))");
+
+  OSAssertTrue(@"(let* ((a 1) (b a)) (eq? a b))");
+}
+
+- (void)testLists {
+  id source, program, returnValue;
+  NSNumber* number;
+
+  OSAssertTrue(@"(list? '())");
+  OSAssertTrue(@"(list? '(1 2))");
+  OSAssertEqualsInt(@"(length '(1 2))", 2);
+  OSAssertTrue(@"(null? '())");
+  OSAssertTrue(@"(equal? (list 1 2) '(1 2))");
+  OSAssertTrue(@"(equal? (list (list 1 2)) '((1 2)))");
+
+  OSAssertTrue(@"(cons 1 2)");
+  OSAssertTrue(@"(= 1 (car (cons 1 2)))");
+  OSAssertTrue(@"(= 2 (cdr (cons 1 2)))");
+  OSAssertTrue(@"(list? (cdr (list 1 2 3)))");
+  OSAssertTrue(@"(null? (cdr (list 1)))");
+  OSAssertTrue(@"(list? (cons 1 (list)))");
+  OSAssertFalse(@"(list? (cons 1 2))");
+  OSAssertFalse(@"(eq? (cons 1 2) (cons 1 2))");
+  OSAssertFalse(@"(eqv? (cons 1 2) (cons 1 2))");
+  OSAssertTrue(@"(equal? (cons 1 2) (cons 1 2))");
+  OSAssertFalse(@"(eq? (list 1 2) (list 1 2))");
+  OSAssertFalse(@"(eqv? (list 1 2) (list 1 2))");
+  OSAssertTrue(@"(equal? (list 1 2) (list 1 2))");
+
+  OSAssertEqualsInt(@"(length (list))", 0);
+  OSAssertEqualsInt(@"(length (list 1 2 3))", 3);
 }
 
 - (void)testVectors {
