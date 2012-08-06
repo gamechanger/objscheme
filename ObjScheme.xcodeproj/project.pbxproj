@@ -6,11 +6,27 @@
 	objectVersion = 46;
 	objects = {
 
+/* Begin PBXAggregateTarget section */
+		FBC68B0515D046AC0051A1BA /* ObjScheme-iOS */ = {
+			isa = PBXAggregateTarget;
+			buildConfigurationList = FBC68B0615D046AC0051A1BA /* Build configuration list for PBXAggregateTarget "ObjScheme-iOS" */;
+			buildPhases = (
+				FBC68B0915D046D00051A1BA /* Build Static Libs */,
+				FBC68B0A15D046F50051A1BA /* Build Universal Framework */,
+				FBC68B0B15D047880051A1BA /* CopyFiles */,
+			);
+			dependencies = (
+			);
+			name = "ObjScheme-iOS";
+			productName = "ObjScheme-iOS";
+		};
+/* End PBXAggregateTarget section */
+
 /* Begin PBXBuildFile section */
+		FBC68B0C15D047AC0051A1BA /* ObjScheme.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = FBE147F915C6D22A000B79FD /* ObjScheme.h */; };
 		FBE147F515C6D22A000B79FD /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FBE147F415C6D22A000B79FD /* Foundation.framework */; };
 		FBE147FB15C6D22A000B79FD /* ObjScheme.m in Sources */ = {isa = PBXBuildFile; fileRef = FBE147FA15C6D22A000B79FD /* ObjScheme.m */; };
 		FBE1480315C6D22A000B79FD /* SenTestingKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FBE1480215C6D22A000B79FD /* SenTestingKit.framework */; };
-		FBE1480515C6D22A000B79FD /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FBE1480415C6D22A000B79FD /* UIKit.framework */; };
 		FBE1480615C6D22A000B79FD /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FBE147F415C6D22A000B79FD /* Foundation.framework */; };
 		FBE1480915C6D22A000B79FD /* libObjScheme.a in Frameworks */ = {isa = PBXBuildFile; fileRef = FBE147F115C6D22A000B79FD /* libObjScheme.a */; };
 		FBE1480F15C6D22A000B79FD /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = FBE1480D15C6D22A000B79FD /* InfoPlist.strings */; };
@@ -27,6 +43,19 @@
 		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		FBC68B0B15D047880051A1BA /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "${BUILD_DIR}/${CONFIGURATION}-iphoneuniversal/${PRODUCT_NAME}.framework/Versions/A/Headers/";
+			dstSubfolderSpec = 0;
+			files = (
+				FBC68B0C15D047AC0051A1BA /* ObjScheme.h in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
 		FBE147F115C6D22A000B79FD /* libObjScheme.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libObjScheme.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		FBE147F415C6D22A000B79FD /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
@@ -35,7 +64,6 @@
 		FBE147FA15C6D22A000B79FD /* ObjScheme.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ObjScheme.m; sourceTree = "<group>"; };
 		FBE1480115C6D22A000B79FD /* ObjSchemeTests.octest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ObjSchemeTests.octest; sourceTree = BUILT_PRODUCTS_DIR; };
 		FBE1480215C6D22A000B79FD /* SenTestingKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SenTestingKit.framework; path = Library/Frameworks/SenTestingKit.framework; sourceTree = DEVELOPER_DIR; };
-		FBE1480415C6D22A000B79FD /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = Library/Frameworks/UIKit.framework; sourceTree = DEVELOPER_DIR; };
 		FBE1480C15C6D22A000B79FD /* ObjSchemeTests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "ObjSchemeTests-Info.plist"; sourceTree = "<group>"; };
 		FBE1480E15C6D22A000B79FD /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		FBE1481015C6D22A000B79FD /* ObjSchemeTests.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ObjSchemeTests.h; sourceTree = "<group>"; };
@@ -56,7 +84,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				FBE1480315C6D22A000B79FD /* SenTestingKit.framework in Frameworks */,
-				FBE1480515C6D22A000B79FD /* UIKit.framework in Frameworks */,
 				FBE1480615C6D22A000B79FD /* Foundation.framework in Frameworks */,
 				FBE1480915C6D22A000B79FD /* libObjScheme.a in Frameworks */,
 			);
@@ -89,7 +116,6 @@
 			children = (
 				FBE147F415C6D22A000B79FD /* Foundation.framework */,
 				FBE1480215C6D22A000B79FD /* SenTestingKit.framework */,
-				FBE1480415C6D22A000B79FD /* UIKit.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -203,6 +229,7 @@
 			targets = (
 				FBE147F015C6D22A000B79FD /* ObjScheme */,
 				FBE1480015C6D22A000B79FD /* ObjSchemeTests */,
+				FBC68B0515D046AC0051A1BA /* ObjScheme-iOS */,
 			);
 		};
 /* End PBXProject section */
@@ -219,6 +246,34 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		FBC68B0915D046D00051A1BA /* Build Static Libs */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Build Static Libs";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "xcodebuild -project ${PROJECT_NAME}.xcodeproj -sdk iphonesimulator -target ${PROJECT_NAME} -configuration ${CONFIGURATION} clean build CONFIGURATION_BUILD_DIR=${BUILD_DIR}/${CONFIGURATION}-iphonesimulator\n\nxcodebuild -project ${PROJECT_NAME}.xcodeproj -sdk iphoneos -target ${PROJECT_NAME} -configuration ${CONFIGURATION} clean build CONFIGURATION_BUILD_DIR=${BUILD_DIR}/${CONFIGURATION}-iphoneos";
+		};
+		FBC68B0A15D046F50051A1BA /* Build Universal Framework */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Build Universal Framework";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "echo \"building universal...\"\nSIMULATOR_LIBRARY_PATH=\"${BUILD_DIR}/${CONFIGURATION}-iphonesimulator/lib${PROJECT_NAME}.a\" &&\nDEVICE_LIBRARY_PATH=\"${BUILD_DIR}/${CONFIGURATION}-iphoneos/lib${PROJECT_NAME}.a\" &&\nUNIVERSAL_LIBRARY_DIR=\"${BUILD_DIR}/${CONFIGURATION}-iphoneuniversal\" &&\nUNIVERSAL_LIBRARY_PATH=\"${UNIVERSAL_LIBRARY_DIR}/${PRODUCT_NAME}\" &&\nFRAMEWORK=\"${UNIVERSAL_LIBRARY_DIR}/${PRODUCT_NAME}.framework\" &&\n\n# Create framework directory structure.\nrm -rf \"${FRAMEWORK}\" &&\necho \"making dir ${UNIVERSAL_LIBRARY_DIR}\" &&\nmkdir -p \"${UNIVERSAL_LIBRARY_DIR}\" &&\nmkdir -p \"${FRAMEWORK}/Versions/A/Headers\" &&\nmkdir -p \"${FRAMEWORK}/Versions/A/Resources\" &&\n# Generate universal binary for the device and simulator.\nlipo \"${SIMULATOR_LIBRARY_PATH}\" \"${DEVICE_LIBRARY_PATH}\" -create -output \"${UNIVERSAL_LIBRARY_PATH}\" &&\n# Move files to appropriate locations in framework paths.\ncp \"${UNIVERSAL_LIBRARY_PATH}\" \"${FRAMEWORK}/Versions/A\" &&\nln -s \"A\" \"${FRAMEWORK}/Versions/Current\" &&\nln -s \"Versions/Current/Headers\" \"${FRAMEWORK}/Headers\" &&\nln -s \"Versions/Current/Resources\" \"${FRAMEWORK}/Resources\" &&\nln -s \"Versions/Current/${PRODUCT_NAME}\" \"${FRAMEWORK}/${PRODUCT_NAME}\"";
+		};
 		FBE147FF15C6D22A000B79FD /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -273,6 +328,20 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
+		FBC68B0715D046AC0051A1BA /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		FBC68B0815D046AC0051A1BA /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
 		FBE1481315C6D22A000B79FD /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -319,9 +388,13 @@
 				DSTROOT = /tmp/ObjScheme.dst;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "ObjScheme/ObjScheme-Prefix.pch";
+				IPHONEOS_DEPLOYMENT_TARGET = 4.0;
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				RUN_CLANG_STATIC_ANALYZER = YES;
 				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALID_ARCHS = "armv6 armv7 i386";
 			};
 			name = Debug;
 		};
@@ -331,9 +404,13 @@
 				DSTROOT = /tmp/ObjScheme.dst;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "ObjScheme/ObjScheme-Prefix.pch";
+				IPHONEOS_DEPLOYMENT_TARGET = 4.0;
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				RUN_CLANG_STATIC_ANALYZER = YES;
 				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALID_ARCHS = "armv6 armv7 i386";
 			};
 			name = Release;
 		};
@@ -370,6 +447,14 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		FBC68B0615D046AC0051A1BA /* Build configuration list for PBXAggregateTarget "ObjScheme-iOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FBC68B0715D046AC0051A1BA /* Debug */,
+				FBC68B0815D046AC0051A1BA /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
 		FBE147EB15C6D229000B79FD /* Build configuration list for PBXProject "ObjScheme" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -386,6 +471,7 @@
 				FBE1481715C6D22A000B79FD /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		FBE1481815C6D22A000B79FD /* Build configuration list for PBXNativeTarget "ObjSchemeTests" */ = {
 			isa = XCConfigurationList;
@@ -394,6 +480,7 @@
 				FBE1481A15C6D22A000B79FD /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
