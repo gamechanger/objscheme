@@ -232,6 +232,9 @@
 
   OSAssertEqualsInt(@"(length (list))", 0);
   OSAssertEqualsInt(@"(length (list 1 2 3))", 3);
+  OSAssertTrue(@"(let ((x '(a b c))) (list? x))");
+  OSAssertTrue(@"(let ((x '(a b c))) (set-cdr! x #f) (not (list? x)))");
+  OSAssertTrue(@"(equal? (cons 'a #f) (let ((x '(a b c))) (set-cdr! x #f) x))");
 }
 
 - (void)testVectors {

@@ -829,6 +829,23 @@ static ObSScope* __globalScope = nil;
         return UNSPECIFIED;
       }]];
 
+  [scope defineFunction: U_LAMBDA(@"vector->immutable-vector", ^(id a) { return [NSArray arrayWithArray: (NSArray*)a]; })];
+  [scope defineFunction: U_LAMBDA(@"immutable?", ^(id a) { return TRUTH([a isKindOfClass: [NSString class]] || ( [a isKindOfClass: [NSArray class]] && ! [a isKindOfClass: [NSMutableArray class]] )); })];
+  [scope defineFunction: [ObSNativeLambda named: SY(@"vector-immutable")
+                                      fromBlock: ^(NSArray* params) {
+        return [NSArray arrayWithArray: params];
+      }]];
+  [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"vector-fill!")
+                                            fromBlock: ^(id a, id value) {
+        NSMutableArray* vector = a;
+        NSUInteger length = [vector count];
+        for ( NSUInteger i = 0; i < length; i++ ) {
+          [vector replaceObjectAtIndex: i withObject: value];
+        }
+        return UNSPECIFIED;
+      }]];
+
+
   [scope defineFunction: U_LAMBDA(@"unspecified?", ^(id a) { return TRUTH(a == UNSPECIFIED); })];
 
   [scope defineFunction: U_LAMBDA(@"string?", ^(id x) { return TRUTH([x isKindOfClass: [NSString class]]); })];
@@ -843,20 +860,17 @@ static ObSScope* __globalScope = nil;
       }]];
 
   [scope defineFunction: U_LAMBDA(@"round", ^(id a) { return [NSNumber numberWithDouble: round([(NSNumber*)a doubleValue])]; })];
-
-  [scope defineFunction: U_LAMBDA(@"vector->immutable-vector", ^(id a) { return [NSArray arrayWithArray: (NSArray*)a]; })];
-  [scope defineFunction: U_LAMBDA(@"immutable?", ^(id a) { return TRUTH([a isKindOfClass: [NSString class]] || ( [a isKindOfClass: [NSArray class]] && ! [a isKindOfClass: [NSMutableArray class]] )); })];
-  [scope defineFunction: [ObSNativeLambda named: SY(@"vector-immutable")
-                                      fromBlock: ^(NSArray* params) {
-        return [NSArray arrayWithArray: params];
+  [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"set-car!")
+                                            fromBlock: ^(id a, id val) {
+        ObSCons* cons = a;
+        [cons setCar: val];
+        return UNSPECIFIED;
       }]];
-  [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"vector-fill!")
-                                            fromBlock: ^(id a, id value) {
-        NSMutableArray* vector = a;
-        NSUInteger length = [vector count];
-        for ( NSUInteger i = 0; i < length; i++ ) {
-          [vector replaceObjectAtIndex: i withObject: value];
-        }
+
+  [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"set-cdr!")
+                                            fromBlock: ^(id a, id val) {
+        ObSCons* cons = a;
+        [cons setCdr: val];
         return UNSPECIFIED;
       }]];
 
