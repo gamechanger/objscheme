@@ -282,24 +282,21 @@ static ObSScope* __globalScope = nil;
     // (lambda (x) a b) => (lambda (x) (begin a b))
     // (lambda x expr) => (lambda (x) expr)
     [ObjScheme assertSyntax: (length >= 3) elseRaise: @"not enough args for lambda"];
-    ObSCons* parameterList = nil;
-    id parameterToken = [list cadr];
-    if ( [parameterToken isKindOfClass: [ObSCons class]] ) {
-      parameterList = parameterToken;
+    id parameters = [list cadr];
+    if ( [parameters isKindOfClass: [ObSCons class]] ) {
+      for ( id paramName in (ObSCons*)parameters ) {
+        [ObjScheme assertSyntax: [paramName isKindOfClass: [ObSSymbol class]] elseRaise: @"invalid lambda argument"];
+      }
 
     } else {
-      parameterList = CONS(parameterToken, C_NULL);
-    }
-
-    for ( id paramName in parameterList ) {
-      [ObjScheme assertSyntax: [paramName isKindOfClass: [ObSSymbol class]] elseRaise: @"invalid lambda argument"];
+      [ObjScheme assertSyntax: [parameters isKindOfClass: [ObSSymbol class]] elseRaise: @"invalid lambda argument"];
     }
 
     ObSCons* body = [list cddr];
     id expression = [self expandToken: ([self listLength: body] == 1 ? [body car] : CONS(S_BEGIN, body))
                            atTopLevel: NO];
 
-    return CONS(S_LAMBDA, CONS(parameterList, CONS(expression, C_NULL)));
+    return CONS(S_LAMBDA, CONS(parameters, CONS(expression, C_NULL)));
 
   } else if ( head == S_QUASIQUOTE ) {
     [ObjScheme assertSyntax: (length == 2) elseRaise: @"invalid quasiquote, wrong arg num"];
@@ -847,7 +844,6 @@ static ObSScope* __globalScope = nil;
 
   [scope defineFunction: U_LAMBDA(@"round", ^(id a) { return [NSNumber numberWithDouble: round([(NSNumber*)a doubleValue])]; })];
 
-  // TODO: (lambda x ...) makes 'x' the LIST of args.
   // TODO:
   /*
     - (vector-fill! v thing)

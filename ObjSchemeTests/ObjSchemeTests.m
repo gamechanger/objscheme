@@ -171,13 +171,21 @@
   OSAssertTrue(@"(equal? \"abc\" (string-append \"a\" \"b\" \"c\"))");
 
 
-  OSAssertTrue(@"(equal? '(1 2) (filter (lambda x #t) '(1 2)))");
-  OSAssertTrue(@"(equal? '(1 2) (filter (lambda x (< x 3)) '(1 2 3)))");
+  OSAssertTrue(@"(equal? '(1 2) (filter (lambda (x) #t) '(1 2)))");
+  OSAssertTrue(@"(equal? '(1 2) (filter (lambda (x) (< x 3)) '(1 2 3)))");
 
   OSAssertFalse(@"(unspecified? #f)");
   OSAssertFalse(@"(unspecified? '())");
 
   OSAssertTrue(@"(equal? (let ((x 1)) (for-each (lambda (n) (set! x (+ x n))) '(1 1)) x) 3)");
+}
+
+- (void)testLambda {
+  id source, program, returnValue;
+
+  OSAssertTrue(@"(equal? 1 ((lambda (x) (- x 1)) 2))");
+  OSAssertTrue(@"(equal? '(a b) ((lambda (x) x) '(a b)))");
+  OSAssertTrue(@"(equal? '((a b)) ((lambda x x) '(a b)))");
 }
 
 - (void)testLets {
