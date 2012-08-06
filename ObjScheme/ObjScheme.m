@@ -844,16 +844,22 @@ static ObSScope* __globalScope = nil;
 
   [scope defineFunction: U_LAMBDA(@"round", ^(id a) { return [NSNumber numberWithDouble: round([(NSNumber*)a doubleValue])]; })];
 
+  [scope defineFunction: U_LAMBDA(@"vector->immutable-vector", ^(id a) { return [NSArray arrayWithArray: (NSArray*)a]; })];
+  [scope defineFunction: U_LAMBDA(@"immutable?", ^(id a) { return TRUTH([a isKindOfClass: [NSString class]] || ( [a isKindOfClass: [NSArray class]] && ! [a isKindOfClass: [NSMutableArray class]] )); })];
+  [scope defineFunction: [ObSNativeLambda named: SY(@"vector-immutable")
+                                      fromBlock: ^(NSArray* params) {
+        return [NSArray arrayWithArray: params];
+      }]];
+
   // TODO:
   /*
     - (vector-fill! v thing)
     - (vector-copy! dest dest-start src [src-start src-end])
-    - (vector->immutable-vector v)
-    - (vector-immutable <things>)
-    - (immutable?)
     - MAYBE I/O: load, read, write, read-char, open-input-file, close-input-port, open-output-file, close-output-port, eof-object?
     - port?
     - call/cc
+    - (set-car! cell value)
+    - (set-cdr! cell value)
    */
 
   /*

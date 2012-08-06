@@ -178,6 +178,9 @@
   OSAssertFalse(@"(unspecified? '())");
 
   OSAssertTrue(@"(equal? (let ((x 1)) (for-each (lambda (n) (set! x (+ x n))) '(1 1)) x) 3)");
+
+  OSAssertTrue(@"(immutable? \"frog\")");
+  OSAssertFalse(@"(immutable? (list \"frog\"))");
 }
 
 - (void)testLambda {
@@ -247,6 +250,11 @@
   OSAssertFalse(@"(equal? (vector 'a 'b) (vector 'a 'c))");
   OSAssertTrue(@"(equal? (vector 'a 'b) (list->vector '(a b)))");
   OSAssertTrue(@"(unspecified? (vector-ref (make-vector 3) 0))"); // yeah, I learned something here...
+
+  OSAssertTrue(@"(equal? (vector 'a 'b) (vector->immutable-vector (vector 'a 'b)))");
+  OSAssertFalse(@"(immutable? (vector 'a 'b))");
+  OSAssertTrue(@"(immutable? (vector->immutable-vector (vector 'a 'b)))");
+  OSAssertTrue(@"(immutable? (vector-immutable 'a 'b))");
 }
 
 - (void)testMath {
