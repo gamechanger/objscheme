@@ -850,20 +850,21 @@ static ObSScope* __globalScope = nil;
                                       fromBlock: ^(NSArray* params) {
         return [NSArray arrayWithArray: params];
       }]];
+  [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"vector-fill!")
+                                            fromBlock: ^(id a, id value) {
+        NSMutableArray* vector = a;
+        NSUInteger length = [vector count];
+        for ( NSUInteger i = 0; i < length; i++ ) {
+          [vector replaceObjectAtIndex: i withObject: value];
+        }
+        return UNSPECIFIED;
+      }]];
 
   // TODO:
   /*
-    - (vector-fill! v thing)
     - (vector-copy! dest dest-start src [src-start src-end])
-    - MAYBE I/O: load, read, write, read-char, open-input-file, close-input-port, open-output-file, close-output-port, eof-object?
-    - port?
-    - call/cc
     - (set-car! cell value)
     - (set-cdr! cell value)
-   */
-
-  /*
-    MORE:
     - cond
     - error <= and replace Exceptions with (error) results which cause a return...? would that work...?
     - every
@@ -871,7 +872,16 @@ static ObSScope* __globalScope = nil;
     - member? (member? thing list)
     - reduce (reduce combiner list)
     - write (and something for formatting properly...)
-    - MAYBE: char (#\a) support?
+
+    - SOON:
+    - char (#\a) support?
+
+    - MAYBE:
+    - I/O: load, read, write, read-char, open-input-file, close-input-port, open-output-file, close-output-port, eof-object?
+    - port?
+
+    - SOME DAY:
+    - call/cc
    */
 }
 

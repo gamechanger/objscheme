@@ -255,6 +255,7 @@
   OSAssertFalse(@"(immutable? (vector 'a 'b))");
   OSAssertTrue(@"(immutable? (vector->immutable-vector (vector 'a 'b)))");
   OSAssertTrue(@"(immutable? (vector-immutable 'a 'b))");
+  OSAssertTrue(@"(equal? 'b (let ((v (vector 'a 'a 'a))) (vector-fill! v 'b) (vector-ref v 2)))");
 }
 
 - (void)testMath {
