@@ -890,9 +890,7 @@ static ObSScope* __globalScope = nil;
   // TODO:
   /*
     - (vector-copy! dest dest-start src [src-start src-end])
-    - cond
     - error <= and replace Exceptions with (error) results which cause a return...? would that work...?
-    - every
     - floor/ceiling
     - member? (member? thing list)
     - reduce (reduce combiner list)
