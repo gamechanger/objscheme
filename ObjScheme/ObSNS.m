@@ -16,7 +16,7 @@
   [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"NSDictionary:objectForKey")
                                             fromBlock: ^(id a, id b) { return [(NSMutableDictionary*)a objectForKey: b]; }]];
 
-  [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"NSDictionary:containsKey")
+  [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"NSDictionary:containsKey?")
                                             fromBlock: ^(id a, id b) { return [ObjScheme boolToTruth: [(NSMutableDictionary*)a objectForKey: b] != nil]; }]];
 
   [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"NSDictionary:keys")
@@ -85,9 +85,19 @@
         return [ObjScheme unspecified];
       }]];
 
-  [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"NSArray:containsObject")
+  [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"NSArray:containsObject?")
                                             fromBlock: ^(id array, id object) {
         return [ObjScheme boolToTruth: [(NSArray*)array containsObject: object]];
+      }]];
+
+  [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"NSDictionary?")
+                                           fromBlock: ^(id x) {
+        return [ObjScheme boolToTruth: [x isKindOfClass: [NSDictionary class]]];
+      }]];
+
+  [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"NSMutableDictionary?")
+                                           fromBlock: ^(id x) {
+        return [ObjScheme boolToTruth: [x isKindOfClass: [NSMutableDictionary class]]];
       }]];
 
   [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"NSArray?")
