@@ -70,6 +70,12 @@
         return [NSMutableArray arrayWithArray: args];
       }]];
 
+  [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"NSMutableArray:addObject")
+                                            fromBlock: ^(id array, id object) {
+        [(NSMutableArray*)array addObject: object];
+        return [ObjScheme unspecified];
+      }]];
+
   [scope defineFunction: [ObSNativeLambda named: SY(@"NSMutableArray:setObjectAtIndex")
                                       fromBlock: ^(NSArray* args) {
         NSMutableArray* array = [args objectAtIndex: 0];
@@ -77,6 +83,21 @@
         int index = [(NSNumber*)[args objectAtIndex: 2] intValue];
         [array replaceObjectAtIndex: index withObject: object];
         return [ObjScheme unspecified];
+      }]];
+
+  [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"NSArray:containsObject")
+                                            fromBlock: ^(id array, id object) {
+        return [ObjScheme boolToTruth: [(NSArray*)array containsObject: object]];
+      }]];
+
+  [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"NSArray?")
+                                           fromBlock: ^(id x) {
+        return [ObjScheme boolToTruth: [x isKindOfClass: [NSArray class]]];
+      }]];
+
+  [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"NSMutableArray?")
+                                           fromBlock: ^(id x) {
+        return [ObjScheme boolToTruth: [x isKindOfClass: [NSMutableArray class]]];
       }]];
 
   [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"NSArray->list")
