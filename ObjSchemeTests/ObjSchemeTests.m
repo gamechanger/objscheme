@@ -97,6 +97,8 @@
   OSAssertTrue(@"(not #f)");
 
   OSAssertTrue(@"(begin (define x 128) (= x 128))");
+  OSAssertTrue(@"(begin (define (f x) x) (= (f 1) 1))");
+  OSAssertTrue(@"(begin (define (f . x) x) (equal? (f 1) '(1)))");
 
   OSAssertTrue(@"(string? \"hello\")");
   OSAssertFalse(@"(string? #f)");
@@ -356,21 +358,5 @@
   OSAssertTrue(@"(equal? (NSArray:array 56 7) (list->NSArray (list 56 7)))");
   OSAssertTrue(@"(equal? (NSArray:array 56 7) (list->NSMutableArray (list 56 7)))");
 }
-
-- (void)testStatEngine {
-  NSError* error;
-  NSString* engineSource = [[NSString alloc] initWithContentsOfFile: @"/Users/kiril/code/gc/gcstatengine/scheme/engine.scm"
-                                                           encoding: NSUTF8StringEncoding
-                                                              error: &error];
-  id engine = [ObjScheme parseString: engineSource];
-  [[ObjScheme globalScope] evaluate: engine];
-}
-
-/*
-- (void)testExample
-{
-    STFail(@"Unit tests are not implemented yet in ObjSchemeTests");
-}
-*/
 
 @end

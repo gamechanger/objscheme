@@ -238,7 +238,11 @@ static ObSScope* __globalScope = nil;
       // we're going to change (define (f args) body) => (define f (lambda (args) body)) for simplicity
       ObSCons* lambdaSpec = defineSpec;
       ObSSymbol* lambdaName = [lambdaSpec car];
-      ObSCons* params = [lambdaSpec cdr];
+      ObSCons* paramSpec = [lambdaSpec cdr];
+      id params = paramSpec;
+      if ( params != C_NULL && [params car] == S_DOT ) {
+        params = [params cadr];
+      }
       // => (f (params) body)
       ObSCons* lambda = CONS(S_LAMBDA, CONS(params, body));
       return [ObjScheme expandToken: CONS(S_DEFINE, CONS(lambdaName, CONS(lambda, C_NULL)))
@@ -998,6 +1002,10 @@ static ObSScope* __globalScope = nil;
   [super dealloc];
 }
 
+- (NSString*)description {
+  return [NSString stringWithFormat: @"%@", _environ];
+}
+
 - (id)resolveSymbol:(ObSSymbol*)symbol {
   id myValue = [_environ objectForKey: symbol.string];
   if ( myValue ) {
@@ -1234,7 +1242,7 @@ static ObSScope* __globalScope = nil;
         if ( [cell car] == S_DOT ) {
           NSAssert(last, @". as first param invalid");
           _listParameter = [[cell cadr] retain];
-          [last setCar: C_NULL];
+          [last setCdr: C_NULL];
           break;
         }
 
@@ -1278,6 +1286,9 @@ static ObSScope* __globalScope = nil;
 
     if ( (id)arguments != C_NULL ) {
       NSAssert( _listParameter, @"too many arguments" );
+    }
+
+    if ( _listParameter ) {
       [invocationScope define: _listParameter as: arguments];
     }
 
