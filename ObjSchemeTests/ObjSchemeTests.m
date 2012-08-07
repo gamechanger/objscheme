@@ -207,7 +207,7 @@
   OSAssertTrue(@"(let ((a \"a\")) (eq? a a))");
 
   OSAssertTrue(@"(let* ((a 1) (b a)) (eq? a b))");
-  OSAssertTrue(@"(begin (define a 2) (equal? 7 (let ((a 7)) 7)))");
+  OSAssertTrue(@"(begin (define-macro a2b2c2 (lambda (x) `(2))) (equal? 7 (let ((a2b2c2 7)) a2b2c2)))");
 }
 
 - (void)testLists {
