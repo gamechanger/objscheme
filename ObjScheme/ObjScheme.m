@@ -699,7 +699,7 @@ static ObSScope* __globalScope = nil;
   [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"map")
                                             fromBlock: ^(id proc, id args) {
         NSAssert1( [proc conformsToProtocol: @protocol(ObSProcedure)], @"map: proc is %@", proc );
-        NSAssert1( [args isKindOfClass: [ObSCons class]], @"map: args is '%@'", args );
+        NSAssert1( args == C_NULL || [args isKindOfClass: [ObSCons class]], @"map: args is '%@'", args );
         return [ObjScheme map: (id<ObSProcedure>)proc on: (ObSCons*)args];
       }]];
 

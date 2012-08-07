@@ -62,6 +62,13 @@
         return [NSArray arrayWithArray: args];
       }]];
 
+  [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"NSArray:subarrayFromIndex")
+                                            fromBlock: ^(id a, id b) {
+        NSUInteger index = [(NSNumber*)b intValue];
+        NSArray* array = a;
+        return [array subarrayWithRange: NSMakeRange(index, [array count]-index)];
+      }]];
+
   [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"NSArray:count")
                                            fromBlock: ^(id a) { return [NSNumber numberWithInteger: [(NSArray*)a count]]; }]];
 
@@ -76,6 +83,12 @@
   [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"NSMutableArray:addObject")
                                             fromBlock: ^(id array, id object) {
         [(NSMutableArray*)array addObject: object];
+        return [ObjScheme unspecified];
+      }]];
+
+  [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"NSMutableArray:removeObject")
+                                            fromBlock: ^(id array, id object) {
+        [(NSMutableArray*)array removeObject: object];
         return [ObjScheme unspecified];
       }]];
 
