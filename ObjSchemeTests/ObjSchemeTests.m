@@ -207,6 +207,7 @@
   OSAssertTrue(@"(let ((a \"a\")) (eq? a a))");
 
   OSAssertTrue(@"(let* ((a 1) (b a)) (eq? a b))");
+  OSAssertTrue(@"(begin (define a 2) (equal? 7 (let ((a 7)) 7)))");
 }
 
 - (void)testLists {
@@ -337,7 +338,7 @@
 - (void)testNSDictionaryBridge {
   id source, program, returnValue;
 
-  OSAssertTrue(@"(NSDictionary:containsKey (NSDictionary:dictionaryWithObjectsAndKeys 3 \"age\") \"age\")");
+  OSAssertTrue(@"(NSDictionary:containsKey? (NSDictionary:dictionaryWithObjectsAndKeys 3 \"age\") \"age\")");
   OSAssertTrue(@"(equal? 3 (NSDictionary:objectForKey (NSDictionary:dictionaryWithObjectsAndKeys 3 \"age\") \"age\"))");
   OSAssertTrue(@"(equal? 7 (begin (define d (NSMutableDictionary:dictionary)) (NSMutableDictionary:setObjectForKey d 7 \"height\") (NSDictionary:objectForKey d \"height\")))");
   OSAssertTrue(@"(equal? '(\"age\") (NSDictionary:keys (NSDictionary:dictionaryWithObjectsAndKeys 3 \"age\")))");
