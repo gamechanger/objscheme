@@ -14,7 +14,10 @@
 + (void)initializeBridgeFunctions:(ObSScope*)scope {
 
   [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"NSDictionary:objectForKey")
-                                            fromBlock: ^(id a, id b) { return [(NSMutableDictionary*)a objectForKey: b]; }]];
+                                            fromBlock: ^(id a, id b) {
+        id val = [(NSMutableDictionary*)a objectForKey: b];
+        return ( val == nil ? [ObjScheme boolToTruth: NO] : val );
+      }]];
 
   [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"NSDictionary:containsKey?")
                                             fromBlock: ^(id a, id b) { return [ObjScheme boolToTruth: [(NSMutableDictionary*)a objectForKey: b] != nil]; }]];

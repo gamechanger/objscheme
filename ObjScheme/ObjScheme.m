@@ -697,12 +697,10 @@ static ObSScope* __globalScope = nil;
       }]];
 
   [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"map")
-                                            fromBlock: ^(id a, id b) {
-        id<ObSProcedure> proc = a;
-        NSAssert1( [proc conformsToProtocol: @protocol(ObSProcedure)], @"proc is %@", proc );
-        ObSCons* arguments = b;
-        NSAssert1( [arguments isKindOfClass: [ObSCons class]], @"args is %@", arguments );
-        return [ObjScheme map: proc on: arguments];
+                                            fromBlock: ^(id proc, id args) {
+        NSAssert1( [proc conformsToProtocol: @protocol(ObSProcedure)], @"map: proc is %@", proc );
+        NSAssert1( [args isKindOfClass: [ObSCons class]], @"map: args is '%@'", args );
+        return [ObjScheme map: (id<ObSProcedure>)proc on: (ObSCons*)args];
       }]];
 
   [scope defineFunction: U_LAMBDA(@"display", ^(id x) { NSLog(@"%@", x); return B_FALSE; })];
