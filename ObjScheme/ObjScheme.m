@@ -52,6 +52,7 @@ static NSString* _EOF = @"#EOF#";
 
 + (id)atomFromToken:(NSString*)token;
 + (NSString*)unpackStringLiteral:(NSString*)string;
++ (id)expandToken:(id)token;
 + (id)expandToken:(id)token atTopLevel:(BOOL)topLevel;
 + (void)assertSyntax:(BOOL)correct elseRaise:(NSString*)message;
 + (id)expandQuasiquote:(id)token;
@@ -184,6 +185,22 @@ static ObSScope* __globalScope = nil;
   return list;
 }
 
++ (id)expandLetDefinitions:(id)definitions {
+  if ( definitions == C_NULL ) {
+    return C_NULL;
+
+  } else {
+    ObSCons* list = definitions;
+    ObSCons* definition = [list car];
+    definition = CONS([definition car], CONS([self expandToken: [definition cadr]], C_NULL));
+    return CONS(definition, [self expandLetDefinitions: [list cdr]]);
+  }
+}
+
++ (id)expandTokenList:(id)arg {
+  return [self expandTokenList: arg atTopLevel: NO];
+}
+
 + (id)expandTokenList:(id)arg atTopLevel:(BOOL)topLevel {
   if ( arg == C_NULL ) {
     return C_NULL;
@@ -194,6 +211,10 @@ static ObSScope* __globalScope = nil;
     id tail = [self expandTokenList: list.cdr atTopLevel: topLevel];
     return ( token == UNSPECIFIED ? tail : CONS(token, tail) );
   }
+}
+
++ (id)expandToken:(id)token {
+  return [self expandToken: token atTopLevel: NO];
 }
 
 /**
@@ -226,7 +247,7 @@ static ObSScope* __globalScope = nil;
     id var = [list cadr];
     [ObjScheme assertSyntax: [var isMemberOfClass: [ObSSymbol class]]
                   elseRaise: @"First arg of 'set!' should be a Symbol"];
-    id expression = [self expandToken: [list caddr] atTopLevel: NO];
+    id expression = [self expandToken: [list caddr]];
     return CONS(S_SET, CONS(var, CONS(expression, C_NULL)));
 
   } else if ( head == S_DEFINE ) { // (define ...)
@@ -245,21 +266,20 @@ static ObSScope* __globalScope = nil;
       }
       // => (f (params) body)
       ObSCons* lambda = CONS(S_LAMBDA, CONS(params, body));
-      return [ObjScheme expandToken: CONS(S_DEFINE, CONS(lambdaName, CONS(lambda, C_NULL)))
-                         atTopLevel: NO];
+      return [ObjScheme expandToken: CONS(S_DEFINE, CONS(lambdaName, CONS(lambda, C_NULL)))];
 
     } else {
       [ObjScheme assertSyntax: [defineSpec isMemberOfClass: [ObSSymbol class]]
                     elseRaise: @"define second param must be symbol"];
       id expression = [body car];
-      return CONS(S_DEFINE, CONS(defineSpec, CONS([ObjScheme expandToken: expression atTopLevel: NO], C_NULL)));
+      return CONS(S_DEFINE, CONS(defineSpec, CONS([ObjScheme expandToken: expression], C_NULL)));
     }
 
   } else if ( head == S_DEFINEMACRO ) { // (define-macro symbol proc)
     [ObjScheme assertSyntax: topLevel elseRaise: @"define-macro must be invoked at the top level"];
     [ObjScheme assertSyntax: (length == 3) elseRaise: @"bad define-macro syntax"];
     ObSSymbol* macroName = [list cadr];
-    id body = [ObjScheme expandToken: [list caddr] atTopLevel: NO];
+    id body = [ObjScheme expandToken: [list caddr]];
     id<ObSProcedure> procedure = [[ObjScheme globalScope] evaluate: body];
     [ObjScheme assertSyntax: [procedure conformsToProtocol: @protocol(ObSProcedure)]
                   elseRaise: @"body of define-macro must be an invocation"];
@@ -273,6 +293,13 @@ static ObSScope* __globalScope = nil;
     } else {
       return CONS(S_BEGIN, [self expandTokenList: [list cdr] atTopLevel: topLevel]);
     }
+
+  } else if ( head == S_LET || head == S_LET_STAR ) {
+    // (let ((x e1) (y e2)) body...)
+    // we special-case this so as not to accidentally try to expand the symbol names
+    ObSCons* definitions = [list cadr];
+    ObSCons* body = [list cddr];
+    return CONS(head, CONS([self expandLetDefinitions: definitions], [self expandTokenList: body]));
 
   } else if ( head == S_LAMBDA ) {
     // (lambda (x) a b) => (lambda (x) (begin a b))
@@ -289,8 +316,7 @@ static ObSScope* __globalScope = nil;
     }
 
     ObSCons* body = [list cddr];
-    id expression = [self expandToken: ([body count] == 1 ? [body car] : CONS(S_BEGIN, body))
-                           atTopLevel: NO];
+    id expression = [self expandToken: ([body count] == 1 ? [body car] : CONS(S_BEGIN, body))];
 
     return CONS(S_LAMBDA, CONS(parameters, CONS(expression, C_NULL)));
 
@@ -303,11 +329,11 @@ static ObSScope* __globalScope = nil;
     if ( [[ObjScheme globalScope] hasMacroNamed: symbol] ) {
       id macro = [[ObjScheme globalScope] macroNamed: symbol];
       ObSCons* args = [list cdr];
-      return [ObjScheme expandToken: [macro callWith: args] atTopLevel: NO];
+      return [ObjScheme expandToken: [macro callWith: args]];
     }
   }
 
-  return [self expandTokenList: list atTopLevel: NO];
+  return [self expandTokenList: list];
 }
 
 + (id)filter:(id)list with:(id<ObSProcedure>)proc {
