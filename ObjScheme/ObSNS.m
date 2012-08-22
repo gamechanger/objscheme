@@ -132,10 +132,10 @@
   [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"list->NSArray")
                                            fromBlock: ^(id x) {
         if ( [ObjScheme isEmptyList: x] ) {
-          return [NSArray array];
+          return (id)[NSArray array];
 
         } else {
-          return [(ObSCons*)x toArray];
+          return (id)[(ObSCons*)x toArray];
         }
       }]];
 

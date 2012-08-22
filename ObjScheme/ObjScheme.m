@@ -462,7 +462,7 @@ static ObSScope* __globalScope = nil;
 
 + (void)assertSyntax:(BOOL)correct elseRaise:(NSString*)message {
   if ( ! correct )
-    [NSException raise: @"SyntaxError" format: message];
+    [NSException raise: @"SyntaxError" format: @"%@", message];
 }
 
 + (void)addGlobalsToScope:(ObSScope*)scope {
@@ -838,7 +838,7 @@ static ObSScope* __globalScope = nil;
   [scope defineFunction: U_LAMBDA(@"vector?", ^(id a) { return TRUTH([a isKindOfClass: [NSArray class]]); })];
 
   [scope defineFunction: U_LAMBDA(@"vector->list", ^(id a) { return [ObjScheme list: (NSArray*)a]; })];
-  [scope defineFunction: U_LAMBDA(@"list->vector", ^(id a) { if ( a == C_NULL ) { return [NSArray array]; } else { return [(ObSCons*)a toArray]; } })];
+  [scope defineFunction: U_LAMBDA(@"list->vector", ^(id a) { if ( a == C_NULL ) { return (id)[NSArray array]; } else { return (id)[(ObSCons*)a toArray]; } })];
   [scope defineFunction: B_LAMBDA(@"vector-ref", ^(id a, id b) { return [(NSArray*)a objectAtIndex: [(NSNumber*)b intValue]]; })];
   [scope defineFunction: [ObSNativeLambda named: SY(@"vector-set!")
                                       fromBlock: ^(NSArray* args) {
