@@ -87,6 +87,10 @@
   returnValue = [[ObjScheme globalScope] evaluate: program];
   STAssertTrue([ObjScheme isFalse: returnValue], @"return value isn't false %@", returnValue);
 
+  source = @"(let ((2-in-1 'bing)) 2-in-1)";
+  program = [ObjScheme parseString: source];
+  returnValue = [[ObjScheme globalScope] evaluate: program];
+  STAssertTrue([returnValue isKindOfClass: [ObSSymbol class]], @"number-prefixed string should be a symbol, not number: %@", returnValue);
 }
 
 - (void)testBuiltIns {

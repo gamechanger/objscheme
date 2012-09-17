@@ -150,17 +150,21 @@ static ObSScope* __globalScope = nil;
   if ( [string hasPrefix: @"\""] )
     return [ObjScheme unpackStringLiteral: string];
 
-  NSRange dotLocation = [string rangeOfString: @"."];
-  if ( dotLocation.location == NSNotFound ) {
-    int intValue = [string intValue];
-    if ( intValue != 0 ) { // note that the literal '0' is handled in constants above
-      return [NSNumber numberWithInteger: intValue];
-    }
-  }
+  NSRange alphaNumRange = [string rangeOfCharacterFromSet: [NSCharacterSet letterCharacterSet]];
+  if ( alphaNumRange.location == NSNotFound ) {
 
-  double doubleValue = [string doubleValue];
-  if ( doubleValue != 0.0 ) // note that the literal '0.0' is handle in constants above
-    return [NSNumber numberWithDouble: doubleValue];
+    NSRange dotLocation = [string rangeOfString: @"."];
+    if ( dotLocation.location == NSNotFound ) {
+      int intValue = [string intValue];
+      if ( intValue != 0 ) { // note that the literal '0' is handled in constants above
+        return [NSNumber numberWithInteger: intValue];
+      }
+    }
+
+    double doubleValue = [string doubleValue];
+    if ( doubleValue != 0.0 ) // note that the literal '0.0' is handle in constants above
+      return [NSNumber numberWithDouble: doubleValue];
+  }
 
   return [ObSSymbol symbolFromString: string];
 }
@@ -1019,7 +1023,7 @@ static ObSScope* __globalScope = nil;
 
 @implementation ObSScope
 
-@synthesize outer=_outerScope;
+@synthesize outer=_outerScope, environ=_environ;
 
 - (id)initWithOuterScope:(ObSScope*)outer {
   if ( (self = [super init]) ) {

@@ -55,6 +55,7 @@
 }
 
 @property (nonatomic,retain) ObSScope* outer;
+@property (nonatomic,retain) NSMutableDictionary* environ;
 
 - (id)initWithOuterScope:(ObSScope*)outer;
 - (id)resolveSymbol:(ObSSymbol*)variable;
