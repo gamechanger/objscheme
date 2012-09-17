@@ -66,7 +66,7 @@
                                             fromBlock: ^(id a, id b) {
         NSUInteger index = [(NSNumber*)b intValue];
         NSArray* array = a;
-        return [array subarrayWithRange: NSMakeRange(index, [array count]-index)];
+        return [NSMutableArray arrayWithArray: [array subarrayWithRange: NSMakeRange(index, [array count]-index)]];
       }]];
 
   [scope defineFunction: [ObSNativeLambda named: SY(@"NSArray:subarrayFromIndexToIndex")
@@ -77,7 +77,15 @@
         if ( endIndex < 0 ) {
           endIndex = [a count] + endIndex;
         }
-        return [a subarrayWithRange: NSMakeRange(startIndex, endIndex-startIndex)];
+        if ( endIndex > [a count] )
+          endIndex = [a count];
+        return [NSMutableArray arrayWithArray: [a subarrayWithRange: NSMakeRange(startIndex, endIndex-startIndex)]];
+      }]];
+
+  [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"NSArray:indexOfObject")
+                                            fromBlock: ^(id a, id b) {
+        NSUInteger index = [(NSArray*)a indexOfObject: b];
+        return (id)(index == NSNotFound ? [ObjScheme boolToTruth: NO] : [NSNumber numberWithInteger: index]);
       }]];
 
   [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"NSArray:count")

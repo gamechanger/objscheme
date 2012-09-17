@@ -29,6 +29,8 @@ static ObSSymbol* S_CLOSEPAREN;
 static ObSSymbol* S_LIST;
 static ObSSymbol* S_EVAL;
 static ObSSymbol* S_MAP;
+static ObSSymbol* S_OPENBRACKET;
+static ObSSymbol* S_CLOSEBRACKET;
 
 static ObSConstant* B_FALSE;
 static ObSConstant* B_TRUE;
@@ -88,6 +90,8 @@ static ObSScope* __globalScope = nil;
   S_LET_STAR =        SY(@"let*");
   S_OPENPAREN =       SY(@"(");
   S_CLOSEPAREN =      SY(@")");
+  S_OPENBRACKET =     SY(@"[");
+  S_CLOSEBRACKET =    SY(@"]");
   S_LIST =            SY(@"list");
   S_EVAL =            SY(@"eval");
   S_MAP =             SY(@"map");
@@ -408,13 +412,13 @@ static ObSScope* __globalScope = nil;
 }
 
 + (id)readAheadFromToken:(id)token andPort:(ObSInPort*)inPort {
-  if ( token == S_OPENPAREN ) {
+  if ( token == S_OPENPAREN || token == S_OPENBRACKET ) {
     id list = C_NULL;
     ObSCons* lastCons = nil;
 
     while ( 1 ) {
       token = [inPort nextToken];
-      if ( token == S_CLOSEPAREN ) {
+      if ( token == S_CLOSEPAREN || token == S_CLOSEBRACKET ) {
         break;
 
       } else {
@@ -434,6 +438,10 @@ static ObSScope* __globalScope = nil;
 
   } else if ( token == S_CLOSEPAREN ) {
     [NSException raise: @"SyntaxError" format: @"unexpected ')'"];
+    return nil;
+
+  } else if ( token == S_CLOSEBRACKET ) {
+    [NSException raise: @"SyntaxError" format: @"unexpected ']'"];
     return nil;
 
   } else if ( token == S_QUOTE || token == S_QUASIQUOTE || token == S_UNQUOTE || token == S_UNQUOTESPLICING ) {
@@ -735,6 +743,12 @@ static ObSScope* __globalScope = nil;
           [string appendString: s];
         }
         return string;
+      }]];
+
+  [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"string-split")
+                                            fromBlock: ^(id string, id sep) {
+        // TODO: this should *really* enforce that 'sep' is a character, not a string, but it's all Doug's fault.
+        return [ObjScheme list: [(NSString*)string componentsSeparatedByString: sep]];
       }]];
 
   [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"map")
@@ -1571,6 +1585,8 @@ static ObSScope* __globalScope = nil;
 
   case '(':  return S_OPENPAREN;
   case ')':  return S_CLOSEPAREN;
+  case '[':  return S_OPENBRACKET;
+  case ']':  return S_CLOSEBRACKET;
   case '`':  return S_QUASIQUOTE;
   case '\'': return S_QUOTE;
   case ',':
