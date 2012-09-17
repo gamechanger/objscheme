@@ -886,10 +886,12 @@ static ObSScope* __globalScope = nil;
   [scope defineFunction: U_LAMBDA(@"string?", ^(id x) { return TRUTH([x isKindOfClass: [NSString class]]); })];
   [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"for-each")
                                             fromBlock: ^(id a, id b) {
-        id<ObSProcedure> proc = a;
-        ObSCons* list = b;
-        for ( id item in list ) {
-          [proc callWith: CONS(item, C_NULL)];
+        if ( b != C_NULL ) {
+          id<ObSProcedure> proc = a;
+          ObSCons* list = b;
+          for ( id item in list ) {
+            [proc callWith: CONS(item, C_NULL)];
+          }
         }
         return UNSPECIFIED;
       }]];
@@ -1646,7 +1648,10 @@ static ObSScope* __globalScope = nil;
 
     if ( [cell isKindOfClass: [ObSCons class]] ) {
       ObSCons* next = cell;
-      [d appendFormat: @"%@", [next car]];
+      id value = [next car];
+      NSString* format = [value isKindOfClass: [NSString class]] ? @"\"%@\"" : @"%@";
+      [d appendFormat: format, value];
+
       cell = [next cdr];
 
     } else {

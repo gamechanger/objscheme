@@ -35,6 +35,12 @@
  STAssertEquals(strcmp([number objCType], @encode(double)), 0, @"%@ isn't a double", source);\
  STAssertEqualsWithAccuracy([number doubleValue], (expected), 0.0001, @"%@ => %f not %f, off by %f", source, [number doubleValue], (expected), (expected)-[number doubleValue]);
 
+#define OSAssertEquals(code, expected) source = (code);\
+ program = [ObjScheme parseString: source];\
+ returnValue = [[ObjScheme globalScope] evaluate: program];\
+ STAssertEqualObjects(returnValue, expected, @"%@ ", source);
+
+
 #define EXEC(source) [[ObjScheme globalScope] evaluate: [ObjScheme parseString: (source)]]
 #define COMPILE(source) [ObjScheme parseString: (source)]
 
@@ -186,6 +192,7 @@
   OSAssertFalse(@"(unspecified? '())");
 
   OSAssertTrue(@"(equal? (let ((x 1)) (for-each (lambda (n) (set! x (+ x n))) '(1 1)) x) 3)");
+  OSAssertTrue(@"(equal? (let ((x 1)) (for-each (lambda (n) (set! x (+ x n))) '()) x) 1)");
 
   OSAssertTrue(@"(immutable? \"frog\")");
   OSAssertFalse(@"(immutable? (list \"frog\"))");
@@ -350,6 +357,7 @@
 
 - (void)testNSArrayBridge {
   id source, program, returnValue;
+  NSNumber* number;
 
   OSAssertTrue(@"(NSArray:array)");
   OSAssertTrue(@"(equal? 0 (NSArray:count (NSArray:array)))");
@@ -357,11 +365,14 @@
   OSAssertTrue(@"(equal? 2 (NSArray:count (NSMutableArray:array 6 7)))");
   OSAssertTrue(@"(equal? 6 (NSArray:objectAtIndex (NSArray:array 6 7) 0))");
   OSAssertTrue(@"(equal? 7 (NSArray:objectAtIndex (NSArray:array 6 7) 1))");
-  OSAssertTrue(@"(equal? 9 (let ((a (NSMutableArray:array 6 7))) (NSMutableArray:setObjectAtIndex a 9 1) (NSArray:objectAtIndex a 1)))");
+  OSAssertEqualsInt(@"(let ((a (NSMutableArray:array 6 7))) (NSMutableArray:setObjectAtIndex a 9 1) (NSArray:objectAtIndex a 1))", 9);
 
   OSAssertTrue(@"(equal? (list 56 7) (NSArray->list (NSArray:array 56 7)))");
   OSAssertTrue(@"(equal? (NSArray:array 56 7) (list->NSArray (list 56 7)))");
   OSAssertTrue(@"(equal? (NSArray:array 56 7) (list->NSMutableArray (list 56 7)))");
+
+  NSArray* a = [NSArray arrayWithObjects: [NSNumber numberWithInteger: 0], [NSNumber numberWithInteger: 1], [NSNumber numberWithInteger: 2], nil];
+  OSAssertEquals(@"(NSArray:subarrayFromIndexToIndex (NSArray:array 0 1 2 3) 0 -1)", a);
 }
 
 @end

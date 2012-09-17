@@ -69,6 +69,17 @@
         return [array subarrayWithRange: NSMakeRange(index, [array count]-index)];
       }]];
 
+  [scope defineFunction: [ObSNativeLambda named: SY(@"NSArray:subarrayFromIndexToIndex")
+                                      fromBlock: ^(NSArray* args) {
+        NSArray* a = [args objectAtIndex: 0];
+        NSUInteger startIndex = [(NSNumber*)[args objectAtIndex: 1] intValue];
+        NSInteger endIndex = [(NSNumber*)[args objectAtIndex: 2] intValue];
+        if ( endIndex < 0 ) {
+          endIndex = [a count] + endIndex;
+        }
+        return [a subarrayWithRange: NSMakeRange(startIndex, endIndex-startIndex)];
+      }]];
+
   [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"NSArray:count")
                                            fromBlock: ^(id a) { return [NSNumber numberWithInteger: [(NSArray*)a count]]; }]];
 
