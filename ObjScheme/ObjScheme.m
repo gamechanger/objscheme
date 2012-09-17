@@ -641,6 +641,16 @@ static ObSScope* __globalScope = nil;
         return [cons2 car];
       }]];
 
+  [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"cddr")
+                                           fromBlock: ^(id o) {
+        NSAssert1([o isKindOfClass: [ObSCons class]], @"invalid operand for car %@", o);
+        ObSCons* cons = o;
+        id second = [cons cdr];
+        NSAssert1([second isKindOfClass: [ObSCons class]], @"cadr requires cdr to be a cons, but it's %@", second);
+        ObSCons* cons2 = second;
+        return [cons2 cdr];
+      }]];
+
   [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"length")
                                            fromBlock: ^(id o) {
         if ( o == C_NULL )
