@@ -51,7 +51,7 @@
                                       fromBlock: ^(NSArray* args) {
         NSMutableDictionary* dict = [NSMutableDictionary dictionary];
         NSUInteger length = [args count];
-        for ( NSUInteger i = 0; i < length-1; i++ ) {
+        for ( NSUInteger i = 0; i < length-1; i+=2 ) {
           [dict setObject: [args objectAtIndex: i] forKey: [args objectAtIndex: i+1]];
         }
         return dict;

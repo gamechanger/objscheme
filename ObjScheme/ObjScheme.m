@@ -744,12 +744,15 @@ static ObSScope* __globalScope = nil;
         }
         return string;
       }]];
+  [scope defineFunction: U_LAMBDA(@"string->number", ^(id o) { return [NSNumber numberWithDouble: [(NSString*)o doubleValue]]; })];
 
   [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"string-split")
                                             fromBlock: ^(id string, id sep) {
         // TODO: this should *really* enforce that 'sep' is a character, not a string, but it's all Doug's fault.
         return [ObjScheme list: [(NSString*)string componentsSeparatedByString: sep]];
       }]];
+
+  [scope defineFunction: U_LAMBDA(@"inexact->exact", ^(id o) { return [NSNumber numberWithInteger: [(NSNumber*)o intValue]]; })];
 
   [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"map")
                                             fromBlock: ^(id proc, id args) {
