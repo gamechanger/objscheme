@@ -355,7 +355,7 @@
   OSAssertTrue(@"(NSDictionary:containsKey? (NSDictionary:dictionaryWithObjectsAndKeys 3 \"age\") \"age\")");
   OSAssertTrue(@"(equal? 3 (NSDictionary:objectForKey (NSDictionary:dictionaryWithObjectsAndKeys 3 \"age\") \"age\"))");
   OSAssertTrue(@"(equal? 7 (begin (define d (NSMutableDictionary:dictionary)) (NSMutableDictionary:setObjectForKey d 7 \"height\") (NSDictionary:objectForKey d \"height\")))");
-  OSAssertTrue(@"(equal? '(\"age\") (NSDictionary:keys (NSDictionary:dictionaryWithObjectsAndKeys 3 \"age\")))");
+  OSAssertTrue(@"(equal? (NSArray:array \"age\") (NSDictionary:keys (NSDictionary:dictionaryWithObjectsAndKeys 3 \"age\")))");
 }
 
 - (void)testNSArrayBridge {

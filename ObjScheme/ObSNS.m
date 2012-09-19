@@ -23,7 +23,7 @@
                                             fromBlock: ^(id a, id b) { return [ObjScheme boolToTruth: [(NSMutableDictionary*)a objectForKey: b] != nil]; }]];
 
   [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"NSDictionary:keys")
-                                           fromBlock: ^(id a) { return [ObjScheme list: [(NSDictionary*)a allKeys]]; }]];
+                                           fromBlock: ^(id a) { return [(NSDictionary*)a allKeys]; }]];
 
   [scope defineFunction: [ObSNativeLambda named: SY(@"NSDictionary:dictionaryWithObjectsAndKeys")
                                       fromBlock: ^(NSArray* args) {
