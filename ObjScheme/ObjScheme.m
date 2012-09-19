@@ -517,33 +517,36 @@ static ObSScope* __globalScope = nil;
         if ( [list count] == 0 )
           return [NSNumber numberWithInteger: 0];
 
-        NSNumber* first = [list objectAtIndex: 0];
-        if ( strcmp([first objCType], @encode(int)) == 0 ) {
-          int ret = 1;
-          for ( NSNumber* number in list ) {
-            ret *= [number intValue];
-          }
-          return [NSNumber numberWithInteger: ret];
+        int intRet = 1;
+        double doubleRet = 1.0;
+        BOOL useDouble = NO;
 
-        } else {
-          double ret = 1.0;
-          for ( NSNumber* number in list ) {
-            ret *= [number doubleValue];
+        for ( NSNumber* number in list ) {
+          if ( useDouble || strcmp([number objCType], @encode(int)) != 0 ) {
+            useDouble = YES;
+            doubleRet *= [number doubleValue];
+
+          } else {
+            intRet *= [number intValue];
+            doubleRet *= [number doubleValue];
           }
-          return [NSNumber numberWithDouble: ret];
         }
+
+        if ( useDouble )
+          return [NSNumber numberWithDouble: doubleRet];
+        else
+          return [NSNumber numberWithInteger: intRet];
       }]];
 
   [scope defineFunction: [ObSNativeLambda named: SY(@"/")
                                       fromBlock: ^(NSArray* list) {
         NSNumber* first = [list objectAtIndex: 0];
         NSNumber* second = [list objectAtIndex: 1];
-        if ( strcmp([first objCType], @encode(int)) == 0 && strcmp([second objCType], @encode(int)) == 0 ) {
-          return [NSNumber numberWithInteger: [first intValue]/[second intValue]];
 
-        } else {
-          return [NSNumber numberWithDouble: [first doubleValue]/[second doubleValue]];
-        }
+        if ( [second floatValue] == 0.0 )
+          return [NSNumber numberWithInteger: INFINITY];
+
+        return [NSNumber numberWithDouble: [first doubleValue]/[second doubleValue]];
       }]];
 
   [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"not")
@@ -745,6 +748,15 @@ static ObSScope* __globalScope = nil;
         return string;
       }]];
   [scope defineFunction: U_LAMBDA(@"string->number", ^(id o) { return [NSNumber numberWithDouble: [(NSString*)o doubleValue]]; })];
+  [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"number->string")
+                                           fromBlock: ^(id o) {
+        NSNumber* n = o;
+        if ( strcmp([n objCType], @encode(int)) == 0 ) {
+          return [NSString stringWithFormat: @"%d", [n intValue]];
+        } else {
+          return [NSString stringWithFormat: @"%f", [n doubleValue]];
+        }
+      }]];
 
   [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"string-split")
                                             fromBlock: ^(id string, id sep) {

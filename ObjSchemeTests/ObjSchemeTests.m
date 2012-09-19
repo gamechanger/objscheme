@@ -292,8 +292,8 @@
   OSAssertEqualsDouble(@"(+ 1.0 2.0)", 3.0);
 
   OSAssertEqualsInt(@"(* 5 7)", 35);
-  OSAssertEqualsInt(@"(/ 5 7)", 0);
-  OSAssertEqualsInt(@"(/ 5 2)", 2);
+  OSAssertEqualsDouble(@"(/ 5 7)", 0.71428);
+  OSAssertEqualsDouble(@"(/ 5 2)", 2.5);
 
   OSAssertEqualsDouble(@"(/ 5.0 2)", 2.5);
   OSAssertEqualsDouble(@"(/ 5 2.0)", 2.5);
@@ -344,6 +344,9 @@
 
   OSAssertEqualsDouble(@"(round 2.2)", 2.0);
   OSAssertEqualsDouble(@"(round 2.5)", 3.0);
+
+  OSAssertEquals(@"(number->string 2)", @"2");
+  OSAssertEquals(@"(number->string 2.2)", @"2.200000");
 }
 
 - (void)testNSDictionaryBridge {
