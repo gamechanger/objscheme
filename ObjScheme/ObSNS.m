@@ -62,6 +62,24 @@
         return [NSArray arrayWithArray: args];
       }]];
 
+  [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"NSMutableArray:reversedArrayFromArray")
+                                           fromBlock: ^(id array) {
+        NSMutableArray* ret = [NSMutableArray arrayWithCapacity: [(NSArray*)array count]];
+        for ( id x in [(NSArray*)array reverseObjectEnumerator] ) {
+          [ret addObject: x];
+        }
+        return ret;
+      }]];
+
+  [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"NSMutableArray:alphabetizedArray")
+                                           fromBlock: ^(id array) {
+        return [(NSArray*)array sortedArrayUsingComparator: ^(id a, id b) {
+            NSString* s1 = a;
+            NSString* s2 = b;
+            return [s1 compare: s2];
+          }];
+      }]];
+
   [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"NSArray:subarrayFromIndex")
                                             fromBlock: ^(id a, id b) {
         NSUInteger index = [(NSNumber*)b intValue];
