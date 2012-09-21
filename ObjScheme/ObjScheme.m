@@ -821,6 +821,9 @@ static ObSScope* __globalScope = nil;
 
   [scope defineFunction: B_LAMBDA(@"filter", ^(id a, id b) { return [ObjScheme filter: b with: a]; })];
 
+  [scope defineFunction: B_LAMBDA(@"string-startswith", ^(id a, id b) { return [ObjScheme boolToTruth: [(NSString*)a hasPrefix: (NSString*)b]]; })];
+  [scope defineFunction: B_LAMBDA(@"string-endswith", ^(id a, id b) { return [ObjScheme boolToTruth: [(NSString*)a hasSuffix: (NSString*)b]]; })];
+
   [scope defineFunction: [ObSNativeLambda named: SY(@"max")
                                       fromBlock: ^(NSArray* args) {
         NSNumber* max = nil;
