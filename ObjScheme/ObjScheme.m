@@ -1215,17 +1215,51 @@ static ObSScope* __globalScope = nil;
           token = [self evaluate: [rest car]];
 
         } else if ( head == S_LET ) {
-          ObSCons* definitions = [rest car];
-          ObSCons* body = [rest cdr];
-          ObSScope* letScope = [[ObSScope alloc] initWithOuterScope: self];
+          // normal: (let ((x y)) body)
+          // named: (let name ((x y)) body)
 
-          for ( ObSCons* definition in definitions ) {
-            ObSSymbol* name = [definition car];
-            id expression = [definition cadr];
-            [letScope define: name as: [self evaluate: expression]];
+          if ( [[rest car] isKindOfClass: [ObSSymbol class]] ) { // named let
+
+            ObSSymbol* name = [rest car];
+            ObSCons* definitions = [rest cadr];
+            ObSCons* body = [rest cddr];
+            ObSScope* letScope = [[ObSScope alloc] initWithOuterScope: self];
+
+            NSMutableArray* argList = [[NSMutableArray alloc] initWithCapacity: 4];
+
+            for ( ObSCons* definition in definitions ) {
+              ObSSymbol* name = [definition car];
+              id expression = [definition cadr];
+              [letScope define: name as: [self evaluate: expression]];
+              [argList addObject: name];
+            }
+
+            ObSCons* parameters = [ObjScheme list: argList];
+            [argList release];
+
+            ObSLambda* lambda = [[ObSLambda alloc] initWithParameters: parameters
+                                                           expression: body
+                                                                scope: letScope
+                                                                 name: name];
+            [letScope define: name as: lambda];
+            [lambda release];
+
+            return [letScope begin: body];
+
+          } else { // normal let
+
+            ObSCons* definitions = [rest car];
+            ObSCons* body = [rest cdr];
+            ObSScope* letScope = [[ObSScope alloc] initWithOuterScope: self];
+
+            for ( ObSCons* definition in definitions ) {
+              ObSSymbol* name = [definition car];
+              id expression = [definition cadr];
+              [letScope define: name as: [self evaluate: expression]];
+            }
+
+            return [letScope begin: body];
           }
-
-          return [letScope begin: body];
 
         } else if ( head == S_LET_STAR ) {
           ObSCons* definitions = [rest car];
