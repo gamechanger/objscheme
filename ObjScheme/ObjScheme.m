@@ -288,7 +288,8 @@ static ObSScope* __globalScope = nil;
     [ObjScheme assertSyntax: (length == 3) elseRaise: @"bad define-macro syntax"];
 
     id nameOrSpec = [list cadr];
-    id body = [ObjScheme expandToken: [list caddr]];
+    id body = [list caddr];
+    body = [ObjScheme expandToken: body];
     ObSSymbol* macroName = nil;
 
     if ( [nameOrSpec isKindOfClass: [ObSSymbol class]] ) {
@@ -298,7 +299,7 @@ static ObSScope* __globalScope = nil;
       [ObjScheme assertSyntax: [nameOrSpec isKindOfClass: [ObSCons class]] elseRaise: @"bad define-macro spec"];
       ObSCons* callSpec = nameOrSpec;
       macroName = [callSpec car];
-      id args = [list cdr];
+      id args = [nameOrSpec cdr];
       id lambdaArgSpec = args != C_NULL && [(ObSCons*)args car] == S_DOT ? [args cadr] : args;
       body = CONS(S_LAMBDA, CONS(lambdaArgSpec, body));
     }
@@ -839,6 +840,27 @@ static ObSScope* __globalScope = nil;
 
   [scope defineFunction: B_LAMBDA(@"string-startswith", ^(id a, id b) { return [ObjScheme boolToTruth: [(NSString*)a hasPrefix: (NSString*)b]]; })];
   [scope defineFunction: B_LAMBDA(@"string-endswith", ^(id a, id b) { return [ObjScheme boolToTruth: [(NSString*)a hasSuffix: (NSString*)b]]; })];
+  [scope defineFunction: [ObSNativeLambda named: SY(@"string-substring")
+                                      fromBlock: ^(NSArray* args) {
+        NSString* string = [args objectAtIndex: 0];
+        NSInteger firstIdx = [(NSNumber*)[args objectAtIndex: 1] intValue];
+        if ( firstIdx < 0 ) {
+          firstIdx = [string length] + firstIdx; // + is right, it's negative
+        }
+
+        if ( [args count] == 3 ) {
+          NSInteger secondIdx = [(NSNumber*)[args objectAtIndex: 2] intValue];
+          if ( secondIdx < 0 ) {
+            secondIdx = [string length] + secondIdx; // + is right, it's negative
+          }
+
+          return [string substringWithRange: NSMakeRange(firstIdx, secondIdx-firstIdx)];
+
+        } else {
+          return [string substringFromIndex: firstIdx];
+        }
+
+      }]];
 
   [scope defineFunction: [ObSNativeLambda named: SY(@"max")
                                       fromBlock: ^(NSArray* args) {
@@ -1162,6 +1184,15 @@ static ObSScope* __globalScope = nil;
   }
 }
 
+- (id)begin:(ObSCons*)expressions {
+  id ret = nil;
+  for ( id expression in expressions ) {
+    ret = [self evaluate: expression];
+  }
+  NSAssert(ret, @"Empty begin statement");
+  return ret;
+}
+
 - (id)evaluate:(id)token {
   NSAssert(token != nil, @"nil token");
 
@@ -1181,8 +1212,7 @@ static ObSScope* __globalScope = nil;
 
         if ( head == S_EVAL ) {
           NSAssert1(argCount == 1, @"eval can have only 1 operand, not %@", rest);
-          id program = [self evaluate: [rest car]];
-          return [self evaluate: program];
+          token = [self evaluate: [rest car]];
 
         } else if ( head == S_LET ) {
           ObSCons* definitions = [rest car];
@@ -1195,11 +1225,7 @@ static ObSScope* __globalScope = nil;
             [letScope define: name as: [self evaluate: expression]];
           }
 
-          id result = nil;
-          for ( id expression in body ) {
-            result = [letScope evaluate: expression];
-          }
-          return result;
+          return [letScope begin: body];
 
         } else if ( head == S_LET_STAR ) {
           ObSCons* definitions = [rest car];
@@ -1212,11 +1238,7 @@ static ObSScope* __globalScope = nil;
             [letScope define: name as: [letScope evaluate: expression]];
           }
 
-          id result = nil;
-          for ( id expression in body ) {
-            result = [letScope evaluate: expression];
-          }
-          return result;
+          return [letScope begin: body];
 
         } else if ( head == S_QUOTE ) { // (quote exp) -> exp
           NSAssert1(argCount == 1, @"quote can have only 1 operand, not %@", rest);
@@ -1236,8 +1258,7 @@ static ObSScope* __globalScope = nil;
           ObSSymbol* symbol = [rest car];
           id expression = [rest cadr];
           ObSScope* definingScope = [self findScopeOf: symbol]; // I do this first, which can fail, so we don't bother executing predicate
-          id value = [self evaluate: expression];
-          [definingScope define: symbol as: value];
+          [definingScope define: symbol as: [self evaluate: expression]];
           return UNSPECIFIED;
 
         } else if ( head == S_DEFINE ) { // (define variableName expression)
@@ -1369,6 +1390,7 @@ static ObSScope* __globalScope = nil;
   if ( _parameters != nil ) {
     // for each parameter, pop something off the top of arguments...
     for ( ObSSymbol* key in _parameters ) {
+      NSAssert1((id)arguments != C_NULL, @"ran out of arguments for %@", _parameters);
       [invocationScope define: key as: [arguments car]];
       arguments = [arguments cdr];
     }
