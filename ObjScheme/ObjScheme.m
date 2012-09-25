@@ -1198,6 +1198,8 @@ static ObSScope* __globalScope = nil;
 }
 
 - (id)begin:(ObSCons*)expressions {
+  NSAssert( [expressions isKindOfClass: [ObSCons class]], @"invalid begin block %@", expressions);
+
   id ret = nil;
   for ( id expression in expressions ) {
     ret = [self evaluate: expression];
