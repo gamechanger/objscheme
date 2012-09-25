@@ -283,15 +283,31 @@ static ObSScope* __globalScope = nil;
       return CONS(S_DEFINE, CONS(defineSpec, CONS([ObjScheme expandToken: expression], C_NULL)));
     }
 
-  } else if ( head == S_DEFINEMACRO ) { // (define-macro symbol proc)
+  } else if ( head == S_DEFINEMACRO ) { // (define-macro symbol proc) or (define-macro (symbol args) body)
     [ObjScheme assertSyntax: topLevel elseRaise: @"define-macro must be invoked at the top level"];
     [ObjScheme assertSyntax: (length == 3) elseRaise: @"bad define-macro syntax"];
-    ObSSymbol* macroName = [list cadr];
+
+    id nameOrSpec = [list cadr];
     id body = [ObjScheme expandToken: [list caddr]];
+    ObSSymbol* macroName = nil;
+
+    if ( [nameOrSpec isKindOfClass: [ObSSymbol class]] ) {
+      macroName = nameOrSpec;
+
+    } else {
+      [ObjScheme assertSyntax: [nameOrSpec isKindOfClass: [ObSCons class]] elseRaise: @"bad define-macro spec"];
+      ObSCons* callSpec = nameOrSpec;
+      macroName = [callSpec car];
+      id args = [list cdr];
+      id lambdaArgSpec = args != C_NULL && [(ObSCons*)args car] == S_DOT ? [args cadr] : args;
+      body = CONS(S_LAMBDA, CONS(lambdaArgSpec, body));
+    }
+
     id<ObSProcedure> procedure = [[ObjScheme globalScope] evaluate: body];
     [ObjScheme assertSyntax: [procedure conformsToProtocol: @protocol(ObSProcedure)]
                   elseRaise: @"body of define-macro must be an invocation"];
     [[ObjScheme globalScope] defineMacroNamed: macroName asProcedure: procedure];
+
     return UNSPECIFIED;
 
   } else if ( head == S_BEGIN ) {
