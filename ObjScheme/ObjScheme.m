@@ -321,10 +321,22 @@ static ObSScope* __globalScope = nil;
 
   } else if ( head == S_LET || head == S_LET_STAR ) {
     // (let ((x e1) (y e2)) body...)
+    // -or-
+    // (let name ((x e1) (y e2)) body)
     // we special-case this so as not to accidentally try to expand the symbol names
-    ObSCons* definitions = [list cadr];
-    ObSCons* body = [list cddr];
-    return CONS(head, CONS([self expandLetDefinitions: definitions], [self expandTokenList: body]));
+
+    BOOL isNamed = [[list cadr] isKindOfClass: [ObSSymbol class]];
+    if ( isNamed ) {
+      ObSSymbol* name = [list cadr];
+      ObSCons* definitions = [list caddr];
+      ObSCons* body = [list cdddr];
+      return CONS(head, CONS(name, CONS([self expandLetDefinitions: definitions], [self expandTokenList: body])));
+
+    } else {
+      ObSCons* definitions = [list cadr];
+      ObSCons* body = [list cddr];
+      return CONS(head, CONS([self expandLetDefinitions: definitions], [self expandTokenList: body]));
+    }
 
   } else if ( head == S_LAMBDA ) {
     // (lambda (x) a b) => (lambda (x) (begin a b))
@@ -667,20 +679,21 @@ static ObSScope* __globalScope = nil;
                                            fromBlock: ^(id o) {
         NSAssert1([o isKindOfClass: [ObSCons class]], @"invalid operand for car %@", o);
         ObSCons* cons = o;
-        id second = [cons cdr];
-        NSAssert1([second isKindOfClass: [ObSCons class]], @"cadr requires cdr to be a cons, but it's %@", second);
-        ObSCons* cons2 = second;
-        return [cons2 car];
+        return [cons cadr];
       }]];
 
   [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"cddr")
                                            fromBlock: ^(id o) {
         NSAssert1([o isKindOfClass: [ObSCons class]], @"invalid operand for car %@", o);
         ObSCons* cons = o;
-        id second = [cons cdr];
-        NSAssert1([second isKindOfClass: [ObSCons class]], @"cadr requires cdr to be a cons, but it's %@", second);
-        ObSCons* cons2 = second;
-        return [cons2 cdr];
+        return [cons cddr];
+      }]];
+
+  [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"cdddr")
+                                           fromBlock: ^(id o) {
+        NSAssert1([o isKindOfClass: [ObSCons class]], @"invalid operand for car %@", o);
+        ObSCons* cons = o;
+        return [cons cdddr];
       }]];
 
   [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"length")
@@ -1238,7 +1251,7 @@ static ObSScope* __globalScope = nil;
             [argList release];
 
             ObSLambda* lambda = [[ObSLambda alloc] initWithParameters: parameters
-                                                           expression: body
+                                                           expression: CONS(S_BEGIN, body)
                                                                 scope: letScope
                                                                  name: name];
             [letScope define: name as: lambda];
@@ -1832,6 +1845,12 @@ static ObSScope* __globalScope = nil;
 - (id)cddr {
   ObSCons* next = [self cdr];
   return [next cdr];
+}
+
+- (id)cdddr {
+  ObSCons* next = [self cdr];
+  ObSCons* further = [next cdr];
+  return [further cdr];
 }
 
 - (NSUInteger)count {

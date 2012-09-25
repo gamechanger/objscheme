@@ -190,6 +190,7 @@ typedef id (^ObSNativeThunkBlock)();
 - (id)cadr;
 - (id)caddr;
 - (id)cddr;
+- (id)cdddr;
 - (NSArray*)toArray;
 - (NSUInteger)count;
 @end

@@ -208,6 +208,7 @@
 
 - (void)testLets {
   id source, program, returnValue;
+  NSNumber* number;
 
   OSAssertFalse(@"(let ((a #f)) a))");
   OSAssertTrue(@"(let ((a #t)) a))");
@@ -219,6 +220,11 @@
 
   OSAssertTrue(@"(let* ((a 1) (b a)) (eq? a b))");
   OSAssertTrue(@"(begin (define-macro a2b2c2 (lambda (x) `(2))) (equal? 7 (let ((a2b2c2 7)) a2b2c2)))");
+
+  OSAssertTrue(@"(let foo ((a \"a\")) (eq? a a))");
+
+  // named let test
+  OSAssertEqualsInt(@"(let fib ((n 4)) (if (= n 0) 0 (if (= n 1) 1 (+ (fib (- n 1)) (fib (- n 2))))))", 3);
 }
 
 - (void)testLists {
