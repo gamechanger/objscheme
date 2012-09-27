@@ -634,7 +634,7 @@ static ObSScope* __globalScope = nil;
 
   [scope defineFunction: U_LAMBDA(@"null?", ^(id o) { return TRUTH(o == C_NULL); })];
 
-  [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"last")
+  [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"last")
                                             fromBlock: ^(id list) {
         if ( list == C_NULL )
           return [ObjScheme boolToTruth: NO];
@@ -642,8 +642,8 @@ static ObSScope* __globalScope = nil;
         ObSCons* tail = list;
         id item = [tail car];
 
-        while ( [list cdr] != C_NULL ) {
-          tail = [list cdr];
+        while ( [tail cdr] != C_NULL ) {
+          tail = [tail cdr];
           item = [tail car];
         }
 
@@ -1271,7 +1271,7 @@ static ObSScope* __globalScope = nil;
             ObSLambda* lambda = [[ObSLambda alloc] initWithParameters: parameters
                                                            expression: CONS(S_BEGIN, body)
                                                                 scope: letScope
-                                                                 name: name];
+                                                                 name: letName];
             [letScope define: letName as: lambda];
             [lambda release];
 
