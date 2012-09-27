@@ -634,6 +634,22 @@ static ObSScope* __globalScope = nil;
 
   [scope defineFunction: U_LAMBDA(@"null?", ^(id o) { return TRUTH(o == C_NULL); })];
 
+  [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"last")
+                                            fromBlock: ^(id list) {
+        if ( list == C_NULL )
+          return [ObjScheme boolToTruth: NO];
+
+        ObSCons* tail = list;
+        id item = [tail car];
+
+        while ( [list cdr] != C_NULL ) {
+          tail = [list cdr];
+          item = [tail car];
+        }
+
+        return item;
+      }]];
+
   [scope defineFunction: B_LAMBDA(@"eq?", ^(id a, id b){ return (a == b) ? B_TRUE : B_FALSE; })];
 
   [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"eqv?")
@@ -851,8 +867,8 @@ static ObSScope* __globalScope = nil;
 
   [scope defineFunction: B_LAMBDA(@"filter", ^(id a, id b) { return [ObjScheme filter: b with: a]; })];
 
-  [scope defineFunction: B_LAMBDA(@"string-startswith", ^(id a, id b) { return [ObjScheme boolToTruth: [(NSString*)a hasPrefix: (NSString*)b]]; })];
-  [scope defineFunction: B_LAMBDA(@"string-endswith", ^(id a, id b) { return [ObjScheme boolToTruth: [(NSString*)a hasSuffix: (NSString*)b]]; })];
+  [scope defineFunction: B_LAMBDA(@"string-startswith?", ^(id a, id b) { return [ObjScheme boolToTruth: [(NSString*)a hasPrefix: (NSString*)b]]; })];
+  [scope defineFunction: B_LAMBDA(@"string-endswith?", ^(id a, id b) { return [ObjScheme boolToTruth: [(NSString*)a hasSuffix: (NSString*)b]]; })];
   [scope defineFunction: [ObSNativeLambda named: SY(@"string-substring")
                                       fromBlock: ^(NSArray* args) {
         NSString* string = [args objectAtIndex: 0];
@@ -1235,7 +1251,7 @@ static ObSScope* __globalScope = nil;
 
           if ( [[rest car] isKindOfClass: [ObSSymbol class]] ) { // named let
 
-            ObSSymbol* name = [rest car];
+            ObSSymbol* letName = [rest car];
             ObSCons* definitions = [rest cadr];
             ObSCons* body = [rest cddr];
             ObSScope* letScope = [[ObSScope alloc] initWithOuterScope: self];
@@ -1256,7 +1272,7 @@ static ObSScope* __globalScope = nil;
                                                            expression: CONS(S_BEGIN, body)
                                                                 scope: letScope
                                                                  name: name];
-            [letScope define: name as: lambda];
+            [letScope define: letName as: lambda];
             [lambda release];
 
             return [letScope begin: body];
