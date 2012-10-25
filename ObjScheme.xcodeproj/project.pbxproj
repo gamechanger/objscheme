@@ -398,7 +398,7 @@
 				DSTROOT = /tmp/ObjScheme.dst;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "ObjScheme/ObjScheme-Prefix.pch";
-				IPHONEOS_DEPLOYMENT_TARGET = 4.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 5.0;
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				RUN_CLANG_STATIC_ANALYZER = YES;
@@ -414,7 +414,7 @@
 				DSTROOT = /tmp/ObjScheme.dst;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "ObjScheme/ObjScheme-Prefix.pch";
-				IPHONEOS_DEPLOYMENT_TARGET = 4.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 5.0;
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				RUN_CLANG_STATIC_ANALYZER = YES;
@@ -435,6 +435,7 @@
 				GCC_PREFIX_HEADER = "ObjScheme/ObjScheme-Prefix.pch";
 				INFOPLIST_FILE = "ObjSchemeTests/ObjSchemeTests-Info.plist";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_AFTER_BUILD = YES;
 				WRAPPER_EXTENSION = octest;
 			};
 			name = Debug;
@@ -450,6 +451,7 @@
 				GCC_PREFIX_HEADER = "ObjScheme/ObjScheme-Prefix.pch";
 				INFOPLIST_FILE = "ObjSchemeTests/ObjSchemeTests-Info.plist";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_AFTER_BUILD = YES;
 				WRAPPER_EXTENSION = octest;
 			};
 			name = Release;
