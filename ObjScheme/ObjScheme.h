@@ -52,10 +52,12 @@
   ObSScope* _outerScope;
   NSMutableDictionary* _macros;
   NSMutableDictionary* _environ;
+  NSMutableArray* _stack;
 }
 
 @property (nonatomic,retain) ObSScope* outer;
 @property (nonatomic,retain) NSMutableDictionary* environ;
+@property (nonatomic,retain) NSArray* stack;
 
 - (id)initWithOuterScope:(ObSScope*)outer;
 - (id)resolveSymbol:(ObSSymbol*)variable;

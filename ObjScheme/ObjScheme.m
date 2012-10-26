@@ -1124,13 +1124,14 @@ static ObSScope* __globalScope = nil;
 
 @implementation ObSScope
 
-@synthesize outer=_outerScope, environ=_environ;
+@synthesize outer=_outerScope, environ=_environ, stack=_stack;
 
 - (id)initWithOuterScope:(ObSScope*)outer {
   if ( (self = [super init]) ) {
     self.outer = outer;
     _macros = [[NSMutableDictionary alloc] init];
     _environ = [[NSMutableDictionary alloc] init];
+    _stack = [[NSMutableArray alloc] init];
   }
   return self;
 }
@@ -1139,6 +1140,7 @@ static ObSScope* __globalScope = nil;
   [_outerScope release];
   [_macros release];
   [_environ release];
+  [_stack release];
   [super dealloc];
 }
 
@@ -1224,6 +1226,14 @@ static ObSScope* __globalScope = nil;
   return ret;
 }
 
+- (void)pushStack:(id)token {
+  [_stack addObject: token];
+}
+
+- (void)popStack {
+  [_stack removeLastObject];
+}
+
 - (id)evaluate:(id)token {
   NSAssert(token != nil, @"nil token");
 
@@ -1243,11 +1253,16 @@ static ObSScope* __globalScope = nil;
 
         if ( head == S_EVAL ) {
           NSAssert1(argCount == 1, @"eval can have only 1 operand, not %@", rest);
+          [self pushStack: S_EVAL];
           token = [self evaluate: [rest car]];
+          [self popStack];
 
         } else if ( head == S_LET ) {
           // normal: (let ((x y)) body)
           // named: (let name ((x y)) body)
+
+          id ret;
+          [self pushStack: S_LET];
 
           if ( [[rest car] isKindOfClass: [ObSSymbol class]] ) { // named let
 
@@ -1275,7 +1290,7 @@ static ObSScope* __globalScope = nil;
             [letScope define: letName as: lambda];
             [lambda release];
 
-            return [letScope begin: body];
+            ret = [letScope begin: body];
 
           } else { // normal let
 
@@ -1289,10 +1304,15 @@ static ObSScope* __globalScope = nil;
               [letScope define: name as: [self evaluate: expression]];
             }
 
-            return [letScope begin: body];
+            ret = [letScope begin: body];
           }
 
+          [self popStack];
+          return ret;
+
         } else if ( head == S_LET_STAR ) {
+          [self pushStack: S_LET_STAR];
+
           ObSCons* definitions = [rest car];
           ObSCons* body = [rest cdr];
           ObSScope* letScope = [[ObSScope alloc] initWithOuterScope: self];
@@ -1303,14 +1323,19 @@ static ObSScope* __globalScope = nil;
             [letScope define: name as: [letScope evaluate: expression]];
           }
 
-          return [letScope begin: body];
+          id ret = [letScope begin: body];
+          [self popStack];
+          return ret;
 
         } else if ( head == S_QUOTE ) { // (quote exp) -> exp
           NSAssert1(argCount == 1, @"quote can have only 1 operand, not %@", rest);
           return [rest car];
 
         } else if ( head == S_LIST ) { // (list a b c)
-          return [self evaluateList: rest];
+          [self pushStack: S_LIST];
+          id ret = [self evaluateList: rest];
+          [self popStack];
+          return ret;
 
         } else if ( head == S_IF ) { // (if test consequence alternate) <- note that full form is enforced by expansion
           id test = [rest car];
@@ -1320,27 +1345,38 @@ static ObSScope* __globalScope = nil;
           continue; // I'm being explicit here for clarity, we'll now evaluate this token
 
         } else if ( head == S_SET ) { // (set! variableName expression)
+          [self pushStack: S_SET];
+
           ObSSymbol* symbol = [rest car];
           id expression = [rest cadr];
           ObSScope* definingScope = [self findScopeOf: symbol]; // I do this first, which can fail, so we don't bother executing predicate
           [definingScope define: symbol as: [self evaluate: expression]];
+          [self popStack];
           return UNSPECIFIED;
 
         } else if ( head == S_DEFINE ) { // (define variableName expression)
+          [self pushStack: S_DEFINE];
           ObSSymbol* variableName = [rest car];
           id expression = [rest cadr];
           [_environ setObject: [self evaluate: expression] forKey: variableName.string];
+          [self popStack];
           return UNSPECIFIED;
 
         } else if ( head == S_LAMBDA ) { // (lambda (argumentNames) body)
+          [self pushStack: S_LAMBDA];
+
           ObSCons* parameters = [rest car];
           ObSCons* body = [rest cadr];
-          return [[[ObSLambda alloc] initWithParameters: parameters
-                                             expression: body
-                                                  scope: self
-                                                   name: S_LAMBDA] autorelease];
+          id ret = [[[ObSLambda alloc] initWithParameters: parameters
+                                               expression: body
+                                                    scope: self
+                                                     name: S_LAMBDA] autorelease];
+          [self popStack];
+          return ret;
 
         } else if ( head == S_BEGIN ) { // (begin expression...)
+          [self pushStack: S_BEGIN];
+
           id result = [NSNumber numberWithBool: NO];
           if ( (id)rest == C_NULL ) {
             return UNSPECIFIED;
@@ -1349,17 +1385,24 @@ static ObSScope* __globalScope = nil;
           for ( id expression in rest ) {
             result = [self evaluate: expression];
           }
+          [self popStack];
           return result; // begin evaluates to value of final expression
 
         } else {
           id<ObSProcedure> procedure = [self evaluate: head];
-          return [procedure callWith: [self evaluateList: rest]];
+          [self pushStack: head];
+          id ret = [procedure callWith: [self evaluateList: rest]];
+          [self popStack];
+          return ret;
         }
       }
     }
 
   } @catch ( NSException* e ) {
     NSLog( @"FAILED TO EVALUATE %@", token );
+    for ( id token in _stack ) {
+      NSLog( @"@ %@", token );
+    }
     [e raise];
   }
 }
