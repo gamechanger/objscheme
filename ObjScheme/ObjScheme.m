@@ -698,6 +698,13 @@ static ObSScope* __globalScope = nil;
         return [cons cadr];
       }]];
 
+  [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"caddr")
+                                           fromBlock: ^(id o) {
+        NSAssert1([o isKindOfClass: [ObSCons class]], @"invalid operand for car %@", o);
+        ObSCons* cons = o;
+        return [cons caddr];
+      }]];
+
   [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"cddr")
                                            fromBlock: ^(id o) {
         NSAssert1([o isKindOfClass: [ObSCons class]], @"invalid operand for car %@", o);
@@ -1399,9 +1406,10 @@ static ObSScope* __globalScope = nil;
     }
 
   } @catch ( NSException* e ) {
-    NSLog( @"FAILED TO EVALUATE %@", token );
-    for ( id token in _stack ) {
-      NSLog( @"@ %@", token );
+    //NSLog( @"FAILED TO EVALUATE %@", token );
+    NSLog( @"Error %@", e );
+    for ( int i = [_stack count]-1; i >= 0; i-- ) {
+      NSLog( @" @ %@", [_stack objectAtIndex: i] );
     }
     [e raise];
   }
