@@ -195,6 +195,7 @@ typedef id (^ObSNativeThunkBlock)();
 - (id)cdddr;
 - (NSArray*)toArray;
 - (NSUInteger)count;
+- (ObSCons*)clone;
 @end
 
 

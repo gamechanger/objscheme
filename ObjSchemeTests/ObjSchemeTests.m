@@ -99,6 +99,12 @@
   STAssertTrue([returnValue isKindOfClass: [ObSSymbol class]], @"number-prefixed string should be a symbol, not number: %@", returnValue);
 }
 
+- (void)testApplyCase {
+  id source, program, returnValue;
+
+  OSAssertTrue(@"(equal? (list 2 3 4) (apply append (filter (lambda (p) p) (map (lambda (x) x) (list '(2 3) '(4))))))");
+}
+
 - (void)testBuiltIns {
   id source, program, returnValue;
   NSNumber* number;

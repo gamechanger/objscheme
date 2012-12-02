@@ -8,6 +8,7 @@
 
 #import "ObjScheme.h"
 #import "ObSNS.h"
+#import "ObSStrings.h"
 
 static ObSSymbol* S_DOT;
 static ObSSymbol* S_QUOTE;
@@ -31,6 +32,7 @@ static ObSSymbol* S_EVAL;
 static ObSSymbol* S_MAP;
 static ObSSymbol* S_OPENBRACKET;
 static ObSSymbol* S_CLOSEBRACKET;
+static ObSSymbol* S_APPLY;
 
 static ObSConstant* B_FALSE;
 static ObSConstant* B_TRUE;
@@ -95,6 +97,7 @@ static ObSScope* __globalScope = nil;
   S_LIST =            SY(@"list");
   S_EVAL =            SY(@"eval");
   S_MAP =             SY(@"map");
+  S_APPLY =           SY(@"apply");
 
   B_FALSE =           CONST(@"#f");
   B_TRUE =            CONST(@"#t");
@@ -133,6 +136,7 @@ static ObSScope* __globalScope = nil;
     [__globalScope bootstrapMacros];
     [ObjScheme addGlobalsToScope: __globalScope];
     [ObSNS initializeBridgeFunctions: __globalScope];
+    [ObSStrings addToScope: __globalScope];
   }
   return __globalScope;
 }
@@ -783,13 +787,6 @@ static ObSScope* __globalScope = nil;
         return TRUTH([o conformsToProtocol: @protocol(ObSProcedure)]);
       }]];
 
-  [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"apply")
-                                            fromBlock: ^(id a, id b) {
-        id<ObSProcedure> procedure = a;
-        ObSCons* arguments = b;
-        return [procedure callWith: arguments];
-      }]];
-
   [scope defineFunction: U_LAMBDA(@"symbol->string", ^(id o) { ObSSymbol* s = o; return s.string; })];
   [scope defineFunction: U_LAMBDA(@"string->symbol", ^(id o) { return [ObSSymbol symbolFromString: o]; })];
   [scope defineFunction: [ObSNativeLambda named: SY(@"string-append")
@@ -1019,23 +1016,22 @@ static ObSScope* __globalScope = nil;
 
   [scope defineFunction: [ObSNativeLambda named: S_APPEND
                                       fromBlock: ^(NSArray* array) {
-        ObSCons* list = nil;
+        ObSCons* list = C_NULL;
+
         for ( id thing in array ) {
           if ( thing == C_NULL ) {
-            if ( list == nil ) {
-              return (id)C_NULL;
-            }
-            break;
+            continue;
           }
 
           ObSCons* subList = thing;
-          if ( list == nil ) {
-            list = subList;
+          if ( list == C_NULL ) {
+            list = [subList clone];
 
           } else {
-            [[ObjScheme tailCons: list] setCdr: subList];
+            [[ObjScheme tailCons: list] setCdr: [subList clone]];
           }
         }
+
         return (id)list;
       }]];
 
@@ -1269,7 +1265,6 @@ static ObSScope* __globalScope = nil;
           // named: (let name ((x y)) body)
 
           id ret;
-          [self pushStack: S_LET];
 
           if ( [[rest car] isKindOfClass: [ObSSymbol class]] ) { // named let
 
@@ -1314,12 +1309,9 @@ static ObSScope* __globalScope = nil;
             ret = [letScope begin: body];
           }
 
-          [self popStack];
           return ret;
 
         } else if ( head == S_LET_STAR ) {
-          [self pushStack: S_LET_STAR];
-
           ObSCons* definitions = [rest car];
           ObSCons* body = [rest cdr];
           ObSScope* letScope = [[ObSScope alloc] initWithOuterScope: self];
@@ -1331,7 +1323,6 @@ static ObSScope* __globalScope = nil;
           }
 
           id ret = [letScope begin: body];
-          [self popStack];
           return ret;
 
         } else if ( head == S_QUOTE ) { // (quote exp) -> exp
@@ -1350,6 +1341,16 @@ static ObSScope* __globalScope = nil;
           id alternate = argCount == 3 ? [rest caddr] : UNSPECIFIED;
           token = [self evaluate: test] == B_FALSE ? alternate : consequence;
           continue; // I'm being explicit here for clarity, we'll now evaluate this token
+
+        } else if ( head == S_APPLY ) {
+          id function_name = [rest car];
+          id function_args = [rest cadr];
+          id args = [self evaluate: function_args];
+          id proc = [self evaluate: function_name];
+          [self pushStack: function_name];
+          id ret = [proc callWith: args];
+          [self popStack];
+          return ret;
 
         } else if ( head == S_SET ) { // (set! variableName expression)
           [self pushStack: S_SET];
@@ -1382,8 +1383,6 @@ static ObSScope* __globalScope = nil;
           return ret;
 
         } else if ( head == S_BEGIN ) { // (begin expression...)
-          [self pushStack: S_BEGIN];
-
           id result = [NSNumber numberWithBool: NO];
           if ( (id)rest == C_NULL ) {
             return UNSPECIFIED;
@@ -1392,7 +1391,6 @@ static ObSScope* __globalScope = nil;
           for ( id expression in rest ) {
             result = [self evaluate: expression];
           }
-          [self popStack];
           return result; // begin evaluates to value of final expression
 
         } else {
@@ -1822,6 +1820,14 @@ static ObSScope* __globalScope = nil;
       return NO;
   }
   return YES;
+}
+
+- (ObSCons*)clone {
+  id cdr = _cdr;
+  if ( [cdr isKindOfClass: [ObSCons class]] ) {
+    cdr = [cdr clone];
+  }
+  return [[[ObSCons alloc] initWithCar: _car cdr: cdr] autorelease];
 }
 
 - (NSString*)description {
