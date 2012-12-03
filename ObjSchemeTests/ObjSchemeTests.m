@@ -390,4 +390,25 @@
   OSAssertEquals(@"(NSArray:subarrayFromIndexToIndex (NSArray:array 0 1 2 3) 0 -1)", a);
 }
 
+- (void)testStringFunctions {
+  id source, program, returnValue;
+
+  NSLog( @"testStringFunctions ....... " );
+
+  OSAssertTrue(@"(equal? (list \"a\" \"b\") (string-split \"a-b\" \"-\"))");
+  OSAssertTrue(@"(string-startswith? \"garble\" \"gar\")");
+  OSAssertFalse(@"(string-startswith? \"gar\" \"garble\")");
+
+  OSAssertTrue(@"(string-endswith? \"garble\" \"ble\")");
+  OSAssertFalse(@"(string-startswith? \"ble\" \"garble\")");
+
+  OSAssertTrue(@"(equal? \"foo\" (->string \"foo\"))");
+  OSAssertTrue(@"(equal? \"#t\" (->string #t))");
+  OSAssertTrue(@"(equal? \"1\" (->string 1))");
+
+  OSAssertEquals(@"(format \"the {} thing\" 1)", @"the 1 thing");
+  OSAssertEquals(@"(format \"the {0} thing\" 1)", @"the 1 thing");
+  OSAssertEquals(@"(format \"the {0} thing {1} like\" 1 \"I\")", @"the 1 thing I like");
+}
+
 @end

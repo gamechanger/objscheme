@@ -45,7 +45,7 @@
         NSString* formatString = [args objectAtIndex: 0];
 
         NSError* error = NULL;
-        NSRegularExpression* regex = [NSRegularExpression regularExpressionWithPattern: @"{(\\d*)}"
+        NSRegularExpression* regex = [NSRegularExpression regularExpressionWithPattern: @"\\{([0-9]*)\\}"
                                                                                options: 0
                                                                                  error: &error];
         NSArray* matches = [regex matchesInString: formatString options: 0 range: NSMakeRange(0, [formatString length])];
@@ -66,7 +66,7 @@
             [string appendString: [formatString substringWithRange: NSMakeRange(stringStart, range.location-stringStart)]];
           }
 
-          NSRange numberRange = [match rangeAtIndex: 0];
+          NSRange numberRange = [match rangeAtIndex: 1];
           if ( numberRange.length > 0 ) {
             NSInteger argumentIndex = [[formatString substringWithRange: numberRange] integerValue];
             if ( argumentIndex > numArgs ) {
@@ -81,6 +81,12 @@
             }
             [string appendFormat: @"%@", [formatArgs objectAtIndex: argumentIndex]];
           }
+
+          stringStart = range.location + range.length;
+        }
+
+        if ( stringStart < [formatString length] ) {
+          [string appendString: [formatString substringFromIndex: stringStart]];
         }
 
         return (id)string;

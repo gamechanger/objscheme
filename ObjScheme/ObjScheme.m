@@ -555,6 +555,7 @@ static ObSScope* __globalScope = nil;
         BOOL useDouble = NO;
 
         for ( NSNumber* number in list ) {
+          NSAssert1( [number isKindOfClass: [NSNumber class]], @"%@ is not a number", number );
           if ( useDouble || strcmp([number objCType], @encode(int)) != 0 ) {
             useDouble = YES;
             doubleRet *= [number doubleValue];
@@ -1016,15 +1017,15 @@ static ObSScope* __globalScope = nil;
 
   [scope defineFunction: [ObSNativeLambda named: S_APPEND
                                       fromBlock: ^(NSArray* array) {
-        ObSCons* list = C_NULL;
+        ObSCons* list = (id)C_NULL;
 
         for ( id thing in array ) {
-          if ( thing == C_NULL ) {
+          if ( thing == (id)C_NULL ) {
             continue;
           }
 
           ObSCons* subList = thing;
-          if ( list == C_NULL ) {
+          if ( list == (id)C_NULL ) {
             list = [subList clone];
 
           } else {
@@ -1127,14 +1128,20 @@ static ObSScope* __globalScope = nil;
 
 @implementation ObSScope
 
-@synthesize outer=_outerScope, environ=_environ, stack=_stack;
+@synthesize outer=_outerScope, environ=_environ;
+
+static NSMutableArray* _stack;
+BOOL _errorLogged = NO;
+
++ (void)initialize {
+  _stack = [[NSMutableArray alloc] init];
+}
 
 - (id)initWithOuterScope:(ObSScope*)outer {
   if ( (self = [super init]) ) {
     self.outer = outer;
     _macros = [[NSMutableDictionary alloc] init];
     _environ = [[NSMutableDictionary alloc] init];
-    _stack = [[NSMutableArray alloc] init];
   }
   return self;
 }
@@ -1143,7 +1150,6 @@ static ObSScope* __globalScope = nil;
   [_outerScope release];
   [_macros release];
   [_environ release];
-  [_stack release];
   [super dealloc];
 }
 
@@ -1405,10 +1411,14 @@ static ObSScope* __globalScope = nil;
 
   } @catch ( NSException* e ) {
     //NSLog( @"FAILED TO EVALUATE %@", token );
-    NSLog( @"Error %@", e );
-    for ( int i = [_stack count]-1; i >= 0; i-- ) {
-      NSLog( @" @ %@", [_stack objectAtIndex: i] );
+    if ( ! _errorLogged ) {
+      _errorLogged = YES;
+      NSLog( @"Error %@", e );
+      for ( int i = [_stack count]-1; i >= 0; i-- ) {
+        NSLog( @" @ %@", [_stack objectAtIndex: i] );
+      }
     }
+
     [e raise];
   }
 }
