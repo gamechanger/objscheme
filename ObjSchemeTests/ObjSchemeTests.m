@@ -9,17 +9,17 @@
 #import "ObjSchemeTests.h"
 #import "ObjScheme.h"
 
-#define OSAssertFalse(code) source = (code);       \
+#define OSAssertFalse(code) source = (code);\
  program = [ObjScheme parseString: source];\
  returnValue = [[ObjScheme globalScope] evaluate: program];\
  STAssertTrue([ObjScheme isFalse: returnValue], @"%@ => %@", source, returnValue);
 
-#define OSAssertTrue(code) source = (code);       \
+#define OSAssertTrue(code) source = (code);\
  program = [ObjScheme parseString: source];\
  returnValue = [[ObjScheme globalScope] evaluate: program];\
  STAssertTrue(! [ObjScheme isFalse: returnValue], @"%@ => %@", source, returnValue);
 
-#define OSAssertEqualsInt(code, expected) source = (code);     \
+#define OSAssertEqualsInt(code, expected) source = (code);\
  program = [ObjScheme parseString: source];\
  returnValue = [[ObjScheme globalScope] evaluate: program];\
  STAssertTrue([returnValue isKindOfClass: [NSNumber class]], @"%@ => %@", source, returnValue); \
@@ -27,7 +27,7 @@
  STAssertEquals(strcmp([number objCType], @encode(int)), 0, @"%@ => %@", source, returnValue); \
  STAssertEquals([number intValue], (expected), @"%@ => %d", source, [number intValue]);
 
-#define OSAssertEqualsDouble(code, expected) source = (code);     \
+#define OSAssertEqualsDouble(code, expected) source = (code);\
  program = [ObjScheme parseString: source];\
  returnValue = [[ObjScheme globalScope] evaluate: program];\
  STAssertTrue([returnValue isKindOfClass: [NSNumber class]], @"%@ isn't a number", source);\
@@ -38,12 +38,11 @@
 #define OSAssertEquals(code, expected) source = (code);\
  program = [ObjScheme parseString: source];\
  returnValue = [[ObjScheme globalScope] evaluate: program];\
- NSLog( @"got back %@ from %@", returnValue, source );                         \
  STAssertEqualObjects(returnValue, expected, @"source: %@ ", source);
 
 
-#define EXEC(source) [[ObjScheme globalScope] evaluate: [ObjScheme parseString: (source)]]
 #define COMPILE(source) [ObjScheme parseString: (source)]
+#define EXEC(source) [[ObjScheme globalScope] evaluate: COMPILE(source)]
 
 @implementation ObjSchemeTests
 
@@ -93,6 +92,16 @@
   program = [ObjScheme parseString: source];
   returnValue = [[ObjScheme globalScope] evaluate: program];
   STAssertTrue([ObjScheme isFalse: returnValue], @"return value isn't false %@", returnValue);
+
+  source = @"3";
+  program = [ObjScheme parseString: source];
+  returnValue = [[ObjScheme globalScope] evaluate: program];
+  STAssertEqualObjects([NSNumber numberWithInteger: 3], returnValue, @"uh-oh");
+
+  source = @"0.5";
+  program = [ObjScheme parseString: source];
+  returnValue = [[ObjScheme globalScope] evaluate: program];
+  STAssertEqualObjects([NSNumber numberWithDouble: 0.5], returnValue, @"uh-oh");
 
   source = @"(let ((2-in-1 'bing)) 2-in-1)";
   program = [ObjScheme parseString: source];
@@ -360,6 +369,12 @@
 
   OSAssertEquals(@"(number->string 2)", @"2");
   OSAssertEquals(@"(number->string 2.2)", @"2.200000");
+
+  OSAssertEqualsDouble(@"(* 0.5 1)", 0.5);
+  NSLog( @"Holy crap : %@", EXEC(@"(+ 2 0.5)") );
+  OSAssertEqualsDouble(@"(+ 2 0.5)", 2.5);
+  OSAssertEqualsDouble(@"(+ 2 (* 0.5 1))", 2.5);
+  OSAssertEqualsDouble(@"(/ (+ 2 (* 0.5 1)) 2)", 1.25);
 }
 
 - (void)testNSDictionaryBridge {

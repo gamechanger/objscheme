@@ -155,8 +155,9 @@ static ObSScope* __globalScope = nil;
     return token; // symbols are atomic
 
   NSString* string = token;
-  if ( [string hasPrefix: @"\""] )
+  if ( [string hasPrefix: @"\""] ) {
     return [ObjScheme unpackStringLiteral: string];
+  }
 
   NSRange alphaNumRange = [string rangeOfCharacterFromSet: [NSCharacterSet letterCharacterSet]];
   if ( alphaNumRange.location == NSNotFound ) {
@@ -170,8 +171,9 @@ static ObSScope* __globalScope = nil;
     }
 
     double doubleValue = [string doubleValue];
-    if ( doubleValue != 0.0 ) // note that the literal '0.0' is handle in constants above
+    if ( doubleValue != 0.0 ) { // note that the literal '0.0' is handle in constants above
       return [NSNumber numberWithDouble: doubleValue];
+    }
   }
 
   return [ObSSymbol symbolFromString: string];
@@ -525,7 +527,31 @@ static ObSScope* __globalScope = nil;
         if ( [list count] == 0 )
           return [NSNumber numberWithInteger: 0];
 
+        int intRet = 0;
+        double doubleRet = 0.0;
+        BOOL useDouble = NO;
+
+        for ( NSNumber* n in list ) {
+          if ( ! useDouble && strcmp([n objCType], @encode(int)) == 0 ) {
+            intRet += [n intValue];
+            doubleRet += [n doubleValue];
+
+          } else {
+            useDouble = YES;
+            doubleRet += [n doubleValue];
+          }
+        }
+
+        if ( useDouble ) {
+          return [NSNumber numberWithDouble: doubleRet];
+
+        } else {
+          return [NSNumber numberWithInt: intRet];
+        }
+
+        /*
         NSNumber* first = [list objectAtIndex: 0];
+
         if ( strcmp([first objCType], @encode(int)) == 0 ) {
           int ret = 0;
           for ( NSNumber* number in list ) {
@@ -540,6 +566,7 @@ static ObSScope* __globalScope = nil;
           }
           return [NSNumber numberWithDouble: ret];
         }
+        */
       }]];
 
   [scope defineFunction: [ObSNativeLambda named: SY(@"-")
@@ -585,6 +612,9 @@ static ObSScope* __globalScope = nil;
                                       fromBlock: ^(NSArray* list) {
         NSNumber* first = [list objectAtIndex: 0];
         NSNumber* second = [list objectAtIndex: 1];
+
+        if ( [first floatValue] == 0.0 )
+          return first;
 
         if ( [second floatValue] == 0.0 )
           return [NSNumber numberWithInteger: INFINITY];
@@ -1410,8 +1440,9 @@ BOOL _errorLogged = NO;
 
         } else {
           id<ObSProcedure> procedure = [self evaluate: head];
+          ObSCons* args = [self evaluateList: rest];
           [self pushStack: head];
-          id ret = [procedure callWith: [self evaluateList: rest]];
+          id ret = [procedure callWith: args];
           [self popStack];
           return ret;
         }
@@ -1426,6 +1457,7 @@ BOOL _errorLogged = NO;
       for ( int i = [_stack count]-1; i >= 0; i-- ) {
         NSLog( @" @ %@", [_stack objectAtIndex: i] );
       }
+      [_stack removeAllObjects];
     }
 
     [e raise];
