@@ -38,7 +38,8 @@
 #define OSAssertEquals(code, expected) source = (code);\
  program = [ObjScheme parseString: source];\
  returnValue = [[ObjScheme globalScope] evaluate: program];\
- STAssertEqualObjects(returnValue, expected, @"%@ ", source);
+ NSLog( @"got back %@ from %@", returnValue, source );                         \
+ STAssertEqualObjects(returnValue, expected, @"source: %@ ", source);
 
 
 #define EXEC(source) [[ObjScheme globalScope] evaluate: [ObjScheme parseString: (source)]]
@@ -393,8 +394,6 @@
 - (void)testStringFunctions {
   id source, program, returnValue;
 
-  NSLog( @"testStringFunctions ....... " );
-
   OSAssertTrue(@"(equal? (list \"a\" \"b\") (string-split \"a-b\" \"-\"))");
   OSAssertTrue(@"(string-startswith? \"garble\" \"gar\")");
   OSAssertFalse(@"(string-startswith? \"gar\" \"garble\")");
@@ -409,6 +408,13 @@
   OSAssertEquals(@"(format \"the {} thing\" 1)", @"the 1 thing");
   OSAssertEquals(@"(format \"the {0} thing\" 1)", @"the 1 thing");
   OSAssertEquals(@"(format \"the {0} thing {1} like\" 1 \"I\")", @"the 1 thing I like");
+}
+
+- (void)testQuotedPairs {
+  id source, program, returnValue;
+
+  OSAssertEquals(@"'(a . b)", EXEC(@"(cons 'a 'b)"));
+  OSAssertTrue(@"(equal? (cons 'a 'b) '(a . b))");
 }
 
 @end

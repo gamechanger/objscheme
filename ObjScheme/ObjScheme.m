@@ -248,6 +248,15 @@ static ObSScope* __globalScope = nil;
   if ( head == S_QUOTE ) { // (quote exp)
     [ObjScheme assertSyntax: (length == 2)
                   elseRaise: [NSString stringWithFormat: @"quote should have 1 arg, given %d", length-1]];
+
+    id quotee = list.cadr;
+    if ( [quotee isKindOfClass: [ObSCons class]] ) {
+      ObSCons* quotedCons = quotee;
+      if ( [quotedCons count] == 3 && [quotedCons cadr] == S_DOT ) {
+        id pair = CONS([quotedCons car], [quotedCons caddr]);
+        return CONS(S_QUOTE, CONS(pair, C_NULL));
+      }
+    }
     return list;
 
   } else if ( head == S_IF ) {
@@ -1410,10 +1419,10 @@ BOOL _errorLogged = NO;
     }
 
   } @catch ( NSException* e ) {
-    //NSLog( @"FAILED TO EVALUATE %@", token );
     if ( ! _errorLogged ) {
       _errorLogged = YES;
       NSLog( @"Error %@", e );
+      NSLog( @"Evaluating %@", token );
       for ( int i = [_stack count]-1; i >= 0; i-- ) {
         NSLog( @" @ %@", [_stack objectAtIndex: i] );
       }
