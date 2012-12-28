@@ -10,36 +10,37 @@
 #import "ObSNS.h"
 #import "ObSStrings.h"
 
-static ObSSymbol* S_DOT;
-static ObSSymbol* S_QUOTE;
-static ObSSymbol* S_IF;
-static ObSSymbol* S_SET;
-static ObSSymbol* S_DEFINE;
-static ObSSymbol* S_LAMBDA;
-static ObSSymbol* S_BEGIN;
-static ObSSymbol* S_DEFINEMACRO;
-static ObSSymbol* S_QUASIQUOTE;
-static ObSSymbol* S_UNQUOTE;
-static ObSSymbol* S_UNQUOTESPLICING;
-static ObSSymbol* S_APPEND;
-static ObSSymbol* S_CONS;
-static ObSSymbol* S_LET;
-static ObSSymbol* S_LET_STAR;
-static ObSSymbol* S_OPENPAREN;
-static ObSSymbol* S_CLOSEPAREN;
-static ObSSymbol* S_LIST;
-static ObSSymbol* S_EVAL;
-static ObSSymbol* S_MAP;
-static ObSSymbol* S_OPENBRACKET;
-static ObSSymbol* S_CLOSEBRACKET;
-static ObSSymbol* S_APPLY;
+ObSSymbol* S_DOT;
+ObSSymbol* S_QUOTE;
+ObSSymbol* S_IF;
+ObSSymbol* S_SET;
+ObSSymbol* S_DEFINE;
+ObSSymbol* S_LAMBDA;
+ObSSymbol* S_BEGIN;
+ObSSymbol* S_DEFINEMACRO;
+ObSSymbol* S_QUASIQUOTE;
+ObSSymbol* S_UNQUOTE;
+ObSSymbol* S_UNQUOTESPLICING;
+ObSSymbol* S_APPEND;
+ObSSymbol* S_CONS;
+ObSSymbol* S_LET;
+ObSSymbol* S_LET_STAR;
+ObSSymbol* S_OPENPAREN;
+ObSSymbol* S_CLOSEPAREN;
+ObSSymbol* S_LIST;
+ObSSymbol* S_EVAL;
+ObSSymbol* S_MAP;
+ObSSymbol* S_OPENBRACKET;
+ObSSymbol* S_CLOSEBRACKET;
+ObSSymbol* S_APPLY;
+ObSSymbol* S_LOAD;
 
-static ObSConstant* B_FALSE;
-static ObSConstant* B_TRUE;
+ObSConstant* B_FALSE;
+ObSConstant* B_TRUE;
 
-static ObSConstant* C_NULL;
+ObSConstant* C_NULL;
 
-static ObSConstant* UNSPECIFIED;
+ObSConstant* UNSPECIFIED;
 
 static NSString* _EOF = @"#EOF#";
 
@@ -64,6 +65,9 @@ static NSString* _EOF = @"#EOF#";
 
 @end
 
+@interface ObSBundleFileLoader : NSObject <ObSFileLoader>
+@end
+
 
 
 
@@ -73,6 +77,7 @@ static NSString* _EOF = @"#EOF#";
 
 static NSDictionary* __constants = nil;
 static ObSScope* __globalScope = nil;
+static NSMutableArray* __loaders = nil;
 
 + (void)initializeSymbols {
   S_DOT =             SY(@".");
@@ -98,6 +103,7 @@ static ObSScope* __globalScope = nil;
   S_EVAL =            SY(@"eval");
   S_MAP =             SY(@"map");
   S_APPLY =           SY(@"apply");
+  S_LOAD =            SY(@"load");
 
   B_FALSE =           CONST(@"#f");
   B_TRUE =            CONST(@"#t");
@@ -117,6 +123,12 @@ static ObSScope* __globalScope = nil;
                     [NSNumber numberWithInteger: 0], @"0",
                     [NSNumber numberWithDouble: 0.0], @"0.0",
                     nil];
+  }
+
+  if ( __loaders == nil ) {
+    id<ObSFileLoader> bundleLoader = [[ObSBundleFileLoader alloc] init];
+    __loaders = [[NSMutableArray alloc] initWithObjects: bundleLoader, nil];
+    [bundleLoader release];
   }
 }
 
@@ -448,16 +460,35 @@ static ObSScope* __globalScope = nil;
   }
 }
 
++ (ObSInPort*)findFile:(NSString*)filename {
+  for ( id<ObSFileLoader> loader in __loaders ) {
+    ObSInPort* port = [loader findFile: filename];
+    if ( port != nil ) {
+      return port;
+    }
+  }
+  [NSException raise: @"NoSuchFile" format: @"Couldn't find %@ from any source", filename];
+  return nil;
+}
+
++ (void)loadFile:(NSString*)filename intoScope:(ObSScope*)scope {
+  ObSInPort* port = [self findFile: filename];
+  [self loadInPort: port intoScope: scope];
+}
+
 + (void)loadSource:(NSString*)source intoScope:(ObSScope*)scope {
   ObSInPort* port = [[ObSInPort alloc] initWithString: source];
+  [self loadInPort: port intoScope: scope];
+  [port release];
+}
+
++ (void)loadInPort:(ObSInPort*)port intoScope:(ObSScope*)scope {
   id token = [ObjScheme parseOneToken: port];
 
   while ( token != _EOF ) {
     [scope evaluate: token];
     token = [ObjScheme parseOneToken: port];
   }
-
-  [port release];
 }
 
 /**
@@ -1450,6 +1481,14 @@ BOOL _errorLogged = NO;
           }
           return result; // begin evaluates to value of final expression
 
+        } else if ( head == S_LOAD ) { // (load <filename> [environment])
+          NSString* filename = [self evaluate: [rest car]];
+          ObSScope* scope = self;
+          if ( (id)[rest cdr] != C_NULL ) {
+            scope = [self evaluate: [rest cadr]];
+          }
+          [ObjScheme loadFile: filename intoScope: scope];
+
         } else {
           id<ObSProcedure> procedure = [self evaluate: head];
           ObSCons* args = [self evaluateList: rest];
@@ -2028,6 +2067,34 @@ BOOL _errorLogged = NO;
 
 - (NSString*)description {
   return _name;
+}
+
+@end
+
+
+
+@implementation ObSBundleFileLoader
+
+- (ObSInPort*)findFile:(NSString*)filename {
+  NSString* filePath = [self qualifyFileName: filename];
+  if ( filePath == nil ) {
+    return nil;
+  }
+
+  NSData* data = [NSData dataWithContentsOfFile: filePath];
+  if ( data == nil ) {
+    return nil;
+  }
+
+  return [[[ObSInPort alloc] initWithData: data] autorelease];
+}
+
+- (NSString*)qualifyFileName:(NSString*)filename {
+  if ( [filename hasSuffix: @".scm"] ) {
+    filename = [filename substringWithRange: NSMakeRange(0, [filename length]-4)];
+  }
+
+  return [[NSBundle mainBundle] pathForResource: filename ofType: @"scm"];
 }
 
 @end

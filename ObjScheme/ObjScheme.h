@@ -11,6 +11,40 @@
 @class ObSScope;
 @class ObSInPort;
 @class ObSCons;
+@class ObSConstant;
+@class ObSSymbol;
+
+extern ObSSymbol* S_DOT;
+extern ObSSymbol* S_QUOTE;
+extern ObSSymbol* S_IF;
+extern ObSSymbol* S_SET;
+extern ObSSymbol* S_DEFINE;
+extern ObSSymbol* S_LAMBDA;
+extern ObSSymbol* S_BEGIN;
+extern ObSSymbol* S_DEFINEMACRO;
+extern ObSSymbol* S_QUASIQUOTE;
+extern ObSSymbol* S_UNQUOTE;
+extern ObSSymbol* S_UNQUOTESPLICING;
+extern ObSSymbol* S_APPEND;
+extern ObSSymbol* S_CONS;
+extern ObSSymbol* S_LET;
+extern ObSSymbol* S_LET_STAR;
+extern ObSSymbol* S_OPENPAREN;
+extern ObSSymbol* S_CLOSEPAREN;
+extern ObSSymbol* S_LIST;
+extern ObSSymbol* S_EVAL;
+extern ObSSymbol* S_MAP;
+extern ObSSymbol* S_OPENBRACKET;
+extern ObSSymbol* S_CLOSEBRACKET;
+extern ObSSymbol* S_APPLY;
+extern ObSSymbol* S_LOAD;
+
+extern ObSConstant* B_FALSE;
+extern ObSConstant* B_TRUE;
+
+extern ObSConstant* C_NULL;
+
+extern ObSConstant* UNSPECIFIED;
 
 
 
@@ -30,6 +64,12 @@
 @end
 
 
+@protocol ObSFileLoader <NSObject>
+- (ObSInPort*)findFile:(NSString*)filename;
+- (NSString*)qualifyFileName:(NSString*)filename;
+@end
+
+
 
 @interface ObjScheme : NSObject
 + (ObSScope*)globalScope;
@@ -37,7 +77,9 @@
 + (id)parseString:(NSString*)string;
 + (id)read:(ObSInPort*)inPort;
 + (BOOL)isFalse:(id)token;
++ (void)loadFile:(NSString*)filename intoScope:(ObSScope*)scope;
 + (void)loadSource:(NSString*)source intoScope:(ObSScope*)scope;
++ (void)loadInPort:(ObSInPort*)port intoScope:(ObSScope*)scope;
 
 + (id)map:(id<ObSProcedure>)procedure on:(id)list;
 + (NSArray*)filter:(ObSCons*)list with:(id<ObSProcedure>)procedure;

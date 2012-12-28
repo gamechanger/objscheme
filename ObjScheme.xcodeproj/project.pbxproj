@@ -23,14 +23,15 @@
 /* End PBXAggregateTarget section */
 
 /* Begin PBXBuildFile section */
+		FB3511D5168E2F350009090D /* ObjScheme.h in Headers */ = {isa = PBXBuildFile; fileRef = FBE147F915C6D22A000B79FD /* ObjScheme.h */; };
+		FB3511D7168E2F3A0009090D /* ObSNS.h in Headers */ = {isa = PBXBuildFile; fileRef = FBC68B3915D05CD50051A1BA /* ObSNS.h */; };
+		FB3511D8168E2F3C0009090D /* ObSNS.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = FBC68B3915D05CD50051A1BA /* ObSNS.h */; };
 		FBAEE119166B19E7009BFFC9 /* ObSStrings.h in Headers */ = {isa = PBXBuildFile; fileRef = FBAEE115166B19E7009BFFC9 /* ObSStrings.h */; };
 		FBAEE11A166B19E7009BFFC9 /* ObSStrings.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = FBAEE115166B19E7009BFFC9 /* ObSStrings.h */; };
 		FBAEE11B166B19E7009BFFC9 /* ObSStrings.m in Sources */ = {isa = PBXBuildFile; fileRef = FBAEE116166B19E7009BFFC9 /* ObSStrings.m */; };
-		FBAEE11C166B19E7009BFFC9 /* ObSStrings.m in CopyFiles */ = {isa = PBXBuildFile; fileRef = FBAEE116166B19E7009BFFC9 /* ObSStrings.m */; };
 		FBAEE11D166B19E7009BFFC9 /* SchemeBacked.h in Headers */ = {isa = PBXBuildFile; fileRef = FBAEE117166B19E7009BFFC9 /* SchemeBacked.h */; };
 		FBAEE11E166B19E7009BFFC9 /* SchemeBacked.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = FBAEE117166B19E7009BFFC9 /* SchemeBacked.h */; };
 		FBAEE11F166B19E7009BFFC9 /* SchemeBacked.m in Sources */ = {isa = PBXBuildFile; fileRef = FBAEE118166B19E7009BFFC9 /* SchemeBacked.m */; };
-		FBAEE120166B19E7009BFFC9 /* SchemeBacked.m in CopyFiles */ = {isa = PBXBuildFile; fileRef = FBAEE118166B19E7009BFFC9 /* SchemeBacked.m */; };
 		FBC68B0C15D047AC0051A1BA /* ObjScheme.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = FBE147F915C6D22A000B79FD /* ObjScheme.h */; };
 		FBC68B3D15D05CD50051A1BA /* ObSNS.m in Sources */ = {isa = PBXBuildFile; fileRef = FBC68B3A15D05CD50051A1BA /* ObSNS.m */; };
 		FBE147F515C6D22A000B79FD /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FBE147F415C6D22A000B79FD /* Foundation.framework */; };
@@ -61,9 +62,8 @@
 			files = (
 				FBC68B0C15D047AC0051A1BA /* ObjScheme.h in CopyFiles */,
 				FBAEE11A166B19E7009BFFC9 /* ObSStrings.h in CopyFiles */,
-				FBAEE11C166B19E7009BFFC9 /* ObSStrings.m in CopyFiles */,
 				FBAEE11E166B19E7009BFFC9 /* SchemeBacked.h in CopyFiles */,
-				FBAEE120166B19E7009BFFC9 /* SchemeBacked.m in CopyFiles */,
+				FB3511D8168E2F3C0009090D /* ObSNS.h in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -191,6 +191,8 @@
 			files = (
 				FBAEE119166B19E7009BFFC9 /* ObSStrings.h in Headers */,
 				FBAEE11D166B19E7009BFFC9 /* SchemeBacked.h in Headers */,
+				FB3511D5168E2F350009090D /* ObjScheme.h in Headers */,
+				FB3511D7168E2F3A0009090D /* ObSNS.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
