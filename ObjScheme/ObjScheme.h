@@ -33,10 +33,11 @@
 
 @interface ObjScheme : NSObject
 + (ObSScope*)globalScope;
-+ (id)parse:(ObSInPort*)inPort;
++ (id)parseOneToken:(ObSInPort*)inPort;
 + (id)parseString:(NSString*)string;
 + (id)read:(ObSInPort*)inPort;
 + (BOOL)isFalse:(id)token;
++ (void)loadSource:(NSString*)source intoScope:(ObSScope*)scope;
 
 + (id)map:(id<ObSProcedure>)procedure on:(id)list;
 + (NSArray*)filter:(ObSCons*)list with:(id<ObSProcedure>)procedure;

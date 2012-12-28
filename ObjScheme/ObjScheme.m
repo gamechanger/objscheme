@@ -448,10 +448,22 @@ static ObSScope* __globalScope = nil;
   }
 }
 
++ (void)loadSource:(NSString*)source intoScope:(ObSScope*)scope {
+  ObSInPort* port = [[ObSInPort alloc] initWithString: source];
+  id token = [ObjScheme parseOneToken: port];
+
+  while ( token != _EOF ) {
+    [scope evaluate: token];
+    token = [ObjScheme parseOneToken: port];
+  }
+
+  [port release];
+}
+
 /**
  * read a program, then expand and error-check it
  */
-+ (id)parse:(ObSInPort*)inPort {
++ (id)parseOneToken:(ObSInPort*)inPort {
   return [ObjScheme expandToken: [ObjScheme read: inPort] atTopLevel: YES];
 }
 
@@ -512,7 +524,7 @@ static ObSScope* __globalScope = nil;
 }
 
 + (id)parseString:(NSString*)string {
-  return [ObjScheme parse: [[[ObSInPort alloc] initWithString: string] autorelease]];
+  return [ObjScheme parseOneToken: [[[ObSInPort alloc] initWithString: string] autorelease]];
 }
 
 
