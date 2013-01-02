@@ -1,15 +1,15 @@
 //
-// SchemeBacked.m
+// ObSSchemeBacked.m
 // GameChanger
 //
 // Created by Kiril Savino on Saturday, December 1, 2012
 // Copyright 2012 GameChanger. All rights reserved.
 //
 
-#import "SchemeBacked.h"
+#import "ObSSchemeBacked.h"
 #import "ObjScheme.h"
 
-@implementation SchemeBacked
+@implementation ObSSchemeBacked
 
 // -- static stuff -- //
 
@@ -50,7 +50,7 @@
     return ret;
   }
 
-  NSString* schemeName = [SchemeBacked toCocoaName: NSStringFromSelector(selector)];
+  NSString* schemeName = [ObSSchemeBacked toCocoaName: NSStringFromSelector(selector)];
   NSDictionary* environ = _scope.environ;
   if ( [environ objectForKey: schemeName] ) {
     /*
@@ -76,9 +76,13 @@
   NSArray* args = NULL;
   [invocation getArgument: &args atIndex: firstArgumentIndex];
   ObSCons* schemeArgs = [ObjScheme list: args];
-  NSString* schemeFunctionName = [SchemeBacked toSchemeName: NSStringFromSelector(invocation.selector)];
+  NSString* schemeFunctionName = [ObSSchemeBacked toSchemeName: NSStringFromSelector(invocation.selector)];
   NSArray* schemeCall = [NSArray arrayWithObjects: schemeFunctionName, schemeArgs, nil];
   [invocation setReturnValue: [_scope evaluate: [ObjScheme list: schemeCall]]];
+}
+
+- (void)loadFile:(NSString*)file {
+  [ObjScheme loadFile: file intoScope: _scope];
 }
 
 @end

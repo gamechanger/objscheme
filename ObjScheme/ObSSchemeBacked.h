@@ -1,5 +1,5 @@
 //
-// SchemeBacked.h
+// ObSSchemeBacked.h
 // GameChanger
 //
 // Created by Kiril Savino on Saturday, December 1, 2012
@@ -8,8 +8,10 @@
 
 @class ObSScope;
 
-@interface SchemeBacked : NSObject {
+@interface ObSSchemeBacked : NSObject {
   ObSScope* _scope;
 }
+
+- (void)loadFile:(NSString*)file;
 
 @end
