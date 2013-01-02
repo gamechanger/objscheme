@@ -65,9 +65,6 @@ static NSString* _EOF = @"#EOF#";
 
 @end
 
-@interface ObSBundleFileLoader : NSObject <ObSFileLoader>
-@end
-
 
 
 
@@ -130,6 +127,14 @@ static NSMutableArray* __loaders = nil;
     __loaders = [[NSMutableArray alloc] initWithObjects: bundleLoader, nil];
     [bundleLoader release];
   }
+}
+
++ (void)addFileLoader:(id<ObSFileLoader>)loader {
+  [__loaders addObject: loader];
+}
+
++ (void)removeFileLoader:(id<ObSFileLoader>)loader {
+  [__loaders removeObject: loader];
 }
 
 + (id)map:(id<ObSProcedure>)proc on:(id)arg {
@@ -460,34 +465,45 @@ static NSMutableArray* __loaders = nil;
   }
 }
 
-+ (ObSInPort*)findFile:(NSString*)filename {
++ (void)loadFile:(NSString*)filename intoScope:(ObSScope*)scope {
   for ( id<ObSFileLoader> loader in __loaders ) {
-    ObSInPort* port = [loader findFile: filename];
+    NSString* qualifiedName = [loader qualifyFileName: filename];
+    if ( ! qualifiedName ) {
+      continue;
+    }
+
+    if ( [scope isFilenameLoaded: qualifiedName] ) {
+      NSLog( @"Skipping %@, already loaded", qualifiedName );
+      return;
+    }
+
+    ObSInPort* port = [loader findFile: qualifiedName];
     if ( port != nil ) {
-      return port;
+      NSLog( @"(%p) Loading %@ FOR %@", scope, qualifiedName, filename );
+      [self loadInPort: port intoScope: scope forFilename: qualifiedName];
+      return;
     }
   }
-  [NSException raise: @"NoSuchFile" format: @"Couldn't find %@ from any source", filename];
-  return nil;
-}
 
-+ (void)loadFile:(NSString*)filename intoScope:(ObSScope*)scope {
-  ObSInPort* port = [self findFile: filename];
-  [self loadInPort: port intoScope: scope];
+  [NSException raise: @"NoSuchFile" format: @"failed to find %@ from any source", filename];
 }
 
 + (void)loadSource:(NSString*)source intoScope:(ObSScope*)scope {
   ObSInPort* port = [[ObSInPort alloc] initWithString: source];
-  [self loadInPort: port intoScope: scope];
+  [self loadInPort: port intoScope: scope forFilename: nil];
   [port release];
 }
 
-+ (void)loadInPort:(ObSInPort*)port intoScope:(ObSScope*)scope {
++ (void)loadInPort:(ObSInPort*)port intoScope:(ObSScope*)scope forFilename:(NSString*)filename {
   id token = [ObjScheme parseOneToken: port];
 
   while ( token != _EOF ) {
     [scope evaluate: token];
     token = [ObjScheme parseOneToken: port];
+  }
+
+  if ( filename ) {
+    [scope recordFilenameLoaded: filename];
   }
 }
 
@@ -1180,7 +1196,7 @@ static NSMutableArray* __loaders = nil;
 
 - (id)initWithString:(NSString*)string {
   if ( ( self = [super init] ) ) {
-    _string = [string retain];
+    _string = [string copy];
   }
   return self;
 }
@@ -1221,9 +1237,10 @@ BOOL _errorLogged = NO;
 
 - (id)initWithOuterScope:(ObSScope*)outer {
   if ( (self = [super init]) ) {
-    self.outer = outer;
+    _outerScope = [outer retain];
     _macros = [[NSMutableDictionary alloc] init];
     _environ = [[NSMutableDictionary alloc] init];
+    _loadedFiles = [[NSMutableSet alloc] init];
   }
   return self;
 }
@@ -1232,11 +1249,22 @@ BOOL _errorLogged = NO;
   [_outerScope release];
   [_macros release];
   [_environ release];
+  [_loadedFiles release];
   [super dealloc];
 }
 
 - (NSString*)description {
   return [NSString stringWithFormat: @"%@", _environ];
+}
+
+- (BOOL)isFilenameLoaded:(NSString*)filename {
+  if ( [_loadedFiles containsObject: filename] )
+    return YES;
+  return _outerScope == nil ? NO : [_outerScope isFilenameLoaded: filename];
+}
+
+- (void)recordFilenameLoaded:(NSString*)filename {
+  [_loadedFiles addObject: filename];
 }
 
 - (id)resolveSymbol:(ObSSymbol*)symbol {
@@ -1488,6 +1516,7 @@ BOOL _errorLogged = NO;
             scope = [self evaluate: [rest cadr]];
           }
           [ObjScheme loadFile: filename intoScope: scope];
+          return UNSPECIFIED;
 
         } else {
           id<ObSProcedure> procedure = [self evaluate: head];
@@ -1784,7 +1813,7 @@ BOOL _errorLogged = NO;
 
 - (id)initWithString:(NSString*)string {
   if ( (self = [super init]) ) {
-    _data = [string retain];
+    _data = [string copy];
   }
   return self;
 }
@@ -2073,15 +2102,60 @@ BOOL _errorLogged = NO;
 
 
 
-@implementation ObSBundleFileLoader
+@implementation ObSFilesystemFileLoader
 
-- (ObSInPort*)findFile:(NSString*)filename {
-  NSString* filePath = [self qualifyFileName: filename];
-  if ( filePath == nil ) {
+- (id)initWithPath:(NSString*)path {
+  if ( self = [super init] ) {
+    _directoryPath = [[[path stringByResolvingSymlinksInPath]
+                        stringByStandardizingPath]
+                       retain];
+  }
+  return self;
+}
+
+- (void)dealloc {
+  [_directoryPath release];
+  [super dealloc];
+}
+
+- (ObSInPort*)findFile:(NSString*)path {
+  if ( ! [[NSFileManager defaultManager] isReadableFileAtPath: path] ) {
     return nil;
   }
 
-  NSData* data = [NSData dataWithContentsOfFile: filePath];
+  NSError* error = nil;
+  NSString* source = [[NSString alloc] initWithContentsOfFile: path
+                                                     encoding: NSUTF8StringEncoding
+                                                        error: &error];
+  if ( error != nil ) {
+    if ( source != nil ) {
+      [source release];
+    }
+    return nil;
+  }
+
+  return [[[ObSInPort alloc] initWithString: [source autorelease]] autorelease];
+}
+
+- (NSString*)qualifyFileName:(NSString*)filename {
+  return [[_directoryPath stringByAppendingPathComponent: filename] stringByStandardizingPath];
+}
+
++ (ObSFilesystemFileLoader*)loaderForPath:(NSString*)path {
+  return [[[ObSFilesystemFileLoader alloc] initWithPath: path] autorelease];
+}
+
+@end
+
+
+@implementation ObSBundleFileLoader
+
+- (ObSInPort*)findFile:(NSString*)path {
+  if ( ! [[NSFileManager defaultManager] isReadableFileAtPath: path] ) {
+    return nil;
+  }
+
+  NSData* data = [NSData dataWithContentsOfFile: path];
   if ( data == nil ) {
     return nil;
   }

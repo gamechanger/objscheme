@@ -70,6 +70,17 @@ extern ObSConstant* UNSPECIFIED;
 @end
 
 
+@interface ObSBundleFileLoader : NSObject <ObSFileLoader>
+@end
+
+
+@interface ObSFilesystemFileLoader : NSObject <ObSFileLoader> {
+  NSString* _directoryPath;
+}
++ (ObSFilesystemFileLoader*)loaderForPath:(NSString*)path;
+@end
+
+
 
 @interface ObjScheme : NSObject
 + (ObSScope*)globalScope;
@@ -79,7 +90,9 @@ extern ObSConstant* UNSPECIFIED;
 + (BOOL)isFalse:(id)token;
 + (void)loadFile:(NSString*)filename intoScope:(ObSScope*)scope;
 + (void)loadSource:(NSString*)source intoScope:(ObSScope*)scope;
-+ (void)loadInPort:(ObSInPort*)port intoScope:(ObSScope*)scope;
++ (void)loadInPort:(ObSInPort*)port intoScope:(ObSScope*)scope forFilename:(NSString*)filename;
++ (void)addFileLoader:(id<ObSFileLoader>)loader;
++ (void)removeFileLoader:(id<ObSFileLoader>)loader;
 
 + (id)map:(id<ObSProcedure>)procedure on:(id)list;
 + (NSArray*)filter:(ObSCons*)list with:(id<ObSProcedure>)procedure;
@@ -95,6 +108,7 @@ extern ObSConstant* UNSPECIFIED;
   ObSScope* _outerScope;
   NSMutableDictionary* _macros;
   NSMutableDictionary* _environ;
+  NSMutableSet* _loadedFiles;
 }
 
 @property (nonatomic,retain) ObSScope* outer;
@@ -110,6 +124,8 @@ extern ObSConstant* UNSPECIFIED;
 - (BOOL)hasMacroNamed:(ObSSymbol*)name;
 - (id<ObSProcedure>)macroNamed:(ObSSymbol*)name;
 - (ObSScope*)findScopeOf:(ObSSymbol*)name;
+- (BOOL)isFilenameLoaded:(NSString*)filename;
+- (void)recordFilenameLoaded:(NSString*)filename;
 
 @end
 
