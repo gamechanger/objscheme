@@ -12,6 +12,8 @@
   ObSScope* _scope;
 }
 
+@property (nonatomic,readonly) ObSScope* scope;
+
 - (id)initWithScope:(ObSScope*)scope;
 - (void)loadFile:(NSString*)file;
 

@@ -11,6 +11,8 @@
 
 @implementation ObSSchemeBacked
 
+@synthesize scope=_scope;
+
 - (id)initWithScope:(ObSScope*)scope {
   if ( ( self = [super init] ) ) {
     _scope = [scope retain];
