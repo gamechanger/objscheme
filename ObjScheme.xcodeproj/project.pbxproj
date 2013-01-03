@@ -23,16 +23,12 @@
 /* End PBXAggregateTarget section */
 
 /* Begin PBXBuildFile section */
-		FB3511D5168E2F350009090D /* ObjScheme.h in Headers */ = {isa = PBXBuildFile; fileRef = FBE147F915C6D22A000B79FD /* ObjScheme.h */; };
-		FB3511D7168E2F3A0009090D /* ObSNS.h in Headers */ = {isa = PBXBuildFile; fileRef = FBC68B3915D05CD50051A1BA /* ObSNS.h */; };
-		FB3511D8168E2F3C0009090D /* ObSNS.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = FBC68B3915D05CD50051A1BA /* ObSNS.h */; };
-		FB3511E41694E3760009090D /* ObSSchemeBacked.h in Headers */ = {isa = PBXBuildFile; fileRef = FB3511E21694E3760009090D /* ObSSchemeBacked.h */; };
+		FB3511D5168E2F350009090D /* ObjScheme.h in Headers */ = {isa = PBXBuildFile; fileRef = FBE147F915C6D22A000B79FD /* ObjScheme.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		FB3511D7168E2F3A0009090D /* ObSNS.h in Headers */ = {isa = PBXBuildFile; fileRef = FBC68B3915D05CD50051A1BA /* ObSNS.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		FB3511E41694E3760009090D /* ObSSchemeBacked.h in Headers */ = {isa = PBXBuildFile; fileRef = FB3511E21694E3760009090D /* ObSSchemeBacked.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		FB3511E51694E3760009090D /* ObSSchemeBacked.m in Sources */ = {isa = PBXBuildFile; fileRef = FB3511E31694E3760009090D /* ObSSchemeBacked.m */; };
-		FB3511E61694E3AE0009090D /* ObSSchemeBacked.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = FB3511E21694E3760009090D /* ObSSchemeBacked.h */; };
-		FBAEE119166B19E7009BFFC9 /* ObSStrings.h in Headers */ = {isa = PBXBuildFile; fileRef = FBAEE115166B19E7009BFFC9 /* ObSStrings.h */; };
-		FBAEE11A166B19E7009BFFC9 /* ObSStrings.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = FBAEE115166B19E7009BFFC9 /* ObSStrings.h */; };
+		FBAEE119166B19E7009BFFC9 /* ObSStrings.h in Headers */ = {isa = PBXBuildFile; fileRef = FBAEE115166B19E7009BFFC9 /* ObSStrings.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		FBAEE11B166B19E7009BFFC9 /* ObSStrings.m in Sources */ = {isa = PBXBuildFile; fileRef = FBAEE116166B19E7009BFFC9 /* ObSStrings.m */; };
-		FBC68B0C15D047AC0051A1BA /* ObjScheme.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = FBE147F915C6D22A000B79FD /* ObjScheme.h */; };
 		FBC68B3D15D05CD50051A1BA /* ObSNS.m in Sources */ = {isa = PBXBuildFile; fileRef = FBC68B3A15D05CD50051A1BA /* ObSNS.m */; };
 		FBE147F515C6D22A000B79FD /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FBE147F415C6D22A000B79FD /* Foundation.framework */; };
 		FBE147FB15C6D22A000B79FD /* ObjScheme.m in Sources */ = {isa = PBXBuildFile; fileRef = FBE147FA15C6D22A000B79FD /* ObjScheme.m */; };
@@ -60,10 +56,6 @@
 			dstPath = "${BUILD_DIR}/${CONFIGURATION}-iphoneuniversal/${PRODUCT_NAME}.framework/Versions/A/Headers/";
 			dstSubfolderSpec = 0;
 			files = (
-				FBC68B0C15D047AC0051A1BA /* ObjScheme.h in CopyFiles */,
-				FBAEE11A166B19E7009BFFC9 /* ObSStrings.h in CopyFiles */,
-				FB3511D8168E2F3C0009090D /* ObSNS.h in CopyFiles */,
-				FB3511E61694E3AE0009090D /* ObSSchemeBacked.h in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -301,8 +293,8 @@
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "echo \"building universal...\"\nSIMULATOR_LIBRARY_PATH=\"${BUILD_DIR}/${CONFIGURATION}-iphonesimulator/lib${PROJECT_NAME}.a\" &&\nDEVICE_LIBRARY_PATH=\"${BUILD_DIR}/${CONFIGURATION}-iphoneos/lib${PROJECT_NAME}.a\" &&\nUNIVERSAL_LIBRARY_DIR=\"${BUILD_DIR}/${CONFIGURATION}-iphoneuniversal\" &&\nUNIVERSAL_LIBRARY_PATH=\"${UNIVERSAL_LIBRARY_DIR}/${PRODUCT_NAME}\" &&\nFRAMEWORK=\"${UNIVERSAL_LIBRARY_DIR}/${PRODUCT_NAME}.framework\" &&\n\n# Create framework directory structure.\nrm -rf \"${FRAMEWORK}\" &&\necho \"making dir ${UNIVERSAL_LIBRARY_DIR}\" &&\nmkdir -p \"${UNIVERSAL_LIBRARY_DIR}\" &&\nmkdir -p \"${FRAMEWORK}/Versions/A/Headers\" &&\nmkdir -p \"${FRAMEWORK}/Versions/A/Resources\" &&\n# Generate universal binary for the device and simulator.\nlipo \"${SIMULATOR_LIBRARY_PATH}\" \"${DEVICE_LIBRARY_PATH}\" -create -output \"${UNIVERSAL_LIBRARY_PATH}\" &&\n# Move files to appropriate locations in framework paths.\ncp \"${UNIVERSAL_LIBRARY_PATH}\" \"${FRAMEWORK}/Versions/A\" &&\nln -s \"A\" \"${FRAMEWORK}/Versions/Current\" &&\nln -s \"Versions/Current/Headers\" \"${FRAMEWORK}/Headers\" &&\nln -s \"Versions/Current/Resources\" \"${FRAMEWORK}/Resources\" &&\nln -s \"Versions/Current/${PRODUCT_NAME}\" \"${FRAMEWORK}/${PRODUCT_NAME}\"";
+			shellPath = /bin/bash;
+			shellScript = "echo \"building universal...\"\nSIMULATOR_LIBRARY_PATH=\"${BUILD_DIR}/${CONFIGURATION}-iphonesimulator/lib${PROJECT_NAME}.a\" &&\nDEVICE_LIBRARY_PATH=\"${BUILD_DIR}/${CONFIGURATION}-iphoneos/lib${PROJECT_NAME}.a\" &&\nUNIVERSAL_LIBRARY_DIR=\"${BUILD_DIR}/${CONFIGURATION}-iphoneuniversal\" &&\nUNIVERSAL_LIBRARY_PATH=\"${UNIVERSAL_LIBRARY_DIR}/${PRODUCT_NAME}\" &&\nFRAMEWORK=\"${UNIVERSAL_LIBRARY_DIR}/${PRODUCT_NAME}.framework\" &&\nHEADERS_PATH=\"${BUILD_DIR}/${CONFIGURATION}-iphoneos/usr/local/include\" &&\n\n# Create framework directory structure.\nrm -rf \"${FRAMEWORK}\" &&\necho \"making dir ${UNIVERSAL_LIBRARY_DIR}\" &&\nmkdir -p \"${UNIVERSAL_LIBRARY_DIR}\" &&\nmkdir -p \"${FRAMEWORK}/Versions/A/Headers\" &&\nmkdir -p \"${FRAMEWORK}/Versions/A/Resources\" &&\ncp -r \"${HEADERS_PATH}/\" \"${FRAMEWORK}/Versions/A/Headers/\" &&\n# Generate universal binary for the device and simulator.\nlipo \"${SIMULATOR_LIBRARY_PATH}\" \"${DEVICE_LIBRARY_PATH}\" -create -output \"${UNIVERSAL_LIBRARY_PATH}\" &&\n# Move files to appropriate locations in framework paths.\ncp \"${UNIVERSAL_LIBRARY_PATH}\" \"${FRAMEWORK}/Versions/A\" &&\nln -s \"A\" \"${FRAMEWORK}/Versions/Current\" &&\nln -s \"Versions/Current/Headers\" \"${FRAMEWORK}/Headers\" &&\nln -s \"Versions/Current/Resources\" \"${FRAMEWORK}/Resources\" &&\nln -s \"Versions/Current/${PRODUCT_NAME}\" \"${FRAMEWORK}/${PRODUCT_NAME}\"";
 		};
 		FBE147FF15C6D22A000B79FD /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;

@@ -1687,6 +1687,10 @@ BOOL _errorLogged = NO;
   [super dealloc];
 }
 
+- (ObSNativeBlock)nativeBlock {
+  return _block;
+}
+
 - (id)callWith:(ObSCons*)arguments {
   if ( (id)arguments == C_NULL ) {
     return _block([NSArray array]);

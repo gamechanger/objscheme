@@ -6,7 +6,19 @@
 // Copyright 2012 GameChanger. All rights reserved.
 //
 
-@class ObSScope;
+#import "ObjScheme.h"
+
+
+@interface ObSBridgedProcedure : NSObject {
+  id<ObSProcedure> _proc;
+  ObSNativeBlock _nativeBlock;
+}
++ (ObSBridgedProcedure*)bridge:(id<ObSProcedure>)schemeProc;
+- (id)initWithProcedure:(id<ObSProcedure>)schemeProc;
+- (id)initWithNativeBlock:(ObSNativeBlock)nativeBlock;
+- (id)invokeWithArguments:(NSArray*)arguments;
+@end
+
 
 @interface ObSSchemeBacked : NSObject {
   ObSScope* _scope;
@@ -16,5 +28,8 @@
 
 - (id)initWithScope:(ObSScope*)scope;
 - (void)loadFile:(NSString*)file;
+- (id)schemeObjectForKey:(NSString*)key;
+- (void)setSchemeObject:(id)object forKey:(NSString*)key;
+- (void)setGlobalSchemeObject:(id)object forKey:(NSString*)key;
 
 @end
