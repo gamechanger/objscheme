@@ -241,6 +241,7 @@
 		FBE147E815C6D229000B79FD /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
+				CLASSPREFIX = ObS;
 				LastUpgradeCheck = 0430;
 				ORGANIZATIONNAME = GameChanger;
 			};

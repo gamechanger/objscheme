@@ -12,6 +12,7 @@
   ObSScope* _scope;
 }
 
+- (id)initWithScope:(ObSScope*)scope;
 - (void)loadFile:(NSString*)file;
 
 @end
