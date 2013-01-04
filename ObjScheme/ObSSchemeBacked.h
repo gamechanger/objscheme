@@ -31,5 +31,8 @@
 - (id)schemeObjectForKey:(NSString*)key;
 - (void)setSchemeObject:(id)object forKey:(NSString*)key;
 - (void)setGlobalSchemeObject:(id)object forKey:(NSString*)key;
+- (id)callFunctionNamed:(NSString*)string;
+- (id)callFunctionNamed:(NSString*)string withArguments:(NSArray*)arguments;
+- (id)callFunctionNamed:(NSString*)string withArgument:(id)argument;
 
 @end

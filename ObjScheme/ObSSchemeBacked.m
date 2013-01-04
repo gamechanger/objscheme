@@ -79,6 +79,20 @@
   return value;
 }
 
+- (id)callFunctionNamed:(NSString*)string {
+  return [self callFunctionNamed: string withArguments: [NSArray array]];
+}
+
+- (id)callFunctionNamed:(NSString*)string withArgument:(id)argument  {
+  ObSBridgedProcedure* proc = [self schemeObjectForKey: string];
+  return [proc invokeWithArguments: @[argument]];
+}
+
+- (id)callFunctionNamed:(NSString*)string withArguments:(NSArray*)arguments  {
+  ObSBridgedProcedure* proc = [self schemeObjectForKey: string];
+  return [proc invokeWithArguments: arguments];
+}
+
 - (void)setSchemeObject:(id)object forKey:(NSString*)key {
 }
 
