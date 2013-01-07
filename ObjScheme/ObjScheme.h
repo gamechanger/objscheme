@@ -114,8 +114,11 @@ extern ObSConstant* UNSPECIFIED;
 @property (nonatomic,retain) ObSScope* outer;
 @property (nonatomic,retain) NSMutableDictionary* environ;
 
++ (ObSScope*)getGlobalChildScope;
+
 - (id)initWithOuterScope:(ObSScope*)outer;
 - (id)resolveSymbol:(ObSSymbol*)variable;
+- (BOOL)definesSymbol:(ObSSymbol*)symbol;
 - (void)bootstrapMacros;
 - (id)evaluate:(id)token;
 - (void)defineFunction:(id<ObSProcedure>)function;

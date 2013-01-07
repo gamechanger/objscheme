@@ -1235,6 +1235,10 @@ BOOL _errorLogged = NO;
   _stack = [[NSMutableArray alloc] init];
 }
 
++ (ObSScope*)getGlobalChildScope {
+  return [[[ObSScope alloc] initWithOuterScope: [ObjScheme globalScope]] autorelease];
+}
+
 - (id)initWithOuterScope:(ObSScope*)outer {
   if ( (self = [super init]) ) {
     _outerScope = [outer retain];
@@ -1279,6 +1283,10 @@ BOOL _errorLogged = NO;
 
   [NSException raise: @"LookupError" format: @"Symbol %@ not defined", symbol];
   return nil;
+}
+
+- (BOOL)definesSymbol:(ObSSymbol*)symbol {
+  return [_environ objectForKey: symbol.string] != nil;
 }
 
 - (void)define:(ObSSymbol*)symbol as:(id)thing {
