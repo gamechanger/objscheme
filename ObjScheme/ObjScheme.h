@@ -133,6 +133,10 @@ extern ObSConstant* UNSPECIFIED;
 @end
 
 
+@protocol ObSUnaryLambda <NSObject>
+- (id)callNatively:(id)arg;
+@end
+
 
 @interface ObSLambda : NSObject <ObSProcedure> {
   ObSSymbol* _listParameter;
@@ -249,6 +253,8 @@ typedef id (^ObSNativeThunkBlock)();
 }
 @property (nonatomic, retain) id car;
 @property (nonatomic, retain) id cdr;
+
++ (ObSCons*)cons:(id)a and:(id)b;
 - (id)initWithCar:(id)car cdr:(id)cdr;
 - (id)cadr;
 - (id)caddr;

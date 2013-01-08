@@ -16,7 +16,7 @@
   [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"NSDictionary:objectForKey")
                                             fromBlock: ^(id a, id b) {
         id val = [(NSMutableDictionary*)a objectForKey: b];
-        return ( val == nil ? [ObjScheme boolToTruth: NO] : val );
+        return ( val == nil ? B_FALSE : val );
       }]];
 
   [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"NSDictionary:containsKey?")
@@ -103,7 +103,7 @@
   [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"NSArray:indexOfObject")
                                             fromBlock: ^(id a, id b) {
         NSUInteger index = [(NSArray*)a indexOfObject: b];
-        return (id)(index == NSNotFound ? [ObjScheme boolToTruth: NO] : [NSNumber numberWithInteger: index]);
+        return (id)(index == NSNotFound ? B_FALSE : [NSNumber numberWithInteger: index]);
       }]];
 
   [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"NSArray:count")

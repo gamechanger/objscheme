@@ -48,7 +48,7 @@ static NSString* _EOF = @"#EOF#";
 #define U_LAMBDA(name, block) [ObSNativeUnaryLambda named: SY(name) fromBlock: (block)]
 #define TRUTH(b) ((b) ? B_TRUE : B_FALSE)
 #define IF(x) ((x) != B_FALSE)
-#define CONS(x,y) [[[ObSCons alloc] initWithCar: (x) cdr: (y)] autorelease]
+#define CONS(x,y) [ObSCons cons: (x) and: (y)]
 #define ISINT(n) (strcmp([(n) objCType], @encode(int)) == 0)
 #define ISDOUBLE(n) (strcmp([(n) objCType], @encode(double)) == 0)
 #define CONST(s) [[ObSConstant alloc] initWithName: (s)]
@@ -1091,8 +1091,16 @@ static NSMutableArray* __loaders = nil;
         if ( b != C_NULL ) {
           id<ObSProcedure> proc = a;
           ObSCons* list = b;
-          for ( id item in list ) {
-            [proc callWith: CONS(item, C_NULL)];
+          if ( [a conformsToProtocol: @protocol(ObSUnaryLambda)] ) {
+            id<ObSUnaryLambda> unary = a;
+            for ( id item in list ) {
+              [unary callNatively: item];
+            }
+
+          } else {
+            for ( id item in list ) {
+              [proc callWith: CONS(item, C_NULL)];
+            }
           }
         }
         return UNSPECIFIED;
@@ -1775,6 +1783,10 @@ BOOL _errorLogged = NO;
   return _block([list car]);
 }
 
+- (id)callNatively:(id)arg {
+  return _block(arg);
+}
+
 - (ObSSymbol*)name {
   return (_name == nil ? S_LAMBDA : _name);
 }
@@ -1932,6 +1944,26 @@ BOOL _errorLogged = NO;
 @implementation ObSCons
 @synthesize car=_car, cdr=_cdr;
 
+static NSMutableArray* __consCache = nil;
+
++ (void)initialize {
+ if ( __consCache == nil ) {
+    __consCache = [[NSMutableArray alloc] init];
+  }
+}
+
++ (ObSCons*)cons:(id)a and:(id)b {
+  if ( [__consCache count] > 0 ) {
+    ObSCons* cached = [[__consCache lastObject] retain];
+    [__consCache removeLastObject];
+    cached->_car = [a retain];
+    cached->_cdr = [b retain];
+    return [cached autorelease];
+  }
+
+  return [[[ObSCons alloc] initWithCar: a cdr: b] autorelease];
+}
+
 - (id)initWithCar:(id)car cdr:(id)cdr {
   if ( ( self = [super init] ) ) {
     _car = [car retain];
@@ -1943,7 +1975,15 @@ BOOL _errorLogged = NO;
 - (void)dealloc {
   [_car release];
   [_cdr release];
-  [super dealloc];
+
+  if ( [__consCache count] < 100 ) {
+    _car = nil;
+    _cdr = nil;
+    [__consCache addObject: self];
+
+  } else {
+    [super dealloc];
+  }
 }
 
 - (BOOL)isEqual:(id)obj {

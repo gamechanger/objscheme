@@ -27,6 +27,10 @@
 		FB3511D7168E2F3A0009090D /* ObSNS.h in Headers */ = {isa = PBXBuildFile; fileRef = FBC68B3915D05CD50051A1BA /* ObSNS.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		FB3511E41694E3760009090D /* ObSSchemeBacked.h in Headers */ = {isa = PBXBuildFile; fileRef = FB3511E21694E3760009090D /* ObSSchemeBacked.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		FB3511E51694E3760009090D /* ObSSchemeBacked.m in Sources */ = {isa = PBXBuildFile; fileRef = FB3511E31694E3760009090D /* ObSSchemeBacked.m */; };
+		FBAA4A4E169CE0C0006F4EA9 /* ObjScheme.m in Sources */ = {isa = PBXBuildFile; fileRef = FBE147FA15C6D22A000B79FD /* ObjScheme.m */; };
+		FBAA4A4F169CE10A006F4EA9 /* ObSStrings.m in Sources */ = {isa = PBXBuildFile; fileRef = FBAEE116166B19E7009BFFC9 /* ObSStrings.m */; };
+		FBAA4A50169CE10C006F4EA9 /* ObSSchemeBacked.m in Sources */ = {isa = PBXBuildFile; fileRef = FB3511E31694E3760009090D /* ObSSchemeBacked.m */; };
+		FBAA4A51169CE110006F4EA9 /* ObSNS.m in Sources */ = {isa = PBXBuildFile; fileRef = FBC68B3A15D05CD50051A1BA /* ObSNS.m */; };
 		FBAEE119166B19E7009BFFC9 /* ObSStrings.h in Headers */ = {isa = PBXBuildFile; fileRef = FBAEE115166B19E7009BFFC9 /* ObSStrings.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		FBAEE11B166B19E7009BFFC9 /* ObSStrings.m in Sources */ = {isa = PBXBuildFile; fileRef = FBAEE116166B19E7009BFFC9 /* ObSStrings.m */; };
 		FBC68B3D15D05CD50051A1BA /* ObSNS.m in Sources */ = {isa = PBXBuildFile; fileRef = FBC68B3A15D05CD50051A1BA /* ObSNS.m */; };
@@ -34,7 +38,6 @@
 		FBE147FB15C6D22A000B79FD /* ObjScheme.m in Sources */ = {isa = PBXBuildFile; fileRef = FBE147FA15C6D22A000B79FD /* ObjScheme.m */; };
 		FBE1480315C6D22A000B79FD /* SenTestingKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FBE1480215C6D22A000B79FD /* SenTestingKit.framework */; };
 		FBE1480615C6D22A000B79FD /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FBE147F415C6D22A000B79FD /* Foundation.framework */; };
-		FBE1480915C6D22A000B79FD /* libObjScheme.a in Frameworks */ = {isa = PBXBuildFile; fileRef = FBE147F115C6D22A000B79FD /* libObjScheme.a */; };
 		FBE1480F15C6D22A000B79FD /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = FBE1480D15C6D22A000B79FD /* InfoPlist.strings */; };
 		FBE1481215C6D22A000B79FD /* ObjSchemeTests.m in Sources */ = {isa = PBXBuildFile; fileRef = FBE1481115C6D22A000B79FD /* ObjSchemeTests.m */; };
 /* End PBXBuildFile section */
@@ -96,7 +99,6 @@
 			files = (
 				FBE1480315C6D22A000B79FD /* SenTestingKit.framework in Frameworks */,
 				FBE1480615C6D22A000B79FD /* Foundation.framework in Frameworks */,
-				FBE1480915C6D22A000B79FD /* libObjScheme.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -327,7 +329,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FBAA4A50169CE10C006F4EA9 /* ObSSchemeBacked.m in Sources */,
+				FBAA4A4F169CE10A006F4EA9 /* ObSStrings.m in Sources */,
+				FBAA4A51169CE110006F4EA9 /* ObSNS.m in Sources */,
 				FBE1481215C6D22A000B79FD /* ObjSchemeTests.m in Sources */,
+				FBAA4A4E169CE0C0006F4EA9 /* ObjScheme.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -357,7 +363,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				VALID_ARCHS = armv7;
+				VALID_ARCHS = "armv7 armv7s i386";
 			};
 			name = Debug;
 		};
@@ -365,7 +371,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				VALID_ARCHS = armv7;
+				VALID_ARCHS = "armv7 armv7s i386";
 			};
 			name = Release;
 		};
@@ -389,7 +395,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 5.1;
 				SDKROOT = iphoneos;
-				VALID_ARCHS = "armv7 armv7s";
+				VALID_ARCHS = "armv7 armv7s i386";
 			};
 			name = Debug;
 		};
@@ -407,7 +413,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 5.1;
 				SDKROOT = iphoneos;
 				VALIDATE_PRODUCT = YES;
-				VALID_ARCHS = "armv7 armv7s";
+				VALID_ARCHS = "armv7 armv7s i386";
 			};
 			name = Release;
 		};
