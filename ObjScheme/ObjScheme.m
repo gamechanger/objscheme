@@ -34,6 +34,7 @@ ObSSymbol* S_OPENBRACKET;
 ObSSymbol* S_CLOSEBRACKET;
 ObSSymbol* S_APPLY;
 ObSSymbol* S_LOAD;
+ObSSymbol* S_IN;
 
 ObSConstant* B_FALSE;
 ObSConstant* B_TRUE;
@@ -101,6 +102,7 @@ static NSMutableArray* __loaders = nil;
   S_MAP =             SY(@"map");
   S_APPLY =           SY(@"apply");
   S_LOAD =            SY(@"load");
+  S_IN =              SY(@"in");
 
   B_FALSE =           CONST(@"#f");
   B_TRUE =            CONST(@"#t");
@@ -1473,6 +1475,26 @@ BOOL _errorLogged = NO;
           id alternate = argCount == 3 ? [rest caddr] : UNSPECIFIED;
           token = [self evaluate: test] == B_FALSE ? alternate : consequence;
           continue; // I'm being explicit here for clarity, we'll now evaluate this token
+
+        } else if ( head == S_IN ) { // (in ob lst)
+          id toFind = [self evaluate: [rest car]];
+          id list = [self evaluate: [rest cadr]];
+          if ( [list isKindOfClass: [NSArray class]] ) {
+            NSArray* a = list;
+            return [a containsObject: toFind] ? B_TRUE : B_FALSE;
+
+          } else if ( list == C_NULL ) {
+            return B_FALSE;
+
+          } else {
+            ObSCons* cons = list;
+            for ( id ob in cons ) {
+              if ( [ob isEqual: toFind] ) {
+                return B_TRUE;
+              }
+            }
+            return B_FALSE;
+          }
 
         } else if ( head == S_APPLY ) {
           id function_name = [rest car];

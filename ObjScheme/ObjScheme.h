@@ -201,7 +201,7 @@ typedef id (^ObSNativeBinaryBlock)(id,id);
 
 typedef id (^ObSNativeUnaryBlock)(id);
 
-@interface ObSNativeUnaryLambda : NSObject <ObSProcedure> {
+@interface ObSNativeUnaryLambda : NSObject <ObSProcedure,ObSUnaryLambda> {
   ObSNativeUnaryBlock _block;
   ObSSymbol* _name;
 }
