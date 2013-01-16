@@ -1257,6 +1257,9 @@ BOOL _errorLogged = NO;
     _macros = [[NSMutableDictionary alloc] init];
     _environ = [[NSMutableDictionary alloc] init];
     _loadedFiles = [[NSMutableSet alloc] init];
+    if ( outer ) {
+      _superScopeCache = [[NSMutableDictionary alloc] init];
+    }
   }
   return self;
 }
@@ -1266,6 +1269,7 @@ BOOL _errorLogged = NO;
   [_macros release];
   [_environ release];
   [_loadedFiles release];
+  [_superScopeCache release];
   [super dealloc];
 }
 
@@ -1283,18 +1287,22 @@ BOOL _errorLogged = NO;
   [_loadedFiles addObject: filename];
 }
 
-- (id)resolveSymbol:(ObSSymbol*)symbol {
-  id myValue = [_environ objectForKey: symbol.string];
-  if ( myValue ) {
-    return myValue;
+- (ObSScope*)findScopeOf:(ObSSymbol*)name {
+  if ( [_environ objectForKey: name.string] != nil ) {
+    return self;
   }
 
   if ( _outerScope != nil ) {
-    return [_outerScope resolveSymbol: symbol];
+    return [_outerScope findScopeOf: name];
   }
 
-  [NSException raise: @"LookupError" format: @"Symbol %@ not defined", symbol];
+  [NSException raise: @"LookupError" format: @"Symbol %@ not found in any scope", name];
   return nil;
+}
+
+- (id)resolveSymbol:(ObSSymbol*)symbol {
+  ObSScope* containingScope = [self findScopeOf: symbol];
+  return [containingScope.environ objectForKey: symbol.string];
 }
 
 - (BOOL)definesSymbol:(ObSSymbol*)symbol {
@@ -1371,6 +1379,28 @@ BOOL _errorLogged = NO;
 
 - (void)popStack {
   [_stack removeLastObject];
+}
+
+static NSMutableDictionary* __times = nil;
+
+- (void)recordTimeForFunction:(NSString*)fname time:(NSTimeInterval)time {
+  if ( __times == nil ) {
+    __times = [NSMutableDictionary new];
+  }
+  if ( ! [__times containsObject: fname] ) {
+    [__times setObject: @(time) forKey: fname];
+  } else {
+    [__times setObject: @(time) + [[__times objectForKey: fname] floatValue] forKey: fname];
+  }
+}
+
+- (void)reportTimes {
+  if ( __times == nil ) {
+    __times = [NSMutableDictionary new];
+  }
+  for ( id key in __times ) {
+    NSLog( @"F: %@ -> %.2f", key, [[__times objectForKey: key] floatValue] );
+  }
 }
 
 - (id)evaluate:(id)token {
@@ -1577,7 +1607,9 @@ BOOL _errorLogged = NO;
           id<ObSProcedure> procedure = [self evaluate: head];
           ObSCons* args = [self evaluateList: rest];
           [self pushStack: head];
+          NSTimeInterval start = [NSDate timeIntervalSinceReferenceDate];
           ret = [procedure callWith: args];
+          [self recordTimeForFunction: head.string time: [NSDate timeIntervalSinceReferenceDate] - start];
           [self popStack];
           break;
         }
@@ -1601,19 +1633,6 @@ BOOL _errorLogged = NO;
 
     [e raise];
   }
-}
-
-- (ObSScope*)findScopeOf:(ObSSymbol*)name {
-  if ( [_environ objectForKey: name.string] != nil ) {
-    return self;
-  }
-
-  if ( _outerScope != nil ) {
-    return [_outerScope findScopeOf: name];
-  }
-
-  [NSException raise: @"LookupError" format: @"Couldn't find defining scope of %@", name];
-  return nil;
 }
 
 - (void)defineMacroNamed:(ObSSymbol*)name asProcedure:(id<ObSProcedure>)procedure {
@@ -1996,7 +2015,7 @@ static NSMutableArray* __consCache = nil;
 }
 
 + (ObSCons*)cons:(id)a and:(id)b {
-  if ( [__consCache count] > 0 ) {
+  if ( NO && [__consCache count] > 0 ) {
     ObSCons* cached = [[__consCache lastObject] retain];
     [__consCache removeLastObject];
     cached->_car = [a retain];
@@ -2019,7 +2038,7 @@ static NSMutableArray* __consCache = nil;
   [_car release];
   [_cdr release];
 
-  if ( [__consCache count] < 100 ) {
+  if ( NO && [__consCache count] < 100 ) {
     _car = nil;
     _cdr = nil;
     [__consCache addObject: self];

@@ -109,6 +109,7 @@ extern ObSConstant* UNSPECIFIED;
   NSMutableDictionary* _macros;
   NSMutableDictionary* _environ;
   NSMutableSet* _loadedFiles;
+  NSMutableDictionary* _superScopeCache;
 }
 
 @property (nonatomic,retain) ObSScope* outer;
@@ -120,6 +121,7 @@ extern ObSConstant* UNSPECIFIED;
 - (id)resolveSymbol:(ObSSymbol*)variable;
 - (BOOL)definesSymbol:(ObSSymbol*)symbol;
 - (void)bootstrapMacros;
+- (void)reportTimes;
 - (id)evaluate:(id)token;
 - (void)defineFunction:(id<ObSProcedure>)function;
 - (void)define:(ObSSymbol*)symbol as:(id)thing;
