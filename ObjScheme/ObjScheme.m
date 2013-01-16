@@ -152,8 +152,8 @@ static NSMutableArray* __loaders = nil;
 + (ObSScope*)globalScope {
   if ( __globalScope == nil ) {
     __globalScope = [[ObSScope alloc] initWithOuterScope: nil];
-    [__globalScope bootstrapMacros];
     [ObjScheme addGlobalsToScope: __globalScope];
+    [__globalScope bootstrapMacros];
     [ObSNS initializeBridgeFunctions: __globalScope];
     [ObSStrings addToScope: __globalScope];
   }
@@ -397,8 +397,8 @@ static NSMutableArray* __loaders = nil;
 
   } else if ( [head isKindOfClass: [ObSSymbol class]] ) {
     ObSSymbol* symbol = head;
-    if ( [[ObjScheme globalScope] hasMacroNamed: symbol] ) {
-      id macro = [[ObjScheme globalScope] macroNamed: symbol];
+    id macro = [[ObjScheme globalScope] macroNamed: symbol];
+    if ( macro ) {
       ObSCons* args = [list cdr];
       return [ObjScheme expandToken: [macro callWith: args]];
     }
@@ -423,6 +423,7 @@ static NSMutableArray* __loaders = nil;
 }
 
 + (id)list:(NSArray*)tokens {
+
   if ( [tokens count] == 0 ) {
     return C_NULL;
 
@@ -475,13 +476,13 @@ static NSMutableArray* __loaders = nil;
     }
 
     if ( [scope isFilenameLoaded: qualifiedName] ) {
-      NSLog( @"Skipping %@, already loaded", qualifiedName );
+      //NSLog( @"Skipping %@, already loaded", qualifiedName );
       return;
     }
 
     ObSInPort* port = [loader findFile: qualifiedName];
     if ( port != nil ) {
-      NSLog( @"(%p) Loading %@ FOR %@", scope, qualifiedName, filename );
+      //NSLog( @"(%p) Loading %@ FOR %@", scope, qualifiedName, filename );
       [self loadInPort: port intoScope: scope forFilename: qualifiedName];
       return;
     }
@@ -585,8 +586,9 @@ static NSMutableArray* __loaders = nil;
 + (void)addGlobalsToScope:(ObSScope*)scope {
   [scope defineFunction: [ObSNativeLambda named: SY(@"+")
                                       fromBlock: ^(NSArray* list) {
-        if ( [list count] == 0 )
+        if ( [list count] == 0 ) {
           return [NSNumber numberWithInteger: 0];
+        }
 
         int intRet = 0;
         double doubleRet = 0.0;
@@ -1375,12 +1377,18 @@ BOOL _errorLogged = NO;
   NSAssert(token != nil, @"nil token");
 
   @try {
+
+    NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
+    id ret;
+
     while ( 1 ) {
       if ( [token isKindOfClass: [ObSSymbol class]] ) {
-        return [self resolveSymbol: token]; // variable reference
+        ret = [self resolveSymbol: token]; // variable reference
+        break;
 
       } else if ( ! [token isKindOfClass: [ObSCons class]] ) {
-        return token; // literal
+        ret = token; // literal
+        break;
 
       } else {
         ObSCons* list = token;
@@ -1397,8 +1405,6 @@ BOOL _errorLogged = NO;
         } else if ( head == S_LET ) {
           // normal: (let ((x y)) body)
           // named: (let name ((x y)) body)
-
-          id ret;
 
           if ( [[rest car] isKindOfClass: [ObSSymbol class]] ) { // named let
 
@@ -1419,10 +1425,12 @@ BOOL _errorLogged = NO;
             ObSCons* parameters = [ObjScheme list: argList];
             [argList release];
 
+            ObSCons* expression = [ObSCons cons: S_BEGIN and: body];
             ObSLambda* lambda = [[ObSLambda alloc] initWithParameters: parameters
-                                                           expression: CONS(S_BEGIN, body)
+                                                           expression: expression
                                                                 scope: letScope
                                                                  name: letName];
+
             [letScope define: letName as: lambda];
             [lambda release];
 
@@ -1443,7 +1451,7 @@ BOOL _errorLogged = NO;
             ret = [letScope begin: body];
           }
 
-          return ret;
+          break;
 
         } else if ( head == S_LET_STAR ) {
           ObSCons* definitions = [rest car];
@@ -1456,18 +1464,19 @@ BOOL _errorLogged = NO;
             [letScope define: name as: [letScope evaluate: expression]];
           }
 
-          id ret = [letScope begin: body];
-          return ret;
+          ret = [letScope begin: body];
+          break;
 
         } else if ( head == S_QUOTE ) { // (quote exp) -> exp
           NSAssert1(argCount == 1, @"quote can have only 1 operand, not %@", rest);
-          return [rest car];
+          ret = [rest car];
+          break;
 
         } else if ( head == S_LIST ) { // (list a b c)
           [self pushStack: S_LIST];
-          id ret = [self evaluateList: rest];
+          ret = [self evaluateList: rest];
           [self popStack];
-          return ret;
+          break;
 
         } else if ( head == S_IF ) { // (if test consequence alternate) <- note that full form is enforced by expansion
           id test = [rest car];
@@ -1481,20 +1490,23 @@ BOOL _errorLogged = NO;
           id list = [self evaluate: [rest cadr]];
           if ( [list isKindOfClass: [NSArray class]] ) {
             NSArray* a = list;
-            return [a containsObject: toFind] ? B_TRUE : B_FALSE;
+            ret = [a containsObject: toFind] ? B_TRUE : B_FALSE;
 
           } else if ( list == C_NULL ) {
-            return B_FALSE;
+            ret = B_FALSE;
 
           } else {
             ObSCons* cons = list;
+            ret = B_FALSE;
             for ( id ob in cons ) {
               if ( [ob isEqual: toFind] ) {
-                return B_TRUE;
+                ret = B_TRUE;
+                break;
               }
             }
-            return B_FALSE;
           }
+
+          break;
 
         } else if ( head == S_APPLY ) {
           id function_name = [rest car];
@@ -1502,9 +1514,9 @@ BOOL _errorLogged = NO;
           id args = [self evaluate: function_args];
           id proc = [self evaluate: function_name];
           [self pushStack: function_name];
-          id ret = [proc callWith: args];
+          ret = [proc callWith: args];
           [self popStack];
-          return ret;
+          break;
 
         } else if ( head == S_SET ) { // (set! variableName expression)
           [self pushStack: S_SET];
@@ -1514,7 +1526,8 @@ BOOL _errorLogged = NO;
           ObSScope* definingScope = [self findScopeOf: symbol]; // I do this first, which can fail, so we don't bother executing predicate
           [definingScope define: symbol as: [self evaluate: expression]];
           [self popStack];
-          return UNSPECIFIED;
+          ret = UNSPECIFIED;
+          break;
 
         } else if ( head == S_DEFINE ) { // (define variableName expression)
           [self pushStack: S_DEFINE];
@@ -1522,30 +1535,33 @@ BOOL _errorLogged = NO;
           id expression = [rest cadr];
           [_environ setObject: [self evaluate: expression] forKey: variableName.string];
           [self popStack];
-          return UNSPECIFIED;
+          ret = UNSPECIFIED;
+          break;
 
         } else if ( head == S_LAMBDA ) { // (lambda (argumentNames) body)
           [self pushStack: S_LAMBDA];
 
           ObSCons* parameters = [rest car];
           ObSCons* body = [rest cadr];
-          id ret = [[[ObSLambda alloc] initWithParameters: parameters
-                                               expression: body
-                                                    scope: self
-                                                     name: S_LAMBDA] autorelease];
+          ret = [[[ObSLambda alloc] initWithParameters: parameters
+                                            expression: body
+                                                 scope: self
+                                                  name: S_LAMBDA] autorelease];
           [self popStack];
-          return ret;
+          break;
 
         } else if ( head == S_BEGIN ) { // (begin expression...)
-          id result = [NSNumber numberWithBool: NO];
+          ret = [NSNumber numberWithBool: NO];
           if ( (id)rest == C_NULL ) {
-            return UNSPECIFIED;
+            ret = UNSPECIFIED;
+
+          } else {
+            for ( id expression in rest ) {
+              ret = [self evaluate: expression];
+            }
           }
 
-          for ( id expression in rest ) {
-            result = [self evaluate: expression];
-          }
-          return result; // begin evaluates to value of final expression
+          break; // begin evaluates to value of final expression
 
         } else if ( head == S_LOAD ) { // (load <filename> [environment])
           NSString* filename = [self evaluate: [rest car]];
@@ -1554,18 +1570,23 @@ BOOL _errorLogged = NO;
             scope = [self evaluate: [rest cadr]];
           }
           [ObjScheme loadFile: filename intoScope: scope];
-          return UNSPECIFIED;
+          ret = UNSPECIFIED;
+          break;
 
         } else {
           id<ObSProcedure> procedure = [self evaluate: head];
           ObSCons* args = [self evaluateList: rest];
           [self pushStack: head];
-          id ret = [procedure callWith: args];
+          ret = [procedure callWith: args];
           [self popStack];
-          return ret;
+          break;
         }
       }
     }
+
+    [ret retain];
+    [pool release];
+    return [ret autorelease];
 
   } @catch ( NSException* e ) {
     if ( ! _errorLogged ) {
