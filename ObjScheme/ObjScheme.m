@@ -1420,14 +1420,6 @@ static NSMutableDictionary* __times = nil;
 - (id)evaluate:(id)token {
   NSAssert(token != nil, @"nil token");
 
-  static NSAutoreleasePool* autoreleasePool = nil;
-  BOOL shouldDrainPool = NO;
-
-  if ( autoreleasePool == nil ) {
-    autoreleasePool = [[NSAutoreleasePool alloc] init];
-    shouldDrainPool = YES;
-  }
-
   @try {
     id ret;
 
@@ -1637,15 +1629,7 @@ static NSMutableDictionary* __times = nil;
       }
     }
 
-    if ( shouldDrainPool ) {
-      [ret retain];
-      [autoreleasePool release];
-      autoreleasePool = nil;
-      return [ret autorelease];
-
-    } else {
-      return ret;
-    }
+    return ret;
 
   } @catch ( NSException* e ) {
     if ( ! _errorLogged ) {
@@ -2078,7 +2062,10 @@ static NSUInteger __consCacheSize = 0;
 }
 
 - (BOOL)isEqual:(id)obj {
-  if ( obj == nil || ! [obj isKindOfClass: [ObSCons class]] ) {
+  if ( obj == self ) {
+    return YES;
+
+  } else if ( obj == nil || ! [obj isKindOfClass: [ObSCons class]] ) {
     return NO;
 
   } else {
