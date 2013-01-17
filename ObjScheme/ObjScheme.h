@@ -109,7 +109,6 @@ extern ObSConstant* UNSPECIFIED;
   NSMutableDictionary* _macros;
   NSMutableDictionary* _environ;
   NSMutableSet* _loadedFiles;
-  NSMutableDictionary* _superScopeCache;
 }
 
 @property (nonatomic,retain) ObSScope* outer;

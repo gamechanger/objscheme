@@ -1257,9 +1257,6 @@ BOOL _errorLogged = NO;
     _macros = [[NSMutableDictionary alloc] init];
     _environ = [[NSMutableDictionary alloc] init];
     _loadedFiles = [[NSMutableSet alloc] init];
-    if ( outer ) {
-      _superScopeCache = [[NSMutableDictionary alloc] init];
-    }
   }
   return self;
 }
@@ -1269,7 +1266,6 @@ BOOL _errorLogged = NO;
   [_macros release];
   [_environ release];
   [_loadedFiles release];
-  [_superScopeCache release];
   [super dealloc];
 }
 
@@ -1296,14 +1292,30 @@ BOOL _errorLogged = NO;
     return [_outerScope findScopeOf: name];
   }
 
-  [NSException raise: @"LookupError" format: @"Symbol %@ not found in any scope", name];
+  [NSException raise: @"LookupError" format: @"Couldn't find defining scope of %@", name];
   return nil;
 }
 
 - (id)resolveSymbol:(ObSSymbol*)symbol {
+  id myValue = [_environ objectForKey: symbol.string];
+  if ( myValue ) {
+    return myValue;
+  }
+
+  if ( _outerScope != nil ) {
+    return [_outerScope resolveSymbol: symbol];
+  }
+
+  [NSException raise: @"LookupError" format: @"Symbol %@ not found in any scope", symbol];
+  return nil;
+}
+
+/*
+- (id)resolveSymbol:(ObSSymbol*)symbol {
   ObSScope* containingScope = [self findScopeOf: symbol];
   return [containingScope.environ objectForKey: symbol.string];
 }
+*/
 
 - (BOOL)definesSymbol:(ObSSymbol*)symbol {
   return [_environ objectForKey: symbol.string] != nil;
@@ -1387,10 +1399,12 @@ static NSMutableDictionary* __times = nil;
   if ( __times == nil ) {
     __times = [NSMutableDictionary new];
   }
-  if ( ! [__times containsObject: fname] ) {
+
+  if ( [__times objectForKey: fname] == nil ) {
     [__times setObject: @(time) forKey: fname];
+
   } else {
-    [__times setObject: @(time) + [[__times objectForKey: fname] floatValue] forKey: fname];
+    [__times setObject: @(time + [[__times objectForKey: fname] floatValue]) forKey: fname];
   }
 }
 
@@ -1406,9 +1420,15 @@ static NSMutableDictionary* __times = nil;
 - (id)evaluate:(id)token {
   NSAssert(token != nil, @"nil token");
 
-  @try {
+  static NSAutoreleasePool* autoreleasePool = nil;
+  BOOL shouldDrainPool = NO;
 
-    NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
+  if ( autoreleasePool == nil ) {
+    autoreleasePool = [[NSAutoreleasePool alloc] init];
+    shouldDrainPool = YES;
+  }
+
+  @try {
     id ret;
 
     while ( 1 ) {
@@ -1604,21 +1624,28 @@ static NSMutableDictionary* __times = nil;
           break;
 
         } else {
-          id<ObSProcedure> procedure = [self evaluate: head];
+          ObSSymbol* functionName = head;
+          id<ObSProcedure> procedure = [self evaluate: functionName];
           ObSCons* args = [self evaluateList: rest];
           [self pushStack: head];
-          NSTimeInterval start = [NSDate timeIntervalSinceReferenceDate];
+          //NSTimeInterval start = [NSDate timeIntervalSinceReferenceDate];
           ret = [procedure callWith: args];
-          [self recordTimeForFunction: head.string time: [NSDate timeIntervalSinceReferenceDate] - start];
+          //[self recordTimeForFunction: functionName.string time: [NSDate timeIntervalSinceReferenceDate] - start];
           [self popStack];
           break;
         }
       }
     }
 
-    [ret retain];
-    [pool release];
-    return [ret autorelease];
+    if ( shouldDrainPool ) {
+      [ret retain];
+      [autoreleasePool release];
+      autoreleasePool = nil;
+      return [ret autorelease];
+
+    } else {
+      return ret;
+    }
 
   } @catch ( NSException* e ) {
     if ( ! _errorLogged ) {
@@ -2007,6 +2034,7 @@ static NSMutableDictionary* __times = nil;
 @synthesize car=_car, cdr=_cdr;
 
 static NSMutableArray* __consCache = nil;
+static NSUInteger __consCacheSize = 0;
 
 + (void)initialize {
  if ( __consCache == nil ) {
@@ -2015,11 +2043,12 @@ static NSMutableArray* __consCache = nil;
 }
 
 + (ObSCons*)cons:(id)a and:(id)b {
-  if ( NO && [__consCache count] > 0 ) {
+  if ( __consCacheSize > 0 ) {
     ObSCons* cached = [[__consCache lastObject] retain];
     [__consCache removeLastObject];
     cached->_car = [a retain];
     cached->_cdr = [b retain];
+    __consCacheSize--;
     return [cached autorelease];
   }
 
@@ -2038,13 +2067,13 @@ static NSMutableArray* __consCache = nil;
   [_car release];
   [_cdr release];
 
-  if ( NO && [__consCache count] < 100 ) {
-    _car = nil;
-    _cdr = nil;
-    [__consCache addObject: self];
+  _car = nil;
+  _cdr = nil;
+  [__consCache addObject: self];
+  __consCacheSize++;
 
-  } else {
-    [super dealloc];
+  if ( NO ) {
+    [super dealloc]; // this gets rid of a warning, stupidly
   }
 }
 
