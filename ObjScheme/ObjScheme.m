@@ -646,8 +646,9 @@ static NSMutableArray* __loaders = nil;
 
   [scope defineFunction: [ObSNativeLambda named: SY(@"*")
                                       fromBlock: ^(NSArray* list) {
-        if ( [list count] == 0 )
+        if ( [list count] == 0 ) {
           return [NSNumber numberWithInteger: 0];
+        }
 
         int intRet = 1;
         double doubleRet = 1.0;
@@ -665,10 +666,12 @@ static NSMutableArray* __loaders = nil;
           }
         }
 
-        if ( useDouble )
+        if ( useDouble ) {
           return [NSNumber numberWithDouble: doubleRet];
-        else
+
+        } else {
           return [NSNumber numberWithInteger: intRet];
+        }
       }]];
 
   [scope defineFunction: [ObSNativeLambda named: SY(@"/")
@@ -771,11 +774,16 @@ static NSMutableArray* __loaders = nil;
 
   [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"equal?")
                                             fromBlock: ^(id a, id b) {
+
         if ( [a isKindOfClass: [NSNumber class]] && [b isKindOfClass: [NSNumber class]] ) {
           NSNumber* n1 = a, *n2 = b;
-          return TRUTH([n1 isEqualToNumber: n2]);
+          return [n1 isEqualToNumber: n2] ? B_TRUE : B_FALSE;
+
+        } else if ( a == b ) {
+          return B_TRUE;
+
         } else {
-          return TRUTH([a isEqual: b]);
+          return [a isEqual: b] ? B_TRUE : B_FALSE;
         }
       }]];
 

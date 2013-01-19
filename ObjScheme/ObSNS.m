@@ -20,7 +20,9 @@
       }]];
 
   [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"NSDictionary:containsKey?")
-                                            fromBlock: ^(id a, id b) { return [ObjScheme boolToTruth: [(NSMutableDictionary*)a objectForKey: b] != nil]; }]];
+                                            fromBlock: ^(id a, id b) {
+        return [(NSMutableDictionary*)a objectForKey: b] != nil ? B_TRUE : B_FALSE;
+      }]];
 
   [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"NSDictionary:keys")
                                            fromBlock: ^(id a) { return [(NSDictionary*)a allKeys]; }]];
@@ -32,7 +34,7 @@
         for ( NSUInteger i = 0; i < length-1; i++ ) {
           [dict setObject: [args objectAtIndex: i] forKey: [args objectAtIndex: i+1]];
         }
-        return [NSDictionary dictionaryWithDictionary: dict];
+        return dict;
       }]];
 
   [scope defineFunction: [ObSNativeThunkLambda named: SY(@"NSMutableDictionary:dictionary")
@@ -44,7 +46,7 @@
         id value = [args objectAtIndex: 1];
         id key = [args objectAtIndex: 2];
         [dict setObject: value forKey: key];
-        return [ObjScheme unspecified];
+        return UNSPECIFIED;
       }]];
 
   [scope defineFunction: [ObSNativeLambda named: SY(@"NSMutableDictionary:dictionaryWithObjectsAndKeys")
@@ -59,7 +61,7 @@
 
   [scope defineFunction: [ObSNativeLambda named: SY(@"NSArray:array")
                                       fromBlock: ^(NSArray* args) {
-        return [NSArray arrayWithArray: args];
+        return [[args copy] autorelease];
       }]];
 
   [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"NSMutableArray:reversedArrayFromArray")
@@ -84,7 +86,7 @@
                                             fromBlock: ^(id a, id b) {
         NSUInteger index = [(NSNumber*)b intValue];
         NSArray* array = a;
-        return [NSMutableArray arrayWithArray: [array subarrayWithRange: NSMakeRange(index, [array count]-index)]];
+        return [[[array subarrayWithRange: NSMakeRange(index, [array count]-index)] mutableCopy] autorelease];
       }]];
 
   [scope defineFunction: [ObSNativeLambda named: SY(@"NSArray:subarrayFromIndexToIndex")
@@ -95,19 +97,20 @@
         if ( endIndex < 0 ) {
           endIndex = [a count] + endIndex;
         }
-        if ( endIndex > [a count] )
+        if ( endIndex > [a count] ) {
           endIndex = [a count];
+        }
         return [NSMutableArray arrayWithArray: [a subarrayWithRange: NSMakeRange(startIndex, endIndex-startIndex)]];
       }]];
 
   [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"NSArray:indexOfObject")
                                             fromBlock: ^(id a, id b) {
         NSUInteger index = [(NSArray*)a indexOfObject: b];
-        return (id)(index == NSNotFound ? B_FALSE : [NSNumber numberWithInteger: index]);
+        return (id)(index == NSNotFound ? B_FALSE : @(index));
       }]];
 
   [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"NSArray:count")
-                                           fromBlock: ^(id a) { return [NSNumber numberWithInteger: [(NSArray*)a count]]; }]];
+                                           fromBlock: ^(id a) { return @([(NSArray*)a count]); }]];
 
   [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"NSArray:objectAtIndex")
                                             fromBlock: ^(id a, id b) { return [(NSArray*)a objectAtIndex: [(NSNumber*)b intValue]]; }]];
@@ -120,13 +123,13 @@
   [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"NSMutableArray:addObject")
                                             fromBlock: ^(id array, id object) {
         [(NSMutableArray*)array addObject: object];
-        return [ObjScheme unspecified];
+        return UNSPECIFIED;
       }]];
 
   [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"NSMutableArray:removeObject")
                                             fromBlock: ^(id array, id object) {
         [(NSMutableArray*)array removeObject: object];
-        return [ObjScheme unspecified];
+        return UNSPECIFIED;
       }]];
 
   [scope defineFunction: [ObSNativeLambda named: SY(@"NSMutableArray:setObjectAtIndex")
@@ -135,32 +138,32 @@
         id object = [args objectAtIndex: 1];
         int index = [(NSNumber*)[args objectAtIndex: 2] intValue];
         [array replaceObjectAtIndex: index withObject: object];
-        return [ObjScheme unspecified];
+        return UNSPECIFIED;
       }]];
 
   [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"NSArray:containsObject?")
                                             fromBlock: ^(id array, id object) {
-        return [ObjScheme boolToTruth: [(NSArray*)array containsObject: object]];
+        return [(NSArray*)array containsObject: object] ? B_TRUE : B_FALSE;
       }]];
 
   [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"NSDictionary?")
                                            fromBlock: ^(id x) {
-        return [ObjScheme boolToTruth: [x isKindOfClass: [NSDictionary class]]];
+        return [x isKindOfClass: [NSDictionary class]] ? B_TRUE : B_FALSE;
       }]];
 
   [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"NSMutableDictionary?")
                                            fromBlock: ^(id x) {
-        return [ObjScheme boolToTruth: [x isKindOfClass: [NSMutableDictionary class]]];
+        return [x isKindOfClass: [NSMutableDictionary class]] ? B_TRUE : B_FALSE;
       }]];
 
   [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"NSArray?")
                                            fromBlock: ^(id x) {
-        return [ObjScheme boolToTruth: [x isKindOfClass: [NSArray class]]];
+        return [x isKindOfClass: [NSArray class]] ? B_TRUE : B_FALSE;
       }]];
 
   [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"NSMutableArray?")
                                            fromBlock: ^(id x) {
-        return [ObjScheme boolToTruth: [x isKindOfClass: [NSMutableArray class]]];
+        return [x isKindOfClass: [NSMutableArray class]] ? B_TRUE : B_FALSE;
       }]];
 
   [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"NSArray->list")
@@ -185,11 +188,6 @@
           return [NSMutableArray arrayWithArray: [(ObSCons*)x toArray]];
         }
       }]];
-
-  /*
-    TODOS:
-    - OMG AM I DONE?
-   */
 }
 
 @end
