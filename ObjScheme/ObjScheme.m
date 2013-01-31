@@ -1421,7 +1421,10 @@ static NSMutableDictionary* __times = nil;
     __times = [NSMutableDictionary new];
   }
   for ( id key in __times ) {
-    NSLog( @"F: %@ -> %.2f", key, [[__times objectForKey: key] floatValue] );
+    float time = [[__times objectForKey: key] floatValue];
+    if ( time > 0.01f ) {
+      NSLog( @"F: %@ -> %.2f", key, time );
+    }
   }
 }
 
