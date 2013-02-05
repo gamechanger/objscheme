@@ -2131,15 +2131,23 @@ static NSUInteger __consCacheSize = 0;
 }
 
 - (void)populateArray:(NSMutableArray*)array {
-  [array addObject: _car];
+  ObSCons* cons = self;
 
-  if ( _cdr != C_NULL ) {
-    if ( [_cdr isKindOfClass: [ObSCons class]] ) {
-      ObSCons* next = (ObSCons*)_cdr;
-      [next populateArray: array];
+  while ( 1 ) {
+    [array addObject: cons.car];
+
+    id cdr = cons.cdr;
+
+    if ( cdr == C_NULL ) {
+      break;
+    }
+
+    if ( [cdr isKindOfClass: [ObSCons class]] ) {
+      cons = cdr;
 
     } else {
-      [array addObject: _cdr];
+      [array addObject: cdr];
+      break;
     }
   }
 }
