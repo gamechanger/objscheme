@@ -1269,25 +1269,6 @@ BOOL _errorLogged = NO;
   return self;
 }
 
-- (oneway void)release {
-  NSInteger retainCount = [self retainCount];
-  [super release];
-  if ( retainCount == 2 ) {
-    __block NSMutableArray* keysToDelete = nil;
-    [_environ enumerateKeysAndObjectsUsingBlock: ^(id key, id obj, BOOL *stop) {
-      if ( [obj isKindOfClass: [ObSLambda class]] && [obj retainCount] == 1 ) {
-        if ( keysToDelete == nil ) {
-          keysToDelete = [[NSMutableArray alloc] init];
-        }
-        [keysToDelete addObject: key];
-      }
-    }];
-    [keysToDelete enumerateObjectsUsingBlock: ^(id obj, NSUInteger idx, BOOL *stop) {
-      [_environ removeObjectForKey: obj];
-    }];
-  }
-}
-
 - (void)dealloc {
   [_outerScope release];
   _outerScope = nil;
@@ -1353,7 +1334,8 @@ BOOL _errorLogged = NO;
 }
 
 - (void)define:(ObSSymbol*)symbol as:(id)thing {
-  [_environ setObject: thing forKey: symbol.string];
+  NSString* key = symbol.string;
+  [_environ setObject: thing forKey: key];
 }
 
 - (void)defineFunction:(id<ObSProcedure>)procedure {
@@ -1612,7 +1594,7 @@ static NSMutableDictionary* __times = nil;
           [self pushStack: S_DEFINE];
           ObSSymbol* variableName = [rest car];
           id expression = [rest cadr];
-          [_environ setObject: [self evaluate: expression] forKey: variableName.string];
+          [self define: variableName as: [self evaluate: expression]];
           [self popStack];
           ret = UNSPECIFIED;
           break;
