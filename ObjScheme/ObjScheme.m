@@ -1269,11 +1269,19 @@ BOOL _errorLogged = NO;
   return self;
 }
 
-- (void)dealloc {
+- (void) prepareForDealloc {
   [_outerScope release];
+  _outerScope = nil;
   [_macros release];
+  _macros = nil;
   [_environ release];
+  _environ = nil;
   [_loadedFiles release];
+  _loadedFiles = nil;
+}
+
+- (void)dealloc {
+  [self prepareForDealloc];
   [super dealloc];
 }
 
@@ -1485,9 +1493,11 @@ static NSMutableDictionary* __times = nil;
                                                                  name: letName];
 
             [letScope define: letName as: lambda];
+            [lambda prepareForDealloc];
             [lambda release];
 
             ret = [letScope begin: body];
+//            [letScope prepareForDealloc];
             [letScope release];
 
           } else { // normal let
@@ -1503,6 +1513,7 @@ static NSMutableDictionary* __times = nil;
             }
 
             ret = [letScope begin: body];
+//            [letScope prepareForDealloc];
             [letScope release];
           }
 
@@ -1520,6 +1531,7 @@ static NSMutableDictionary* __times = nil;
           }
 
           ret = [letScope begin: body];
+//          [letScope prepareForDealloc];
           [letScope release];
           break;
 
@@ -1720,12 +1732,21 @@ static NSMutableDictionary* __times = nil;
   return self;
 }
 
-- (void)dealloc {
+- (void)prepareForDealloc {
   [_listParameter release];
+  _listParameter = nil;
   [_parameters release];
+  _parameters = nil;
   [_expression release];
+  _expression = nil;
   [_scope release];
+  _scope = nil;
   [_name release];
+  _name = nil;
+}
+
+- (void)dealloc {
+  [self prepareForDealloc];
   [super dealloc];
 }
 
@@ -1756,6 +1777,7 @@ static NSMutableDictionary* __times = nil;
   }
 
   id ret = [invocationScope evaluate: _expression];
+  [invocationScope prepareForDealloc];
   [invocationScope release]; // trying to be conservative with memory in highly recursive environment here
   return ret;
 }
