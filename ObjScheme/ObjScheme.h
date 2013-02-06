@@ -130,7 +130,6 @@ extern ObSConstant* UNSPECIFIED;
 - (ObSScope*)findScopeOf:(ObSSymbol*)name;
 - (BOOL)isFilenameLoaded:(NSString*)filename;
 - (void)recordFilenameLoaded:(NSString*)filename;
-- (void)prepareForDealloc;
 
 @end
 
@@ -158,7 +157,6 @@ extern ObSConstant* UNSPECIFIED;
               expression:(id)expression
                    scope:(ObSScope*)scope
                     name:(ObSSymbol*)name;
-- (void) prepareForDealloc;
 - (id)callWith:(ObSCons*)arguments;
 @end
 
