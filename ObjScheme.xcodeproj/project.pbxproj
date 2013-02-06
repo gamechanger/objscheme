@@ -113,7 +113,9 @@
 				FBE147F315C6D22A000B79FD /* Frameworks */,
 				FBE147F215C6D22A000B79FD /* Products */,
 			);
+			indentWidth = 2;
 			sourceTree = "<group>";
+			tabWidth = 2;
 		};
 		FBE147F215C6D22A000B79FD /* Products */ = {
 			isa = PBXGroup;

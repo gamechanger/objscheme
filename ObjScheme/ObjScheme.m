@@ -1488,6 +1488,7 @@ static NSMutableDictionary* __times = nil;
             [lambda release];
 
             ret = [letScope begin: body];
+            [letScope release];
 
           } else { // normal let
 
@@ -1502,6 +1503,7 @@ static NSMutableDictionary* __times = nil;
             }
 
             ret = [letScope begin: body];
+            [letScope release];
           }
 
           break;
@@ -1518,6 +1520,7 @@ static NSMutableDictionary* __times = nil;
           }
 
           ret = [letScope begin: body];
+          [letScope release];
           break;
 
         } else if ( head == S_QUOTE ) { // (quote exp) -> exp
@@ -2038,14 +2041,14 @@ static NSUInteger __consCacheSize = 0;
 }
 
 + (ObSCons*)cons:(id)a and:(id)b {
-  if ( __consCacheSize > 0 ) {
-    ObSCons* cached = [[__consCache lastObject] retain];
-    [__consCache removeLastObject];
-    cached->_car = [a retain];
-    cached->_cdr = [b retain];
-    __consCacheSize--;
-    return [cached autorelease];
-  }
+//  if ( __consCacheSize > 0 ) {
+//    ObSCons* cached = [[__consCache lastObject] retain];
+//    [__consCache removeLastObject];
+//    cached->_car = [a retain];
+//    cached->_cdr = [b retain];
+//    __consCacheSize--;
+//    return [cached autorelease];
+//  }
 
   return [[[ObSCons alloc] initWithCar: a cdr: b] autorelease];
 }
@@ -2064,12 +2067,10 @@ static NSUInteger __consCacheSize = 0;
 
   _car = nil;
   _cdr = nil;
-  [__consCache addObject: self];
-  __consCacheSize++;
+//  [__consCache addObject: self];
+//  __consCacheSize++;
 
-  if ( NO ) {
     [super dealloc]; // this gets rid of a warning, stupidly
-  }
 }
 
 - (BOOL)isEqual:(id)obj {
