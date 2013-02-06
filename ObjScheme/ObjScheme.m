@@ -1269,7 +1269,26 @@ BOOL _errorLogged = NO;
   return self;
 }
 
-- (void) prepareForDealloc {
+- (oneway void)release {
+  NSInteger retainCount = [self retainCount];
+  [super release];
+  if ( retainCount == 2 ) {
+    __block NSMutableArray* keysToDelete = nil;
+    [_environ enumerateKeysAndObjectsUsingBlock: ^(id key, id obj, BOOL *stop) {
+      if ( [obj isKindOfClass: [ObSLambda class]] && [obj retainCount] == 1 ) {
+        if ( keysToDelete == nil ) {
+          keysToDelete = [[NSMutableArray alloc] init];
+        }
+        [keysToDelete addObject: key];
+      }
+    }];
+    [keysToDelete enumerateObjectsUsingBlock: ^(id obj, NSUInteger idx, BOOL *stop) {
+      [_environ removeObjectForKey: obj];
+    }];
+  }
+}
+
+- (void)dealloc {
   [_outerScope release];
   _outerScope = nil;
   [_macros release];
@@ -1278,10 +1297,6 @@ BOOL _errorLogged = NO;
   _environ = nil;
   [_loadedFiles release];
   _loadedFiles = nil;
-}
-
-- (void)dealloc {
-  [self prepareForDealloc];
   [super dealloc];
 }
 
@@ -1493,11 +1508,9 @@ static NSMutableDictionary* __times = nil;
                                                                  name: letName];
 
             [letScope define: letName as: lambda];
-            [lambda prepareForDealloc];
             [lambda release];
 
             ret = [letScope begin: body];
-//            [letScope prepareForDealloc];
             [letScope release];
 
           } else { // normal let
@@ -1513,7 +1526,6 @@ static NSMutableDictionary* __times = nil;
             }
 
             ret = [letScope begin: body];
-//            [letScope prepareForDealloc];
             [letScope release];
           }
 
@@ -1531,7 +1543,6 @@ static NSMutableDictionary* __times = nil;
           }
 
           ret = [letScope begin: body];
-//          [letScope prepareForDealloc];
           [letScope release];
           break;
 
@@ -1732,7 +1743,18 @@ static NSMutableDictionary* __times = nil;
   return self;
 }
 
-- (void)prepareForDealloc {
+- (oneway void)release {
+  NSInteger retainCount = [self retainCount];
+  [super release];
+  if ( retainCount == 2 ) {
+    if ( [_scope retainCount] == 1 ) {
+      [_scope release];
+      _scope = nil;
+    }
+  }
+}
+
+- (void)dealloc {
   [_listParameter release];
   _listParameter = nil;
   [_parameters release];
@@ -1743,10 +1765,6 @@ static NSMutableDictionary* __times = nil;
   _scope = nil;
   [_name release];
   _name = nil;
-}
-
-- (void)dealloc {
-  [self prepareForDealloc];
   [super dealloc];
 }
 
@@ -1777,7 +1795,6 @@ static NSMutableDictionary* __times = nil;
   }
 
   id ret = [invocationScope evaluate: _expression];
-  [invocationScope prepareForDealloc];
   [invocationScope release]; // trying to be conservative with memory in highly recursive environment here
   return ret;
 }
@@ -2054,7 +2071,7 @@ static NSMutableDictionary* __times = nil;
 @synthesize car=_car, cdr=_cdr;
 
 static NSMutableArray* __consCache = nil;
-static NSUInteger __consCacheSize = 0;
+//static NSUInteger __consCacheSize = 0;
 
 + (void)initialize {
  if ( __consCache == nil ) {
