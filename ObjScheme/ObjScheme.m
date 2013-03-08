@@ -35,6 +35,9 @@ ObSSymbol* S_CLOSEBRACKET;
 ObSSymbol* S_APPLY;
 ObSSymbol* S_LOAD;
 ObSSymbol* S_IN;
+ObSSymbol* S_DO;
+ObSSymbol* S_OR;
+ObSSymbol* S_AND;
 
 ObSConstant* B_FALSE;
 ObSConstant* B_TRUE;
@@ -103,6 +106,9 @@ static NSMutableArray* __loaders = nil;
   S_APPLY =           SY(@"apply");
   S_LOAD =            SY(@"load");
   S_IN =              SY(@"in");
+  S_DO =              SY(@"do");
+  S_OR =              SY(@"or");
+  S_AND =             SY(@"and");
 
   B_FALSE =           CONST(@"#f");
   B_TRUE =            CONST(@"#t");
@@ -1322,13 +1328,6 @@ BOOL _errorLogged = NO;
   return nil;
 }
 
-/*
-- (id)resolveSymbol:(ObSSymbol*)symbol {
-  ObSScope* containingScope = [self findScopeOf: symbol];
-  return [containingScope.environ objectForKey: symbol.string];
-}
-*/
-
 - (BOOL)definesSymbol:(ObSSymbol*)symbol {
   return [_environ objectForKey: symbol.string] != nil;
 }
@@ -1344,19 +1343,6 @@ BOOL _errorLogged = NO;
 
 - (void)bootstrapMacros {
   static NSString* macros = @"(begin\n"
-
-    "(define-macro and (lambda args\n"
-    "   (if (null? args) #t\n"
-    "       (if (= (length args) 1) (car args)\n"
-    "           `(if ,(car args) (and ,@(cdr args)) #f)))))\n"
-
-    "(define-macro or\n"
-    "  (lambda args\n"
-    "    (if (null? args) #f\n"
-    "        (let ((arg (car args)))\n"
-    "          `(let ((arg ,arg))\n"
-    "             (if arg arg\n"
-    "                 (or ,@(cdr args))))))))\n"
 
     "(define-macro cond\n"
     "  (lambda conditions\n"
@@ -1460,6 +1446,33 @@ static NSMutableDictionary* __times = nil;
           token = [self evaluate: [rest car]];
           [self popStack];
 
+        } else if ( head == S_OR ) {
+
+          id operands = rest;
+          while ( operands != C_NULL ) {
+            ObSCons* lst = operands;
+            id aResult = [self evaluate: [lst car]];
+            if ( aResult != B_FALSE ) {
+              return aResult;
+            }
+            operands = [lst cdr];
+          }
+          return B_FALSE;
+
+        } else if ( head == S_AND ) {
+          id operands = rest;
+          id thing = B_FALSE;
+          while ( operands != C_NULL ) {
+            ObSCons* lst = operands;
+            thing = [self evaluate: [lst car]];
+            if ( thing == B_FALSE ) {
+              return B_FALSE;
+            }
+            operands = [lst cdr];
+          }
+          return thing;
+
+
         } else if ( head == S_LET ) {
           // normal: (let ((x y)) body)
           // named: (let name ((x y)) body)
@@ -1527,6 +1540,66 @@ static NSMutableDictionary* __times = nil;
           ret = [letScope begin: body];
           [letScope release];
           break;
+
+        } else if ( head == S_DO ) {
+          ObSCons* variables = [rest car];
+          ObSCons* exit = [rest cadr];
+          ObSCons* loopBody = [rest cddr];
+          ObSScope* doScope = [[ObSScope alloc] initWithOuterScope: self];
+
+          NSMutableDictionary* varToStep = [NSMutableDictionary dictionaryWithCapacity: 4];
+
+          for ( ObSCons* variable in variables ) {
+            ObSSymbol* name = [variable car];
+            id value = [variable cadr];
+            id step = [variable cddr] != C_NULL ? [variable caddr] : nil;
+            if ( step ) {
+              varToStep[name.string] = step;
+            }
+            [doScope define: name as: [self evaluate: value]];
+          }
+
+          id exit_condition = [exit car];
+          ObSCons* exitBody = [exit cdr];
+
+          BOOL haveSteps = [varToStep count] > 0;
+
+          while ( 1 ) {
+            id testValue = [doScope evaluate: exit_condition];
+            if ( testValue != B_FALSE ) {
+              id ret = B_FALSE;
+              id body = exitBody;
+
+              while ( body != C_NULL ) {
+                ObSCons* realBody = body;
+                ret = [doScope evaluate: [realBody car]];
+                body = [realBody cdr];
+              }
+
+              return ret;
+            }
+
+            id body = loopBody;
+            while ( body != C_NULL ) {
+              ObSCons* realBody = body;
+              [doScope evaluate: [body car]];
+              body = [realBody cdr];
+            }
+
+            if ( haveSteps ) {
+              NSMutableDictionary* changes = [[NSMutableDictionary alloc] init];
+
+              for ( NSString* var in varToStep ) {
+                changes[var] = [doScope evaluate: varToStep[var]];
+              }
+
+              if ( [changes count] ) {
+                [doScope.environ addEntriesFromDictionary: changes];
+              }
+
+              [changes release];
+            }
+          }
 
         } else if ( head == S_QUOTE ) { // (quote exp) -> exp
           NSAssert1(argCount == 1, @"quote can have only 1 operand, not %@", rest);
