@@ -3,7 +3,7 @@
 //  ObjScheme
 //
 //  Created by Kiril Savino on 8/6/12.
-//  Copyright (c) 2012 GameChanger. All rights reserved.
+//  Copyright (c) 2012, 2013 GameChanger. All rights reserved.
 //
 
 #import "ObSNS.h"
