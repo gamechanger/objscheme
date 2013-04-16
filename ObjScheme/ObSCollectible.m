@@ -18,7 +18,7 @@
 
 - (oneway void)release {
   // basically, if we would otherwise be about to hit a reference count of 1
-  // otherwise, but we're retained by the Garbage Collector's list,
+  // but we're retained by the Garbage Collector's list,
   // then we tell the GC to let us go, so we can properly hit 0 and dealloc here.
   // otherwise, we'd have to wait for the next GC cycle to go away, which is a waste.
   if ( _garbageCollector != nil && [self retainCount] == 2 ) {
@@ -27,7 +27,7 @@
   [super release];
 }
 
-- (NSArray*)childCollectibles {
+- (NSArray*)children {
   [NSException raise: @"Not Implemented" format: @"OMG"];
   return nil;
 }

@@ -9,7 +9,7 @@
 @class ObSCollectible;
 
 @interface ObSGarbageCollector : NSObject {
-  NSSet* _collectibles;
+  NSMutableSet* _collectibles;
   ObSCollectible* _root;
   NSRecursiveLock* _lock;
 }

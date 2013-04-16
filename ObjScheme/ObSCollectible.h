@@ -13,7 +13,7 @@
 }
 
 - (void)setGarbageCollector:(ObSGarbageCollector*)gc;
-- (NSArray*)childCollectibles;
+- (NSArray*)children;
 - (void)releaseChildren;
 
 @end

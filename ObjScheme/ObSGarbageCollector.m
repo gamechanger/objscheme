@@ -15,7 +15,7 @@
 - (id)initWithRoot:(ObSCollectible*)root {
   if ( self = [super init] ) {
     _root = [root retain];
-    _collectibles = [[NSSet alloc] init];
+    _collectibles = [[NSMutableSet alloc] init];
     _lock = [[NSRecursiveLock alloc] init];
     [_lock setName: @"ObSGarbageCollector"];
   }
@@ -35,16 +35,18 @@
 - (void)startTracking:(ObSCollectible*)collectible {
   [_lock lock];
   [_collectibles addObject: collectible];
+  [collectible setGarbageCollector: self];
   [_lock unlock];
 }
 
 - (void)stopTracking:(ObSCollectible*)collectible {
   [_lock lock];
   [_collectibles removeObject: collectible];
+  [collectible setGarbageCollector: nil];
   [_lock unlock];
 }
 
-- (void)mark:(ObSCollectible*)node reachable:(NSSet*)reachable {
+- (void)mark:(ObSCollectible*)node reachable:(NSMutableSet*)reachable {
   // don't freak out on retain cycles, that's the point
   if ( [reachable containsObject: node] ) {
     return;
@@ -103,7 +105,7 @@
   [_lock lock];
 
   // mark stuff as reachable
-  NSSet* reachable = [[NSSet alloc] initWithCapacity: [_collectibles count]];
+  NSMutableSet* reachable = [[NSMutableSet alloc] initWithCapacity: [_collectibles count]];
   [self mark: _root reachable: reachable];
 
   // sweep all the unreachable into a list
