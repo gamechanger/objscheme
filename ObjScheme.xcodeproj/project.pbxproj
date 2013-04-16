@@ -34,6 +34,28 @@
 		FBC0872A16A4B4AB0045239E /* ObjScheme.m in Sources */ = {isa = PBXBuildFile; fileRef = FBE147FA15C6D22A000B79FD /* ObjScheme.m */; };
 		FBC0872B16A4B4AE0045239E /* ObSNS.m in Sources */ = {isa = PBXBuildFile; fileRef = FBC68B3A15D05CD50051A1BA /* ObSNS.m */; };
 		FBC68B3D15D05CD50051A1BA /* ObSNS.m in Sources */ = {isa = PBXBuildFile; fileRef = FBC68B3A15D05CD50051A1BA /* ObSNS.m */; };
+		FBD3F7DB171DA2E1008181F9 /* ObSSymbol.m in Sources */ = {isa = PBXBuildFile; fileRef = FBD3F7D9171DA2E1008181F9 /* ObSSymbol.m */; };
+		FBD3F7DC171DA2E1008181F9 /* ObSSymbol.h in Headers */ = {isa = PBXBuildFile; fileRef = FBD3F7DA171DA2E1008181F9 /* ObSSymbol.h */; };
+		FBD3F7DE171DA3C8008181F9 /* ObSProcedure.h in Headers */ = {isa = PBXBuildFile; fileRef = FBD3F7DD171DA3C8008181F9 /* ObSProcedure.h */; };
+		FBD3F7E0171DA411008181F9 /* ObSFileLoader.h in Headers */ = {isa = PBXBuildFile; fileRef = FBD3F7DF171DA411008181F9 /* ObSFileLoader.h */; };
+		FBD3F7E1171DA442008181F9 /* ObSSymbol.m in Sources */ = {isa = PBXBuildFile; fileRef = FBD3F7D9171DA2E1008181F9 /* ObSSymbol.m */; };
+		FBD3F7E3171DA568008181F9 /* ObSFileLoader.m in Sources */ = {isa = PBXBuildFile; fileRef = FBD3F7E2171DA568008181F9 /* ObSFileLoader.m */; };
+		FBD3F7E4171DA568008181F9 /* ObSFileLoader.m in Sources */ = {isa = PBXBuildFile; fileRef = FBD3F7E2171DA568008181F9 /* ObSFileLoader.m */; };
+		FBD3F7EF171DA7D9008181F9 /* ObSConstant.m in Sources */ = {isa = PBXBuildFile; fileRef = FBD3F7E5171DA7D9008181F9 /* ObSConstant.m */; };
+		FBD3F7F0171DA7D9008181F9 /* ObSConstant.m in Sources */ = {isa = PBXBuildFile; fileRef = FBD3F7E5171DA7D9008181F9 /* ObSConstant.m */; };
+		FBD3F7F1171DA7D9008181F9 /* ObSConstant.h in Headers */ = {isa = PBXBuildFile; fileRef = FBD3F7E6171DA7D9008181F9 /* ObSConstant.h */; };
+		FBD3F7F2171DA7D9008181F9 /* ObSCons.m in Sources */ = {isa = PBXBuildFile; fileRef = FBD3F7E7171DA7D9008181F9 /* ObSCons.m */; };
+		FBD3F7F3171DA7D9008181F9 /* ObSCons.m in Sources */ = {isa = PBXBuildFile; fileRef = FBD3F7E7171DA7D9008181F9 /* ObSCons.m */; };
+		FBD3F7F4171DA7D9008181F9 /* ObSCons.h in Headers */ = {isa = PBXBuildFile; fileRef = FBD3F7E8171DA7D9008181F9 /* ObSCons.h */; };
+		FBD3F7F5171DA7D9008181F9 /* ObSInPort.m in Sources */ = {isa = PBXBuildFile; fileRef = FBD3F7E9171DA7D9008181F9 /* ObSInPort.m */; };
+		FBD3F7F6171DA7D9008181F9 /* ObSInPort.m in Sources */ = {isa = PBXBuildFile; fileRef = FBD3F7E9171DA7D9008181F9 /* ObSInPort.m */; };
+		FBD3F7F7171DA7D9008181F9 /* ObSInPort.h in Headers */ = {isa = PBXBuildFile; fileRef = FBD3F7EA171DA7D9008181F9 /* ObSInPort.h */; };
+		FBD3F7F8171DA7D9008181F9 /* ObSLambda.m in Sources */ = {isa = PBXBuildFile; fileRef = FBD3F7EB171DA7D9008181F9 /* ObSLambda.m */; };
+		FBD3F7F9171DA7D9008181F9 /* ObSLambda.m in Sources */ = {isa = PBXBuildFile; fileRef = FBD3F7EB171DA7D9008181F9 /* ObSLambda.m */; };
+		FBD3F7FA171DA7D9008181F9 /* ObSLambda.h in Headers */ = {isa = PBXBuildFile; fileRef = FBD3F7EC171DA7D9008181F9 /* ObSLambda.h */; };
+		FBD3F7FB171DA7D9008181F9 /* ObSScope.m in Sources */ = {isa = PBXBuildFile; fileRef = FBD3F7ED171DA7D9008181F9 /* ObSScope.m */; };
+		FBD3F7FC171DA7D9008181F9 /* ObSScope.m in Sources */ = {isa = PBXBuildFile; fileRef = FBD3F7ED171DA7D9008181F9 /* ObSScope.m */; };
+		FBD3F7FD171DA7D9008181F9 /* ObSScope.h in Headers */ = {isa = PBXBuildFile; fileRef = FBD3F7EE171DA7D9008181F9 /* ObSScope.h */; };
 		FBE147F515C6D22A000B79FD /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FBE147F415C6D22A000B79FD /* Foundation.framework */; };
 		FBE147FB15C6D22A000B79FD /* ObjScheme.m in Sources */ = {isa = PBXBuildFile; fileRef = FBE147FA15C6D22A000B79FD /* ObjScheme.m */; };
 		FBE1480315C6D22A000B79FD /* SenTestingKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FBE1480215C6D22A000B79FD /* SenTestingKit.framework */; };
@@ -71,6 +93,21 @@
 		FBAEE116166B19E7009BFFC9 /* ObSStrings.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ObSStrings.m; sourceTree = "<group>"; };
 		FBC68B3915D05CD50051A1BA /* ObSNS.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ObSNS.h; sourceTree = "<group>"; };
 		FBC68B3A15D05CD50051A1BA /* ObSNS.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ObSNS.m; sourceTree = "<group>"; };
+		FBD3F7D9171DA2E1008181F9 /* ObSSymbol.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ObSSymbol.m; sourceTree = "<group>"; };
+		FBD3F7DA171DA2E1008181F9 /* ObSSymbol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ObSSymbol.h; sourceTree = "<group>"; };
+		FBD3F7DD171DA3C8008181F9 /* ObSProcedure.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ObSProcedure.h; sourceTree = "<group>"; };
+		FBD3F7DF171DA411008181F9 /* ObSFileLoader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ObSFileLoader.h; sourceTree = "<group>"; };
+		FBD3F7E2171DA568008181F9 /* ObSFileLoader.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ObSFileLoader.m; sourceTree = "<group>"; };
+		FBD3F7E5171DA7D9008181F9 /* ObSConstant.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ObSConstant.m; sourceTree = "<group>"; };
+		FBD3F7E6171DA7D9008181F9 /* ObSConstant.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ObSConstant.h; sourceTree = "<group>"; };
+		FBD3F7E7171DA7D9008181F9 /* ObSCons.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ObSCons.m; sourceTree = "<group>"; };
+		FBD3F7E8171DA7D9008181F9 /* ObSCons.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ObSCons.h; sourceTree = "<group>"; };
+		FBD3F7E9171DA7D9008181F9 /* ObSInPort.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ObSInPort.m; sourceTree = "<group>"; };
+		FBD3F7EA171DA7D9008181F9 /* ObSInPort.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ObSInPort.h; sourceTree = "<group>"; };
+		FBD3F7EB171DA7D9008181F9 /* ObSLambda.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ObSLambda.m; sourceTree = "<group>"; };
+		FBD3F7EC171DA7D9008181F9 /* ObSLambda.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ObSLambda.h; sourceTree = "<group>"; };
+		FBD3F7ED171DA7D9008181F9 /* ObSScope.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ObSScope.m; sourceTree = "<group>"; };
+		FBD3F7EE171DA7D9008181F9 /* ObSScope.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ObSScope.h; sourceTree = "<group>"; };
 		FBE147F115C6D22A000B79FD /* libObjScheme.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libObjScheme.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		FBE147F415C6D22A000B79FD /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		FBE147F815C6D22A000B79FD /* ObjScheme-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "ObjScheme-Prefix.pch"; sourceTree = "<group>"; };
@@ -138,6 +175,21 @@
 		FBE147F615C6D22A000B79FD /* ObjScheme */ = {
 			isa = PBXGroup;
 			children = (
+				FBD3F7E5171DA7D9008181F9 /* ObSConstant.m */,
+				FBD3F7E6171DA7D9008181F9 /* ObSConstant.h */,
+				FBD3F7E7171DA7D9008181F9 /* ObSCons.m */,
+				FBD3F7E8171DA7D9008181F9 /* ObSCons.h */,
+				FBD3F7E9171DA7D9008181F9 /* ObSInPort.m */,
+				FBD3F7EA171DA7D9008181F9 /* ObSInPort.h */,
+				FBD3F7EB171DA7D9008181F9 /* ObSLambda.m */,
+				FBD3F7EC171DA7D9008181F9 /* ObSLambda.h */,
+				FBD3F7ED171DA7D9008181F9 /* ObSScope.m */,
+				FBD3F7EE171DA7D9008181F9 /* ObSScope.h */,
+				FBD3F7E2171DA568008181F9 /* ObSFileLoader.m */,
+				FBD3F7DF171DA411008181F9 /* ObSFileLoader.h */,
+				FBD3F7DD171DA3C8008181F9 /* ObSProcedure.h */,
+				FBD3F7D9171DA2E1008181F9 /* ObSSymbol.m */,
+				FBD3F7DA171DA2E1008181F9 /* ObSSymbol.h */,
 				FB3511E21694E3760009090D /* ObSSchemeBacked.h */,
 				FB3511E31694E3760009090D /* ObSSchemeBacked.m */,
 				FBAEE115166B19E7009BFFC9 /* ObSStrings.h */,
@@ -189,6 +241,14 @@
 				FB3511D5168E2F350009090D /* ObjScheme.h in Headers */,
 				FB3511D7168E2F3A0009090D /* ObSNS.h in Headers */,
 				FB3511E41694E3760009090D /* ObSSchemeBacked.h in Headers */,
+				FBD3F7DC171DA2E1008181F9 /* ObSSymbol.h in Headers */,
+				FBD3F7DE171DA3C8008181F9 /* ObSProcedure.h in Headers */,
+				FBD3F7E0171DA411008181F9 /* ObSFileLoader.h in Headers */,
+				FBD3F7F1171DA7D9008181F9 /* ObSConstant.h in Headers */,
+				FBD3F7F4171DA7D9008181F9 /* ObSCons.h in Headers */,
+				FBD3F7F7171DA7D9008181F9 /* ObSInPort.h in Headers */,
+				FBD3F7FA171DA7D9008181F9 /* ObSLambda.h in Headers */,
+				FBD3F7FD171DA7D9008181F9 /* ObSScope.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -324,6 +384,13 @@
 				FBC68B3D15D05CD50051A1BA /* ObSNS.m in Sources */,
 				FBAEE11B166B19E7009BFFC9 /* ObSStrings.m in Sources */,
 				FB3511E51694E3760009090D /* ObSSchemeBacked.m in Sources */,
+				FBD3F7DB171DA2E1008181F9 /* ObSSymbol.m in Sources */,
+				FBD3F7E3171DA568008181F9 /* ObSFileLoader.m in Sources */,
+				FBD3F7EF171DA7D9008181F9 /* ObSConstant.m in Sources */,
+				FBD3F7F2171DA7D9008181F9 /* ObSCons.m in Sources */,
+				FBD3F7F5171DA7D9008181F9 /* ObSInPort.m in Sources */,
+				FBD3F7F8171DA7D9008181F9 /* ObSLambda.m in Sources */,
+				FBD3F7FB171DA7D9008181F9 /* ObSScope.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -336,6 +403,13 @@
 				FBC0872916A4B4A70045239E /* ObSStrings.m in Sources */,
 				FBC0872A16A4B4AB0045239E /* ObjScheme.m in Sources */,
 				FBC0872B16A4B4AE0045239E /* ObSNS.m in Sources */,
+				FBD3F7E1171DA442008181F9 /* ObSSymbol.m in Sources */,
+				FBD3F7E4171DA568008181F9 /* ObSFileLoader.m in Sources */,
+				FBD3F7F0171DA7D9008181F9 /* ObSConstant.m in Sources */,
+				FBD3F7F3171DA7D9008181F9 /* ObSCons.m in Sources */,
+				FBD3F7F6171DA7D9008181F9 /* ObSInPort.m in Sources */,
+				FBD3F7F9171DA7D9008181F9 /* ObSLambda.m in Sources */,
+				FBD3F7FC171DA7D9008181F9 /* ObSScope.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
