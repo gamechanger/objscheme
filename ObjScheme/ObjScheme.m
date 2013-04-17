@@ -9,6 +9,7 @@
 #import "ObjScheme.h"
 #import "ObSNS.h"
 #import "ObSStrings.h"
+#import "ObSGarbageCollector.h"
 
 ObSSymbol* S_DOT;
 ObSSymbol* S_QUOTE;
@@ -38,6 +39,7 @@ ObSSymbol* S_IN;
 ObSSymbol* S_DO;
 ObSSymbol* S_OR;
 ObSSymbol* S_AND;
+ObSSymbol* S_THE_ENVIRONMENT;
 
 ObSConstant* B_FALSE;
 ObSConstant* B_TRUE;
@@ -67,6 +69,7 @@ ObSConstant* UNSPECIFIED;
 
 static NSDictionary* __constants = nil;
 static ObSScope* __globalScope = nil;
+static ObSGarbageCollector* __globalGarbageCollector;
 static NSMutableArray* __loaders = nil;
 
 + (void)initializeSymbols {
@@ -98,6 +101,7 @@ static NSMutableArray* __loaders = nil;
   S_DO =              SY(@"do");
   S_OR =              SY(@"or");
   S_AND =             SY(@"and");
+  S_THE_ENVIRONMENT = SY(@"the-environment");
 
   B_FALSE =           CONST(@"#f");
   B_TRUE =            CONST(@"#t");
@@ -153,6 +157,18 @@ static NSMutableArray* __loaders = nil;
     [ObSStrings addToScope: __globalScope];
   }
   return __globalScope;
+}
+
++ (ObSGarbageCollector*)globalGarbageCollector {
+  if ( __globalGarbageCollector == nil ) {
+    __globalGarbageCollector = [[ObSGarbageCollector alloc] initWithRoot: [self globalScope]];
+  }
+  NSAssert( __globalGarbageCollector, @"ZOINK" );
+  return __globalGarbageCollector;
+}
+
++ (void)runGarbageCollection {
+  [[self globalGarbageCollector] runGarbageCollection];
 }
 
 + (NSString*)unpackStringLiteral:(NSString*)string {

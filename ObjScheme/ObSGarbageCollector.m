@@ -53,6 +53,7 @@
   }
 
   [reachable addObject: node];
+
   for ( ObSCollectible* child in [node children] ) {
     [self mark: child reachable: reachable];
   }
@@ -110,14 +111,16 @@
 
   // sweep all the unreachable into a list
   NSMutableArray* unreachable = [[NSMutableArray alloc] initWithCapacity: [_collectibles count] - [reachable count]];
-  for ( ObSCollectible* collectible in [_collectibles allObjects] ) {
+  NSSet* collectibleCopy = [_collectibles copy]; // prevent mutation, but also don't allow any autorelease
+  for ( ObSCollectible* collectible in collectibleCopy ) {
     if ( ! [reachable containsObject: collectible] ) {
       [unreachable addObject: collectible];
     }
   }
+  [collectibleCopy release];
   [reachable release];
 
-  // break all the retain cycles, but individuals still retained by this list and _collectibles
+  // break all the retain cycles!
   for ( ObSCollectible* node in unreachable ) {
     [node releaseChildren];
   }

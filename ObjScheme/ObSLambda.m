@@ -11,6 +11,7 @@
 #import "ObSSymbol.h"
 #import "ObSCons.h"
 #import "ObjScheme.h"
+#import "ObSGarbageCollector.h"
 
 @implementation ObSLambda
 
@@ -55,15 +56,8 @@
   return self;
 }
 
-- (oneway void)release {
-  NSInteger retainCount = [self retainCount];
-  [super release];
-  if ( retainCount == 2 ) {
-    if ( [_scope retainCount] == 1 ) {
-      [_scope release];
-      _scope = nil;
-    }
-  }
+- (NSArray*)children {
+  return [NSArray arrayWithObject: _scope];
 }
 
 - (void)dealloc {
@@ -86,6 +80,8 @@
 
 - (id)callWith:(ObSCons*)arguments {
   ObSScope* invocationScope = [[ObSScope alloc] initWithOuterScope: _scope];
+  [[ObjScheme globalGarbageCollector] startTracking: invocationScope];
+
   if ( _parameters != nil ) {
     // for each parameter, pop something off the top of arguments...
     for ( ObSSymbol* key in _parameters ) {

@@ -7,6 +7,7 @@
 //
 
 #import "ObSProcedure.h"
+#import "ObSCollectible.h"
 
 @class ObSSymbol;
 @class ObSCons;
@@ -18,7 +19,7 @@
 @end
 
 
-@interface ObSLambda : NSObject <ObSProcedure> {
+@interface ObSLambda : ObSCollectible <ObSProcedure> {
   ObSSymbol* _listParameter;
   ObSCons* _parameters;
   id _expression;

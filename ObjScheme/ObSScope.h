@@ -6,10 +6,12 @@
 // Copyright 2013 GameChanger. All rights reserved.
 //
 
+#import "ObSCollectible.h"
+
 @class ObSSymbol;
 @protocol ObSProcedure;
 
-@interface ObSScope : NSObject {
+@interface ObSScope : ObSCollectible {
   ObSScope* _outerScope;
   NSMutableDictionary* _macros;
   NSMutableDictionary* _environ;

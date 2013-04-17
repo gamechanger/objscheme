@@ -13,7 +13,7 @@
 #import "ObSProcedure.h"
 #import "ObSCons.h"
 #import "ObSLambda.h"
-
+#import "ObSGarbageCollector.h"
 
 
 @implementation ObSScope
@@ -51,6 +51,20 @@ BOOL _errorLogged = NO;
   [_loadedFiles release];
   _loadedFiles = nil;
   [super dealloc];
+}
+
+- (NSArray*)children {
+  NSMutableArray* children = [NSMutableArray arrayWithCapacity: [_environ count]];
+  for ( id value in [_environ allValues] ) {
+    if ( [value isKindOfClass: [ObSCollectible class]] ) {
+      [children addObject: value];
+    }
+  }
+  return children;
+}
+
+- (void)releaseChildren {
+  [_environ removeAllObjects];
 }
 
 - (NSString*)description {
@@ -249,6 +263,7 @@ static NSMutableDictionary* __times = nil;
             ObSCons* definitions = [rest cadr];
             ObSCons* body = [rest cddr];
             ObSScope* letScope = [[ObSScope alloc] initWithOuterScope: self];
+            [[ObjScheme globalGarbageCollector] startTracking: letScope];
 
             NSMutableArray* argList = [[NSMutableArray alloc] initWithCapacity: 4];
 
@@ -279,6 +294,7 @@ static NSMutableDictionary* __times = nil;
             ObSCons* definitions = [rest car];
             ObSCons* body = [rest cdr];
             ObSScope* letScope = [[ObSScope alloc] initWithOuterScope: self];
+            [[ObjScheme globalGarbageCollector] startTracking: letScope];
 
             for ( ObSCons* definition in definitions ) {
               ObSSymbol* name = [definition car];
@@ -296,6 +312,7 @@ static NSMutableDictionary* __times = nil;
           ObSCons* definitions = [rest car];
           ObSCons* body = [rest cdr];
           ObSScope* letScope = [[ObSScope alloc] initWithOuterScope: self];
+          [[ObjScheme globalGarbageCollector] startTracking: letScope];
 
           for ( ObSCons* definition in definitions ) {
             ObSSymbol* name = [definition car];
@@ -312,6 +329,7 @@ static NSMutableDictionary* __times = nil;
           ObSCons* exit = [rest cadr];
           ObSCons* loopBody = [rest cddr];
           ObSScope* doScope = [[ObSScope alloc] initWithOuterScope: self];
+          [[ObjScheme globalGarbageCollector] startTracking: doScope];
 
           NSMutableDictionary* varToStep = [NSMutableDictionary dictionaryWithCapacity: 4];
 
@@ -366,6 +384,8 @@ static NSMutableDictionary* __times = nil;
               [changes release];
             }
           }
+
+          [doScope release];
 
         } else if ( head == S_QUOTE ) { // (quote exp) -> exp
           NSAssert1(argCount == 1, @"quote can have only 1 operand, not %@", rest);
@@ -473,7 +493,10 @@ static NSMutableDictionary* __times = nil;
           ret = UNSPECIFIED;
           break;
 
-        } else {
+        } else if ( head == S_THE_ENVIRONMENT ) {
+          return self;
+
+        } else { // (<procname> args...)
           ObSSymbol* functionName = head;
           id<ObSProcedure> procedure = [self evaluate: functionName];
           ObSCons* args = [self evaluateList: rest];

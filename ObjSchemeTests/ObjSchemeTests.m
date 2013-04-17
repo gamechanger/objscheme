@@ -3,11 +3,14 @@
 //  ObjSchemeTests
 //
 //  Created by Kiril Savino on 7/30/12.
-//  Copyright (c) 2012 GameChanger. All rights reserved.
+//  Copyright (c) 2012, 2013 GameChanger. All rights reserved.
 //
 
 #import "ObjSchemeTests.h"
 #import "ObjScheme.h"
+#import "ObSCollectible.h"
+#import "ObSGarbageCollector.h"
+
 
 #define OSAssertFalse(code) source = (code);\
  program = [ObjScheme parseString: source];\
@@ -43,6 +46,47 @@
 
 #define COMPILE(source) [ObjScheme parseString: (source)]
 #define EXEC(source) [[ObjScheme globalScope] evaluate: COMPILE(source)]
+
+
+
+typedef void (^Thunk)(void);
+
+
+@interface MockCollectible : ObSCollectible {
+  Thunk _onReleaseChildren;
+  Thunk _onDealloc;
+}
+@property (nonatomic,copy) Thunk onReleaseChildren;
+@property (nonatomic,copy) Thunk onDealloc;
+@end
+
+
+
+@implementation MockCollectible
+
+- (void)dealloc {
+  if ( _onDealloc != nil ) {
+    _onDealloc();
+  }
+  [_onDealloc release];
+  [_onReleaseChildren release];
+  [super dealloc];
+}
+
+- (NSArray*)children {
+  return [NSArray array];
+}
+
+- (void)releaseChildren {
+  if ( _onReleaseChildren != nil ) {
+    _onReleaseChildren();
+  }
+}
+
+@end
+
+
+
 
 @implementation ObjSchemeTests
 
@@ -428,6 +472,53 @@
 
   OSAssertEquals(@"'(a . b)", EXEC(@"(cons 'a 'b)"));
   OSAssertTrue(@"(equal? (cons 'a 'b) '(a . b))");
+}
+
+- (void)testGarbageCollectionIndirectly {
+  id aScope = EXEC(@"(the-environment)");
+  STAssertTrue([aScope isKindOfClass: [ObSScope class]], @"wow, it's not a scope?" );
+
+  NSAutoreleasePool* autoreleasePool = [[NSAutoreleasePool alloc] init];
+  aScope = EXEC(@"(let* ((x (lambda () #t))) (the-environment))");
+  [autoreleasePool drain];
+
+  STAssertTrue([aScope retainCount] == 2, @"Leak should mean we have RC of 2 (the GC keeps one ref, lambda the other), not %d", [aScope retainCount]);
+
+  [aScope retain];
+  [ObjScheme runGarbageCollection];
+
+  STAssertTrue([aScope retainCount] == 2, @"GC should break the lambda-scope retain cycle, but we retained it, so GC hasn't let go yet, so it should be 2 not %d", [aScope retainCount]);
+  [aScope release];
+}
+
+- (void)testGarbageCollectionDirectly {
+  __block BOOL rootGone = NO;
+  __block BOOL secondaryGone = NO;
+  __block BOOL tertiaryGone = NO;
+
+  __block MockCollectible* root = [MockCollectible new];
+  __block MockCollectible* secondary = [MockCollectible new];
+  __block MockCollectible* tertiary = [MockCollectible new];
+
+  root.onDealloc = ^(){ rootGone = YES; };
+
+  secondary.onReleaseChildren = ^() { [tertiary release]; };
+  secondary.onDealloc = ^() { secondaryGone = YES; };
+
+  tertiary.onReleaseChildren = ^() { [secondary release]; };
+  tertiary.onDealloc = ^() { tertiaryGone = YES; };
+
+  ObSGarbageCollector* gc = [[ObSGarbageCollector alloc] initWithRoot: root];
+  [gc startTracking: secondary];
+  [gc startTracking: tertiary];
+  [gc runGarbageCollection];
+
+  STAssertTrue(secondaryGone, @"shit, secondary didn't die!");
+  STAssertTrue(tertiaryGone, @"shit, secondary didn't die!");
+  STAssertFalse(rootGone, @"shit, secondary didn't die!");
+
+  [root release];
+  [gc release];
 }
 
 @end

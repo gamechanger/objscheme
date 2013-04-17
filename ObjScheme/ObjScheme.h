@@ -17,6 +17,9 @@
 #import "ObSConstant.h"
 #import "ObSLambda.h"
 
+@class ObSGarbageCollector;
+
+
 extern ObSSymbol* S_DOT;
 extern ObSSymbol* S_QUOTE;
 extern ObSSymbol* S_IF;
@@ -45,6 +48,7 @@ extern ObSSymbol* S_IN;
 extern ObSSymbol* S_DO;
 extern ObSSymbol* S_OR;
 extern ObSSymbol* S_AND;
+extern ObSSymbol* S_THE_ENVIRONMENT;
 
 extern ObSConstant* B_FALSE;
 extern ObSConstant* B_TRUE;
@@ -55,6 +59,7 @@ extern ObSConstant* UNSPECIFIED;
 
 
 @interface ObjScheme : NSObject
+
 + (ObSScope*)globalScope;
 + (id)parseOneToken:(ObSInPort*)inPort;
 + (id)parseString:(NSString*)string;
@@ -72,6 +77,10 @@ extern ObSConstant* UNSPECIFIED;
 + (id)boolToTruth:(BOOL)b;
 + (BOOL)isEmptyList:(id)token;
 + (id)unspecified;
+
++ (ObSGarbageCollector*)globalGarbageCollector;
++ (void)runGarbageCollection;
+
 @end
 
 
