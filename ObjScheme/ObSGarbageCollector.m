@@ -112,6 +112,7 @@
   // sweep all the unreachable into a list
   NSMutableArray* unreachable = [[NSMutableArray alloc] initWithCapacity: [_collectibles count] - [reachable count]];
   NSSet* collectibleCopy = [_collectibles copy]; // prevent mutation, but also don't allow any autorelease
+  NSLog( @"GC running with %d scopes", [collectibleCopy count] );
   for ( ObSCollectible* collectible in collectibleCopy ) {
     if ( ! [reachable containsObject: collectible] ) {
       [unreachable addObject: collectible];
