@@ -25,6 +25,8 @@
   id _expression;
   ObSScope* _scope;
   ObSSymbol* _name;
+  ObSScope* _invocationScope;
+  BOOL _scopeInUse;
 }
 
 @property (readonly) ObSSymbol* listParameter;

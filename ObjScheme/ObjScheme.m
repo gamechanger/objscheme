@@ -69,7 +69,6 @@ ObSConstant* UNSPECIFIED;
 
 static NSDictionary* __constants = nil;
 static ObSScope* __globalScope = nil;
-static ObSGarbageCollector* __globalGarbageCollector;
 static NSMutableArray* __loaders = nil;
 
 + (void)initializeSymbols {
@@ -150,25 +149,13 @@ static NSMutableArray* __loaders = nil;
 
 + (ObSScope*)globalScope {
   if ( __globalScope == nil ) {
-    __globalScope = [[ObSScope alloc] initWithOuterScope: nil];
+    __globalScope = [[ObSScope alloc] initWithOuterScope: nil name: @"global"];
     [ObjScheme addGlobalsToScope: __globalScope];
     [__globalScope bootstrapMacros];
     [ObSNS initializeBridgeFunctions: __globalScope];
     [ObSStrings addToScope: __globalScope];
   }
   return __globalScope;
-}
-
-+ (ObSGarbageCollector*)globalGarbageCollector {
-  if ( __globalGarbageCollector == nil ) {
-    __globalGarbageCollector = [[ObSGarbageCollector alloc] initWithRoot: [self globalScope]];
-  }
-  NSAssert( __globalGarbageCollector, @"ZOINK" );
-  return __globalGarbageCollector;
-}
-
-+ (void)runGarbageCollection {
-  [[self globalGarbageCollector] runGarbageCollection];
 }
 
 + (NSString*)unpackStringLiteral:(NSString*)string {

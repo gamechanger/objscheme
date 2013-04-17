@@ -71,6 +71,8 @@
   _scope = nil;
   [_name release];
   _name = nil;
+  [_invocationScope release];
+  _invocationScope = nil;
   [super dealloc];
 }
 
@@ -78,9 +80,38 @@
   return (_name == nil ? S_LAMBDA : _name);
 }
 
+- (NSString*)description {
+  return [NSString stringWithFormat: @"ObSLambda '%@' <%@> %p", _name, _expression, self];
+}
+
+- (ObSScope*)newInvocationScope {
+  if ( _invocationScope == nil ) {
+    _invocationScope = [[ObSScope alloc] initWithOuterScope: _scope
+                                                       name: [NSString stringWithFormat: @"%@.callWith", self]];
+    _scopeInUse = YES;
+
+  } else if ( _scopeInUse ) {
+    return [[ObSScope alloc] initWithOuterScope: _scope
+                                           name: [NSString stringWithFormat: @"%@.callWith", self]];
+  }
+
+  [_invocationScope retain];
+  return _invocationScope;
+}
+
+- (void)doneWithInvocationScope:(ObSScope*)scope {
+  if ( scope == _invocationScope ) {
+    _scopeInUse = NO;
+
+    if ( [scope.environ count] > 0 ) {
+      [_invocationScope release];
+      _invocationScope = nil;
+    }
+  }
+}
+
 - (id)callWith:(ObSCons*)arguments {
-  ObSScope* invocationScope = [[ObSScope alloc] initWithOuterScope: _scope];
-  [[ObjScheme globalGarbageCollector] startTracking: invocationScope];
+  ObSScope* invocationScope = [self newInvocationScope];
 
   if ( _parameters != nil ) {
     // for each parameter, pop something off the top of arguments...
@@ -103,7 +134,8 @@
   }
 
   id ret = [invocationScope evaluate: _expression];
-  [invocationScope release]; // trying to be conservative with memory in highly recursive environment here
+  [self doneWithInvocationScope: invocationScope];
+  [invocationScope release];
   return ret;
 }
 

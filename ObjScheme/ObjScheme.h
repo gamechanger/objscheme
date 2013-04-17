@@ -78,9 +78,6 @@ extern ObSConstant* UNSPECIFIED;
 + (BOOL)isEmptyList:(id)token;
 + (id)unspecified;
 
-+ (ObSGarbageCollector*)globalGarbageCollector;
-+ (void)runGarbageCollection;
-
 @end
 
 

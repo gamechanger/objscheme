@@ -7,43 +7,34 @@
 //
 
 #import "ObSGarbageCollector.h"
-
+#import "ObjScheme.h"
 #import "ObSCollectible.h"
 
 @implementation ObSGarbageCollector
 
 - (id)initWithRoot:(ObSCollectible*)root {
   if ( self = [super init] ) {
-    _root = [root retain];
+    _root = root;
     _collectibles = [[NSMutableSet alloc] init];
-    _lock = [[NSRecursiveLock alloc] init];
-    [_lock setName: @"ObSGarbageCollector"];
   }
   return self;
 }
 
 - (void)dealloc {
-  [_root release];
   _root = nil;
   [_collectibles release];
   _collectibles = nil;
-  [_lock release];
-  _lock = nil;
   [super dealloc];
 }
 
 - (void)startTracking:(ObSCollectible*)collectible {
-  [_lock lock];
   [_collectibles addObject: collectible];
   [collectible setGarbageCollector: self];
-  [_lock unlock];
 }
 
 - (void)stopTracking:(ObSCollectible*)collectible {
-  [_lock lock];
-  [_collectibles removeObject: collectible];
   [collectible setGarbageCollector: nil];
-  [_lock unlock];
+  [_collectibles removeObject: collectible];
 }
 
 - (void)mark:(ObSCollectible*)node reachable:(NSMutableSet*)reachable {
@@ -103,16 +94,24 @@
  * TADA!!
  */
 - (void)runGarbageCollection {
-  [_lock lock];
-
+  //NSLog( @"ObjScheme Garbage collecting starting at %p (global is %p)", _root, [ObjScheme globalScope] );
   // mark stuff as reachable
   NSMutableSet* reachable = [[NSMutableSet alloc] initWithCapacity: [_collectibles count]];
   [self mark: _root reachable: reachable];
 
+  /*
+  if ( [reachable count] < 10 ) {
+    NSLog( @"REACHABLE %@", reachable );
+  } else {
+    NSLog( @"too many reachable..." );
+  }
+  */
+
   // sweep all the unreachable into a list
-  NSMutableArray* unreachable = [[NSMutableArray alloc] initWithCapacity: [_collectibles count] - [reachable count]];
+  NSMutableArray* unreachable = [[NSMutableArray alloc] initWithCapacity: [_collectibles count]];
   NSSet* collectibleCopy = [_collectibles copy]; // prevent mutation, but also don't allow any autorelease
-  NSLog( @"GC running with %d scopes", [collectibleCopy count] );
+  //NSLog( @"GC running with %d scopes", [collectibleCopy count] );
+  //NSLog( @"Reachable: %d", [reachable count] );
   for ( ObSCollectible* collectible in collectibleCopy ) {
     if ( ! [reachable containsObject: collectible] ) {
       [unreachable addObject: collectible];
@@ -121,15 +120,33 @@
   [collectibleCopy release];
   [reachable release];
 
+  //NSLog( @"Unreachable %d", [unreachable count] );
+
   // break all the retain cycles!
   for ( ObSCollectible* node in unreachable ) {
     [node releaseChildren];
   }
 
   // and now this ought to cause these to get ripped out of the universe
+  /*
+  int i = 0;
+  for ( id x in unreachable ) {
+    if ( i++ < 10 ) {
+      NSLog( @"%@ RC %d", x, [x retainCount] );
+    }
+  }
+  */
   [unreachable release];
 
-  [_lock unlock];
+  /*
+  NSLog( @"remaining: %d", [_collectibles count] );
+  i = 0;
+  for ( id x in _collectibles ) {
+    if ( i++ < 10 ) {
+      NSLog( @"remaining %@ RC %d", x, [x retainCount] );
+    }
+  }
+  */
 }
 
 @end

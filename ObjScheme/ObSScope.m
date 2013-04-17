@@ -27,21 +27,54 @@ BOOL _errorLogged = NO;
   _stack = [[NSMutableArray alloc] init];
 }
 
-+ (ObSScope*)getGlobalChildScope {
-  return [[[ObSScope alloc] initWithOuterScope: [ObjScheme globalScope]] autorelease];
++ (ObSScope*)newGlobalChildScopeNamed:(NSString*)name {
+  return [[ObSScope alloc] initWithOuterScope: [ObjScheme globalScope] name: name];
 }
 
-- (id)initWithOuterScope:(ObSScope*)outer {
+- (id)initWithOuterScope:(ObSScope*)outer name:(NSString*)name {
   if ( (self = [super init]) ) {
+    _name = [name retain];
     _outerScope = [outer retain];
     _macros = [[NSMutableDictionary alloc] init];
     _environ = [[NSMutableDictionary alloc] init];
     _loadedFiles = [[NSMutableSet alloc] init];
+    _inheritedGC = outer ? [outer garbageCollector] : nil;
+    _rootGC = _inheritedGC ? nil : [[ObSGarbageCollector alloc] initWithRoot: self];
+    [[self garbageCollector] startTracking: self];
   }
   return self;
 }
 
+- (void)ensureLocalGC {
+  if ( _rootGC == nil ) {
+    _rootGC = [[ObSGarbageCollector alloc] initWithRoot: self];
+  }
+}
+
+- (ObSGarbageCollector*)garbageCollector {
+  return _rootGC ? _rootGC : _inheritedGC;
+}
+
+- (void)gc {
+  [[self garbageCollector] runGarbageCollection];
+}
+
+- (oneway void)release {
+  // basically, if we would otherwise be about to hit a reference count of 1
+  // but we're retained by the Garbage Collector's list,
+  // then we tell the GC to let us go, so we can properly hit 0 and dealloc here.
+  // otherwise, we'd have to wait for the next GC cycle to go away, which is a waste.
+
+  if ( _garbageCollector != nil && [self retainCount] == 2 ) {
+    [_garbageCollector stopTracking: self];
+  }
+
+  [super release];
+}
+
 - (void)dealloc {
+  [_name release];
+  _name = nil;
   [_outerScope release];
   _outerScope = nil;
   [_macros release];
@@ -50,6 +83,8 @@ BOOL _errorLogged = NO;
   _environ = nil;
   [_loadedFiles release];
   _loadedFiles = nil;
+  [_rootGC release];
+  _rootGC = nil;
   [super dealloc];
 }
 
@@ -60,6 +95,11 @@ BOOL _errorLogged = NO;
       [children addObject: value];
     }
   }
+
+  if ( _outerScope != nil ) {
+    [children addObject: _outerScope];
+  }
+
   return children;
 }
 
@@ -68,7 +108,7 @@ BOOL _errorLogged = NO;
 }
 
 - (NSString*)description {
-  return [NSString stringWithFormat: @"%@", _environ];
+  return [NSString stringWithFormat: @"ObSScope %p %@ : %@", self, _name, _environ];
 }
 
 - (BOOL)isFilenameLoaded:(NSString*)filename {
@@ -200,6 +240,10 @@ static NSMutableDictionary* __times = nil;
 }
 
 - (id)evaluate:(id)token {
+  return [self evaluate: token named: nil];
+}
+
+- (id)evaluate:(id)token named:(ObSSymbol*)name {
   NSAssert(token != nil, @"nil token");
 
   @try {
@@ -262,8 +306,8 @@ static NSMutableDictionary* __times = nil;
             ObSSymbol* letName = [rest car];
             ObSCons* definitions = [rest cadr];
             ObSCons* body = [rest cddr];
-            ObSScope* letScope = [[ObSScope alloc] initWithOuterScope: self];
-            [[ObjScheme globalGarbageCollector] startTracking: letScope];
+            ObSScope* letScope = [[ObSScope alloc] initWithOuterScope: self
+                                                                 name: [NSString stringWithFormat: @"named-let %@", letName]];
 
             NSMutableArray* argList = [[NSMutableArray alloc] initWithCapacity: 4];
 
@@ -293,8 +337,8 @@ static NSMutableDictionary* __times = nil;
 
             ObSCons* definitions = [rest car];
             ObSCons* body = [rest cdr];
-            ObSScope* letScope = [[ObSScope alloc] initWithOuterScope: self];
-            [[ObjScheme globalGarbageCollector] startTracking: letScope];
+            ObSScope* letScope = [[ObSScope alloc] initWithOuterScope: self
+                                                                 name: @"let"];
 
             for ( ObSCons* definition in definitions ) {
               ObSSymbol* name = [definition car];
@@ -311,8 +355,8 @@ static NSMutableDictionary* __times = nil;
         } else if ( head == S_LET_STAR ) {
           ObSCons* definitions = [rest car];
           ObSCons* body = [rest cdr];
-          ObSScope* letScope = [[ObSScope alloc] initWithOuterScope: self];
-          [[ObjScheme globalGarbageCollector] startTracking: letScope];
+          ObSScope* letScope = [[ObSScope alloc] initWithOuterScope: self
+                                                               name: @"let*"];
 
           for ( ObSCons* definition in definitions ) {
             ObSSymbol* name = [definition car];
@@ -328,10 +372,10 @@ static NSMutableDictionary* __times = nil;
           ObSCons* variables = [rest car];
           ObSCons* exit = [rest cadr];
           ObSCons* loopBody = [rest cddr];
-          ObSScope* doScope = [[ObSScope alloc] initWithOuterScope: self];
-          [[ObjScheme globalGarbageCollector] startTracking: doScope];
+          ObSScope* doScope = [[ObSScope alloc] initWithOuterScope: self
+                                                              name: @"do"];
 
-          NSMutableDictionary* varToStep = [NSMutableDictionary dictionaryWithCapacity: 4];
+          NSMutableDictionary* varToStep = [[NSMutableDictionary alloc] initWithCapacity: 4];
 
           for ( ObSCons* variable in variables ) {
             ObSSymbol* name = [variable car];
@@ -351,7 +395,7 @@ static NSMutableDictionary* __times = nil;
           while ( 1 ) {
             id testValue = [doScope evaluate: exit_condition];
             if ( testValue != B_FALSE ) {
-              id ret = B_FALSE;
+              ret = B_FALSE;
               id body = exitBody;
 
               while ( body != C_NULL ) {
@@ -360,7 +404,7 @@ static NSMutableDictionary* __times = nil;
                 body = [realBody cdr];
               }
 
-              return ret;
+              break;
             }
 
             id body = loopBody;
@@ -385,7 +429,9 @@ static NSMutableDictionary* __times = nil;
             }
           }
 
+          [varToStep release];
           [doScope release];
+          break;
 
         } else if ( head == S_QUOTE ) { // (quote exp) -> exp
           NSAssert1(argCount == 1, @"quote can have only 1 operand, not %@", rest);
@@ -453,7 +499,7 @@ static NSMutableDictionary* __times = nil;
           [self pushStack: S_DEFINE];
           ObSSymbol* variableName = [rest car];
           id expression = [rest cadr];
-          [self define: variableName as: [self evaluate: expression]];
+          [self define: variableName as: [self evaluate: expression named: variableName]];
           [self popStack];
           ret = UNSPECIFIED;
           break;
@@ -466,7 +512,7 @@ static NSMutableDictionary* __times = nil;
           ret = [[[ObSLambda alloc] initWithParameters: parameters
                                             expression: body
                                                  scope: self
-                                                  name: S_LAMBDA] autorelease];
+                                                  name: name ? name : S_LAMBDA] autorelease];
           [self popStack];
           break;
 

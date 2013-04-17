@@ -3,7 +3,7 @@
 // GameChanger
 //
 // Created by Kiril Savino on Saturday, December 1, 2012
-// Copyright 2012 GameChanger. All rights reserved.
+// Copyright 2012, 2013 GameChanger. All rights reserved.
 //
 
 #import "ObjScheme.h"

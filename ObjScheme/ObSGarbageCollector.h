@@ -10,8 +10,7 @@
 
 @interface ObSGarbageCollector : NSObject {
   NSMutableSet* _collectibles;
-  ObSCollectible* _root;
-  NSRecursiveLock* _lock;
+  __weak ObSCollectible* _root;
 }
 
 - (id)initWithRoot:(ObSCollectible*)root;

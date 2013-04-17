@@ -83,6 +83,14 @@ typedef void (^Thunk)(void);
   }
 }
 
+- (oneway void)release {
+  if ( _garbageCollector != nil && [self retainCount] == 2 ) {
+    [_garbageCollector stopTracking: self];
+  }
+
+  [super release];
+}
+
 @end
 
 
@@ -485,7 +493,7 @@ typedef void (^Thunk)(void);
   STAssertTrue([aScope retainCount] == 2, @"Leak should mean we have RC of 2 (the GC keeps one ref, lambda the other), not %d", [aScope retainCount]);
 
   [aScope retain];
-  [ObjScheme runGarbageCollection];
+  [[ObjScheme globalScope] gc];
 
   STAssertTrue([aScope retainCount] == 2, @"GC should break the lambda-scope retain cycle, but we retained it, so GC hasn't let go yet, so it should be 2 not %d", [aScope retainCount]);
   [aScope release];
