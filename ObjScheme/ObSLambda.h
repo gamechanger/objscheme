@@ -27,6 +27,7 @@
   ObSSymbol* _name;
   ObSScope* _invocationScope;
   BOOL _scopeInUse;
+  NSString* _scopeName;
 }
 
 @property (readonly) ObSSymbol* listParameter;

@@ -51,6 +51,7 @@
     _expression = [expression retain];
     _scope = [scope retain];
     _name = [name retain];
+    _scopeName = [[NSString stringWithFormat: @"%@.call", _name] retain];
   }
 
   return self;
@@ -73,6 +74,8 @@
   _name = nil;
   [_invocationScope release];
   _invocationScope = nil;
+  [_scopeName release];
+  _scopeName = nil;
   [super dealloc];
 }
 
@@ -86,15 +89,13 @@
 
 - (ObSScope*)newInvocationScope {
   if ( _invocationScope == nil ) {
-    _invocationScope = [[ObSScope alloc] initWithOuterScope: _scope
-                                                       name: [NSString stringWithFormat: @"%@.callWith", self]];
-    _scopeInUse = YES;
+    _invocationScope = [[ObSScope alloc] initWithOuterScope: _scope name: _scopeName];
 
   } else if ( _scopeInUse ) {
-    return [[ObSScope alloc] initWithOuterScope: _scope
-                                           name: [NSString stringWithFormat: @"%@.callWith", self]];
+    return [[ObSScope alloc] initWithOuterScope: _scope name: _scopeName];
   }
 
+  _scopeInUse = YES;
   [_invocationScope retain];
   return _invocationScope;
 }
