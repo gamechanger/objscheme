@@ -280,22 +280,18 @@ static NSMutableDictionary* __times = nil;
           for ( ObSCons* conditionAndResult in listOfTuples ) {
             id condition = [self evaluate: [conditionAndResult car]];
             if ( condition == S_ELSE ) {
-              NSLog( @"yay for else" );
               token = [conditionAndResult cadr];
               continueEvaluation = YES;
               break;
 
             } else {
-              NSLog( @"cond eval of %@", conditionAndResult );
               if ( condition == B_TRUE ) {
                 if ( [conditionAndResult cdr] == C_NULL ) {
-                  NSLog( @"returning true from cond cuz %@", conditionAndResult );
                   return B_TRUE;
 
                 } else {
                   continueEvaluation = YES;
                   token = [conditionAndResult cadr];
-                  NSLog( @"Match, returning val of %@", token );
                   continue;
                 }
               }
