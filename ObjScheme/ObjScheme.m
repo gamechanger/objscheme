@@ -40,6 +40,8 @@ ObSSymbol* S_DO;
 ObSSymbol* S_OR;
 ObSSymbol* S_AND;
 ObSSymbol* S_THE_ENVIRONMENT;
+ObSSymbol* S_COND;
+ObSSymbol* S_ELSE;
 
 ObSConstant* B_FALSE;
 ObSConstant* B_TRUE;
@@ -101,6 +103,8 @@ static NSMutableArray* __loaders = nil;
   S_OR =              SY(@"or");
   S_AND =             SY(@"and");
   S_THE_ENVIRONMENT = SY(@"the-environment");
+  S_COND =            SY(@"cond");
+  S_ELSE =            SY(@"else");
 
   B_FALSE =           CONST(@"#f");
   B_TRUE =            CONST(@"#t");
@@ -151,7 +155,6 @@ static NSMutableArray* __loaders = nil;
   if ( __globalScope == nil ) {
     __globalScope = [[ObSScope alloc] initWithOuterScope: nil name: @"global"];
     [ObjScheme addGlobalsToScope: __globalScope];
-    [__globalScope bootstrapMacros];
     [ObSNS initializeBridgeFunctions: __globalScope];
     [ObSStrings addToScope: __globalScope];
   }

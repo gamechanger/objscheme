@@ -161,28 +161,6 @@ BOOL _errorLogged = NO;
   [self define: [procedure name] as: procedure];
 }
 
-- (void)bootstrapMacros {
-  static NSString* macros = @"(begin\n"
-
-    "(define-macro cond\n"
-    "  (lambda conditions\n"
-    "    (if (not (null? conditions))\n"
-    "        (let* ((condition (car conditions)) (test (car condition)) (result-exprs (cdr condition)))\n"
-    "          (if (eq? test 'else)\n"
-    "              `(begin ,@result-exprs)"
-    "              (if (null? result-exprs)\n"
-    "                  `(let ((r ,test)) (if r r (cond ,@(cdr conditions))))\n"
-    "                  `(if ,test\n"
-    "                       (begin ,@result-exprs)\n"
-    "                       (cond ,@(cdr conditions)))))))))\n"
-
-    ";; More macros can also go here\n"
-    ")";
-
-  ObSScope* global = [ObjScheme globalScope];
-  [global evaluate: [ObjScheme parseString: macros]];
-}
-
 - (id)evaluateList:(id)arg {
   if ( arg == C_NULL ) {
     return C_NULL;
@@ -295,6 +273,40 @@ static NSMutableDictionary* __times = nil;
             operands = [lst cdr];
           }
           return thing;
+
+        } else if ( head == S_COND ) {
+          ObSCons* listOfTuples = rest;
+          BOOL continueEvaluation = NO;
+          for ( ObSCons* conditionAndResult in listOfTuples ) {
+            id condition = [self evaluate: [conditionAndResult car]];
+            if ( condition == S_ELSE ) {
+              NSLog( @"yay for else" );
+              token = [conditionAndResult cadr];
+              continueEvaluation = YES;
+              break;
+
+            } else {
+              NSLog( @"cond eval of %@", conditionAndResult );
+              if ( condition == B_TRUE ) {
+                if ( [conditionAndResult cdr] == C_NULL ) {
+                  NSLog( @"returning true from cond cuz %@", conditionAndResult );
+                  return B_TRUE;
+
+                } else {
+                  continueEvaluation = YES;
+                  token = [conditionAndResult cadr];
+                  NSLog( @"Match, returning val of %@", token );
+                  continue;
+                }
+              }
+            }
+          }
+
+          if ( continueEvaluation ) {
+            continue;
+          } else {
+            return UNSPECIFIED;
+          }
 
 
         } else if ( head == S_LET ) {

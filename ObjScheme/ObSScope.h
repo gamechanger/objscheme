@@ -31,7 +31,6 @@
 - (id)initWithOuterScope:(ObSScope*)outer name:(NSString*)name;
 - (id)resolveSymbol:(ObSSymbol*)variable;
 - (BOOL)definesSymbol:(ObSSymbol*)symbol;
-- (void)bootstrapMacros;
 - (void)reportTimes;
 - (id)evaluate:(id)token;
 - (void)defineFunction:(id<ObSProcedure>)function;

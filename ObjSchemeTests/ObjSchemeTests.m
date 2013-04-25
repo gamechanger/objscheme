@@ -329,7 +329,9 @@ typedef void (^Thunk)(void);
 - (void)testCond {
   id source, program, returnValue;
 
-  OSAssertTrue(@"(equal? 2 ((lambda (x) (cond ((= x 3) 1) ((= x 7) 2) )) 7))");
+  OSAssertTrue(@"(equal? #t ((lambda (x) (cond ((= x 3) 1) ((= x 7)) )) 7))");
+  OSAssertEquals(@"((lambda (x) (cond ((= x 3) 1) ((= x 7) 2) )) 7)", @(2));
+  OSAssertEquals(@"((lambda (x) (cond ((= x 3) 1) ((= x 7)) ('else 'abc))) 8)", SY(@"abc"));
 }
 
 - (void)testVectors {

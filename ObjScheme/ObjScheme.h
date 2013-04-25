@@ -49,6 +49,8 @@ extern ObSSymbol* S_DO;
 extern ObSSymbol* S_OR;
 extern ObSSymbol* S_AND;
 extern ObSSymbol* S_THE_ENVIRONMENT;
+extern ObSSymbol* S_COND;
+extern ObSSymbol* S_ELSE;
 
 extern ObSConstant* B_FALSE;
 extern ObSConstant* B_TRUE;
