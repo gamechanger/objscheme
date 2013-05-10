@@ -123,13 +123,13 @@
   [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"NSMutableArray:addObject")
                                             fromBlock: ^(id array, id object) {
         [(NSMutableArray*)array addObject: object];
-        return UNSPECIFIED;
+        return array;
       }]];
 
   [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"NSMutableArray:removeObject")
                                             fromBlock: ^(id array, id object) {
         [(NSMutableArray*)array removeObject: object];
-        return UNSPECIFIED;
+        return array;
       }]];
 
   [scope defineFunction: [ObSNativeLambda named: SY(@"NSMutableArray:setObjectAtIndex")

@@ -42,10 +42,10 @@
 
   [scope defineFunction: [ObSNativeLambda named: SY(@"format")
                                       fromBlock: ^(NSArray* args) {
-        NSString* formatString = [args objectAtIndex: 0];
+        NSString* formatString = [args objectAtIndex: 1];
 
         NSError* error = NULL;
-        NSRegularExpression* regex = [NSRegularExpression regularExpressionWithPattern: @"\\{([0-9]*)\\}"
+        NSRegularExpression* regex = [NSRegularExpression regularExpressionWithPattern: @"~s"
                                                                                options: 0
                                                                                  error: &error];
         NSArray* matches = [regex matchesInString: formatString options: 0 range: NSMakeRange(0, [formatString length])];
@@ -53,7 +53,7 @@
           return (id)formatString;
         }
 
-        NSArray* formatArgs = [args subarrayWithRange: NSMakeRange(1, [args count]-1)];
+        NSArray* formatArgs = [args subarrayWithRange: NSMakeRange(2, [args count]-2)];
         NSUInteger numArgs = [formatArgs count];
 
         NSMutableString* string = [NSMutableString string];
@@ -66,21 +66,11 @@
             [string appendString: [formatString substringWithRange: NSMakeRange(stringStart, range.location-stringStart)]];
           }
 
-          NSRange numberRange = [match rangeAtIndex: 1];
-          if ( numberRange.length > 0 ) {
-            NSInteger argumentIndex = [[formatString substringWithRange: numberRange] integerValue];
-            if ( argumentIndex > numArgs ) {
-              [NSException raise: @"InvalidFormat" format: @"%@ at position %d", formatString, range.location];
-            }
-            [string appendFormat: @"%@", [formatArgs objectAtIndex: argumentIndex]];
-
-          } else {
-            NSInteger argumentIndex = ++implicitPositionCounter;
-            if ( argumentIndex > numArgs ) {
-              [NSException raise: @"InvalidFormat" format: @"implicit index in %@ at position %d", formatString, range.location];
-            }
-            [string appendFormat: @"%@", [formatArgs objectAtIndex: argumentIndex]];
+          NSInteger argumentIndex = ++implicitPositionCounter;
+          if ( argumentIndex > numArgs ) {
+            [NSException raise: @"InvalidFormat" format: @"implicit index in %@ at position %d", formatString, range.location];
           }
+          [string appendFormat: @"%@", [formatArgs objectAtIndex: argumentIndex]];
 
           stringStart = range.location + range.length;
         }

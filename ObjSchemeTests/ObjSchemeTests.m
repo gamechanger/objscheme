@@ -472,9 +472,9 @@ typedef void (^Thunk)(void);
   OSAssertTrue(@"(equal? \"#t\" (->string #t))");
   OSAssertTrue(@"(equal? \"1\" (->string 1))");
 
-  OSAssertEquals(@"(format \"the {} thing\" 1)", @"the 1 thing");
-  OSAssertEquals(@"(format \"the {0} thing\" 1)", @"the 1 thing");
-  OSAssertEquals(@"(format \"the {0} thing {1} like\" 1 \"I\")", @"the 1 thing I like");
+  OSAssertEquals(@"(format #f \"the ~s thing\" 1)", @"the 1 thing");
+  OSAssertEquals(@"(format #f \"the ~s thing\" 1)", @"the 1 thing");
+  OSAssertEquals(@"(format #f \"the ~s thing ~s like\" 1 \"I\")", @"the 1 thing I like");
 }
 
 - (void)testQuotedPairs {

@@ -8,6 +8,7 @@
 
 @class ObSSymbol;
 @class ObSCons;
+@class ObSScope;
 
 @protocol ObSProcedure <NSObject>
 - (id)callWith:(ObSCons*)args;

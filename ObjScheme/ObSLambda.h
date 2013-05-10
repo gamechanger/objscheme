@@ -40,7 +40,6 @@
               expression:(id)expression
                    scope:(ObSScope*)scope
                     name:(ObSSymbol*)name;
-- (id)callWith:(ObSCons*)arguments;
 @end
 
 
@@ -57,7 +56,6 @@ typedef id (^ObSNativeBlock)(NSArray*);
 
 + (id)named:(ObSSymbol*)name fromBlock:(ObSNativeBlock)block;
 - (id)initWithBlock:(ObSNativeBlock)block name:(ObSSymbol*)name;
-- (id)callWith:(ObSCons*)arguments;
 - (ObSNativeBlock)nativeBlock;
 
 @end
@@ -75,7 +73,6 @@ typedef id (^ObSNativeBinaryBlock)(id,id);
 
 + (id)named:(ObSSymbol*)name fromBlock:(ObSNativeBinaryBlock)block;
 - (id)initWithBlock:(ObSNativeBinaryBlock)block name:(ObSSymbol*)name;
-- (id)callWith:(ObSCons*)arguments;
 
 @end
 

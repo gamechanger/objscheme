@@ -26,6 +26,7 @@ ObSSymbol* S_APPEND;
 ObSSymbol* S_CONS;
 ObSSymbol* S_LET;
 ObSSymbol* S_LET_STAR;
+ObSSymbol* S_LETREC;
 ObSSymbol* S_OPENPAREN;
 ObSSymbol* S_CLOSEPAREN;
 ObSSymbol* S_LIST;
@@ -89,6 +90,7 @@ static NSMutableArray* __loaders = nil;
   S_CONS =            SY(@"cons");
   S_LET =             SY(@"let");
   S_LET_STAR =        SY(@"let*");
+  S_LETREC =          SY(@"letrec");
   S_OPENPAREN =       SY(@"(");
   S_CLOSEPAREN =      SY(@")");
   S_OPENBRACKET =     SY(@"[");
@@ -467,6 +469,10 @@ static NSMutableArray* __loaders = nil;
       return CONS(S_CONS, CONS([ObjScheme expandQuasiquote: first], CONS([ObjScheme expandQuasiquote: remainderOfList], C_NULL)));
     }
   }
+}
+
++ (void)loadFile:(NSString*)filename {
+  [self loadFile: filename intoScope: [ObjScheme globalScope]];
 }
 
 + (void)loadFile:(NSString*)filename intoScope:(ObSScope*)scope {
@@ -1007,6 +1013,8 @@ static NSMutableArray* __loaders = nil;
 
       }]];
 
+  [scope defineFunction: B_LAMBDA(@"split", ^(id s1, id s2) { NSString* str = s1; NSString* d = s2; return [ObjScheme list: [str componentsSeparatedByString: d]]; })];
+
   [scope defineFunction: [ObSNativeLambda named: SY(@"max")
                                       fromBlock: ^(NSArray* args) {
         NSNumber* max = nil;
@@ -1097,6 +1105,8 @@ static NSMutableArray* __loaders = nil;
 
 
   [scope defineFunction: U_LAMBDA(@"unspecified?", ^(id a) { return TRUTH(a == UNSPECIFIED); })];
+
+  [scope defineFunction: U_LAMBDA(@"identity", ^(id x) { return x; })];
 
   [scope defineFunction: U_LAMBDA(@"string?", ^(id x) { return TRUTH([x isKindOfClass: [NSString class]]); })];
   [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"for-each")

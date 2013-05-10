@@ -360,7 +360,7 @@ static NSMutableDictionary* __times = nil;
 
           break;
 
-        } else if ( head == S_LET_STAR ) {
+        } else if ( head == S_LET_STAR || head == S_LETREC ) { // note: this is clearly wrong, but I don't care for now
           ObSCons* definitions = [rest car];
           ObSCons* body = [rest cdr];
           ObSScope* letScope = [[ObSScope alloc] initWithOuterScope: self

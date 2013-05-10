@@ -35,6 +35,7 @@ extern ObSSymbol* S_APPEND;
 extern ObSSymbol* S_CONS;
 extern ObSSymbol* S_LET;
 extern ObSSymbol* S_LET_STAR;
+extern ObSSymbol* S_LETREC;
 extern ObSSymbol* S_OPENPAREN;
 extern ObSSymbol* S_CLOSEPAREN;
 extern ObSSymbol* S_LIST;
@@ -61,12 +62,12 @@ extern ObSConstant* UNSPECIFIED;
 
 
 @interface ObjScheme : NSObject
-
 + (ObSScope*)globalScope;
 + (id)parseOneToken:(ObSInPort*)inPort;
 + (id)parseString:(NSString*)string;
 + (id)read:(ObSInPort*)inPort;
 + (BOOL)isFalse:(id)token;
++ (void)loadFile:(NSString*)filename;
 + (void)loadFile:(NSString*)filename intoScope:(ObSScope*)scope;
 + (void)loadSource:(NSString*)source intoScope:(ObSScope*)scope;
 + (void)loadInPort:(ObSInPort*)port intoScope:(ObSScope*)scope forFilename:(NSString*)filename;
