@@ -278,21 +278,22 @@ static NSMutableDictionary* __times = nil;
           ObSCons* listOfTuples = rest;
           BOOL continueEvaluation = NO;
           for ( ObSCons* conditionAndResult in listOfTuples ) {
-            id condition = [self evaluate: [conditionAndResult car]];
-            if ( condition == S_ELSE ) {
+            id left = [conditionAndResult car];
+            if ( left == S_ELSE ) {
               token = [conditionAndResult cadr];
               continueEvaluation = YES;
               break;
 
             } else {
-              if ( condition == B_TRUE ) {
+              id condition = [self evaluate: left];
+              if ( condition != B_FALSE ) {
                 if ( [conditionAndResult cdr] == C_NULL ) {
                   return B_TRUE;
 
                 } else {
                   continueEvaluation = YES;
                   token = [conditionAndResult cadr];
-                  continue;
+                  break;
                 }
               }
             }
@@ -300,6 +301,7 @@ static NSMutableDictionary* __times = nil;
 
           if ( continueEvaluation ) {
             continue;
+
           } else {
             return UNSPECIFIED;
           }
