@@ -695,6 +695,22 @@ static NSMutableArray* __loaders = nil;
         return [NSNumber numberWithDouble: [first doubleValue]/[second doubleValue]];
       }]];
 
+  [scope defineFunction: [ObSNativeLambda named: SY(@"safe-divide")
+                                      fromBlock: ^(NSArray* list) {
+        NSNumber* first = [list objectAtIndex: 0];
+        NSNumber* second = [list objectAtIndex: 1];
+
+        if ( [first floatValue] == 0.0 )
+          return first;
+
+        if ( [second floatValue] == 0.0 )
+          return [NSNumber numberWithInteger: INFINITY];
+
+        return [NSNumber numberWithDouble: [first doubleValue]/[second doubleValue]];
+      }]];
+
+
+
   [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"not")
                                                  fromBlock: ^(id object) { return object == B_FALSE ? B_TRUE : B_FALSE; }]];
 
@@ -1199,17 +1215,3 @@ static NSMutableArray* __loaders = nil;
 }
 
 @end
-
-
-
-
-
-
-
-
-
-
-
-
-
-
