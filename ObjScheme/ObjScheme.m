@@ -1107,20 +1107,21 @@ static NSMutableArray* __loaders = nil;
                                             fromBlock: ^(id a, id b) {
         ObSCons* list = a;
         NSInteger length = [(NSNumber*)b integerValue];
+
         id ret = C_NULL;
+        ObSCons* soFar = nil;
 
         // if length == 0, we'll just return C_NULL, which is correct
         while ( length-- > 0 ) {
           if ( ret == C_NULL ) {
             // this is just the first iteration, where we create the 1-length sublist
-            ret = CONS(list.car, C_NULL);
+            ret = soFar = CONS(list.car, C_NULL);
 
           } else {
             // from then on, we're tracking the last CONS cell, and mutating it.
-            ObSCons* soFar = ret;
             ObSCons* nextCell = CONS(list.car, C_NULL);
             [soFar setCdr: nextCell];
-            ret = nextCell;
+            soFar = nextCell;
           }
           // pop!
           list = list.cdr;
