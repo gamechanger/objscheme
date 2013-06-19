@@ -1103,6 +1103,32 @@ static NSMutableArray* __loaders = nil;
         return UNSPECIFIED;
       }]];
 
+  [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"list-head")
+                                            fromBlock: ^(id a, id b) {
+        ObSCons* list = a;
+        NSInteger length = [(NSNumber*)b integerValue];
+        id ret = C_NULL;
+
+        // if length == 0, we'll just return C_NULL, which is correct
+        while ( length-- > 0 ) {
+          if ( ret == C_NULL ) {
+            // this is just the first iteration, where we create the 1-length sublist
+            ret = CONS(list.car, C_NULL);
+
+          } else {
+            // from then on, we're tracking the last CONS cell, and mutating it.
+            ObSCons* soFar = ret;
+            ObSCons* nextCell = CONS(list.car, C_NULL);
+            [soFar setCdr: nextCell];
+            ret = nextCell;
+          }
+          // pop!
+          list = list.cdr;
+        }
+
+        return ret;
+      }]];
+
   [scope defineFunction: U_LAMBDA(@"vector->immutable-vector", ^(id a) { return [NSArray arrayWithArray: (NSArray*)a]; })];
   [scope defineFunction: U_LAMBDA(@"immutable?", ^(id a) { return TRUTH([a isKindOfClass: [NSString class]] || ( [a isKindOfClass: [NSArray class]] && ! [a isKindOfClass: [NSMutableArray class]] )); })];
   [scope defineFunction: [ObSNativeLambda named: SY(@"vector-immutable")
