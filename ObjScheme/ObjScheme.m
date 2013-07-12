@@ -686,9 +686,6 @@ static NSMutableArray* __loaders = nil;
         NSNumber* first = [list objectAtIndex: 0];
         NSNumber* second = [list objectAtIndex: 1];
 
-        if ( [first floatValue] == 0.0 )
-          return first;
-
         if ( [second floatValue] == 0.0 )
           return [NSNumber numberWithInteger: INFINITY];
 
@@ -699,9 +696,6 @@ static NSMutableArray* __loaders = nil;
                                       fromBlock: ^(NSArray* list) {
         NSNumber* first = [list objectAtIndex: 0];
         NSNumber* second = [list objectAtIndex: 1];
-
-        if ( [first floatValue] == 0.0 )
-          return first;
 
         if ( [second floatValue] == 0.0 )
           return [NSNumber numberWithInteger: INFINITY];
