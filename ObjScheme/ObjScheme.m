@@ -683,32 +683,33 @@ static NSMutableArray* __loaders = nil;
 
   [scope defineFunction: [ObSNativeLambda named: SY(@"/")
                                       fromBlock: ^(NSArray* list) {
-        NSNumber* first = [list objectAtIndex: 0];
-        NSNumber* second = [list objectAtIndex: 1];
+                                        NSNumber* first = [list objectAtIndex: 0];
+                                        NSNumber* second = [list objectAtIndex: 1];
 
-        if ( [first floatValue] == 0.0 )
-          return first;
+                                        if ( [second floatValue] == 0.0 )
+                                          return [NSNumber numberWithDouble: INFINITY];
 
-        if ( [second floatValue] == 0.0 )
-          return [NSNumber numberWithInteger: INFINITY];
+                                        if ( [first floatValue] == 0.0 )
+                                          return first;
 
-        return [NSNumber numberWithDouble: [first doubleValue]/[second doubleValue]];
-      }]];
+                                        return [NSNumber numberWithDouble: [first doubleValue]/[second doubleValue]];
+                                      }]];
 
   [scope defineFunction: [ObSNativeLambda named: SY(@"safe-divide")
                                       fromBlock: ^(NSArray* list) {
-        NSNumber* first = [list objectAtIndex: 0];
-        NSNumber* second = [list objectAtIndex: 1];
-
-        if ( [first floatValue] == 0.0 )
-          return first;
-
-        if ( [second floatValue] == 0.0 )
-          return [NSNumber numberWithInteger: INFINITY];
-
-        return [NSNumber numberWithDouble: [first doubleValue]/[second doubleValue]];
-      }]];
-
+                                        NSNumber* first = [list objectAtIndex: 0];
+                                        NSNumber* second = [list objectAtIndex: 1];
+                                        
+                                        if ( [second floatValue] == 0.0 )
+                                          return [NSNumber numberWithDouble: INFINITY];
+                                        
+                                        if ( [first floatValue] == 0.0 )
+                                          return first;
+                                        
+                                        return [NSNumber numberWithDouble: [first doubleValue]/[second doubleValue]];
+                                      }]];
+  
+  [scope define: SY(@"+inf.0") as: [NSNumber numberWithDouble: INFINITY]];
 
 
   [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"not")
