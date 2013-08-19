@@ -218,7 +218,9 @@ static NSMutableDictionary* __times = nil;
 }
 
 - (id)evaluate:(id)token {
-  return [self evaluate: token named: nil];
+  id ret = [self evaluate: token named: nil];
+
+  return ret;
 }
 
 - (id)evaluate:(id)token named:(ObSSymbol*)name {
@@ -234,6 +236,13 @@ static NSMutableDictionary* __times = nil;
 
       } else if ( ! [token isKindOfClass: [ObSCons class]] ) {
         ret = token; // literal
+
+        if ( ret == (id)kCFBooleanTrue ) {
+          ret = B_TRUE;
+        } else if ( ret == (id)kCFBooleanFalse ) {
+          ret = B_FALSE;
+        }
+        
         break;
 
       } else {
