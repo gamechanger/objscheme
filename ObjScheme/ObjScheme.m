@@ -1229,6 +1229,10 @@ static NSMutableArray* __loaders = nil;
    */
 }
 
++ (BOOL)isTrue:(id)token {
+  return token == B_TRUE;
+}
+
 + (BOOL)isFalse:(id)token {
   return token == B_FALSE;
 }
