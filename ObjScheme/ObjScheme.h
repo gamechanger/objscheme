@@ -66,6 +66,7 @@ extern ObSConstant* UNSPECIFIED;
 + (id)parseOneToken:(ObSInPort*)inPort;
 + (id)parseString:(NSString*)string;
 + (id)read:(ObSInPort*)inPort;
++ (BOOL)isTrue:(id)token;
 + (BOOL)isFalse:(id)token;
 + (void)loadFile:(NSString*)filename;
 + (void)loadFile:(NSString*)filename intoScope:(ObSScope*)scope;
