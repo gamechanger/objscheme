@@ -53,8 +53,8 @@ extern ObSSymbol* S_THE_ENVIRONMENT;
 extern ObSSymbol* S_COND;
 extern ObSSymbol* S_ELSE;
 
-extern ObSConstant* B_FALSE;
-extern ObSConstant* B_TRUE;
+extern NSNumber* B_FALSE;
+extern NSNumber* B_TRUE;
 
 extern ObSConstant* C_NULL;
 

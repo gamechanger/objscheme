@@ -44,8 +44,8 @@ ObSSymbol* S_THE_ENVIRONMENT;
 ObSSymbol* S_COND;
 ObSSymbol* S_ELSE;
 
-ObSConstant* B_FALSE;
-ObSConstant* B_TRUE;
+NSNumber* B_FALSE;
+NSNumber* B_TRUE;
 
 ObSConstant* C_NULL;
 
@@ -108,8 +108,8 @@ static NSMutableArray* __loaders = nil;
   S_COND =            SY(@"cond");
   S_ELSE =            SY(@"else");
 
-  B_FALSE =           CONST(@"#f");
-  B_TRUE =            CONST(@"#t");
+  B_FALSE =           @NO;
+  B_TRUE =            @YES;
 
   C_NULL =            CONST(@"()");
 
@@ -119,13 +119,12 @@ static NSMutableArray* __loaders = nil;
 + (void)initialize {
   if ( __constants == nil ) {
     [self initializeSymbols];
-    __constants = [[NSDictionary alloc]
-                    initWithObjectsAndKeys:
-                      B_FALSE, @"#f",
-                    B_TRUE, @"#t",
-                    [NSNumber numberWithInteger: 0], @"0",
-                    [NSNumber numberWithDouble: 0.0], @"0.0",
-                    nil];
+    __constants = @{
+                    @"#f" : B_FALSE,
+                    @"#t" : B_TRUE,
+                    @"0" : @0,
+                    @"0.0" : @0.0
+                    };
   }
 
   if ( __loaders == nil ) {
@@ -905,7 +904,7 @@ static NSMutableArray* __loaders = nil;
         }
       }]];
 
-  [scope defineFunction: U_LAMBDA(@"number?", ^(id o) { return TRUTH([o isKindOfClass: [NSNumber class]]); })];
+  [scope defineFunction: U_LAMBDA(@"number?", ^(id o) { return TRUTH([o isKindOfClass: [NSNumber class]] && o != (id)kCFBooleanFalse && o != (id)kCFBooleanTrue); })];
   [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"integer?")
                                            fromBlock: ^(id o) {
         if ( ! [o isKindOfClass: [NSNumber class]] ) {
