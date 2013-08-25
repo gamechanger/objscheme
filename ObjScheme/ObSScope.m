@@ -218,7 +218,14 @@ static NSMutableDictionary* __times = nil;
 }
 
 - (id)evaluate:(id)token {
-  return [self evaluate: token named: nil];
+  id ret = [self evaluate: token named: nil];
+  if ( ret == (id)kCFBooleanTrue ) {
+    ret = B_TRUE;
+  } else if ( ret == (id)kCFBooleanFalse ) {
+    ret = B_FALSE;
+  }
+
+  return ret;
 }
 
 - (id)evaluate:(id)token named:(ObSSymbol*)name {
