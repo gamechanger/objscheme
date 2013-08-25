@@ -428,7 +428,7 @@ typedef void (^Thunk)(void);
   OSAssertEqualsDouble(@"(+ 2 (* 0.5 1))", 2.5);
   OSAssertEqualsDouble(@"(/ (+ 2 (* 0.5 1)) 2)", 1.25);
 
-  OSAssertEquals(@"(safe-divide 2 0)", [NSNumber numberWithDouble: INFINITY]);
+  OSAssertEquals(@"(safe-divide 2 0)", [NSNumber numberWithLongLong: LLONG_MAX]);
 }
 
 - (void)testNSDictionaryBridge {

@@ -687,7 +687,7 @@ static NSMutableArray* __loaders = nil;
                                         NSNumber* second = [list objectAtIndex: 1];
 
                                         if ( [second floatValue] == 0.0 )
-                                          return [NSNumber numberWithDouble: INFINITY];
+                                          return [NSNumber numberWithLongLong: LLONG_MAX];
 
                                         if ( [first floatValue] == 0.0 )
                                           return first;
@@ -701,7 +701,7 @@ static NSMutableArray* __loaders = nil;
                                         NSNumber* second = [list objectAtIndex: 1];
                                         
                                         if ( [second floatValue] == 0.0 )
-                                          return [NSNumber numberWithDouble: INFINITY];
+                                          return [NSNumber numberWithLongLong: LLONG_MAX];
                                         
                                         if ( [first floatValue] == 0.0 )
                                           return first;
@@ -709,7 +709,7 @@ static NSMutableArray* __loaders = nil;
                                         return [NSNumber numberWithDouble: [first doubleValue]/[second doubleValue]];
                                       }]];
   
-  [scope define: SY(@"+inf.0") as: [NSNumber numberWithDouble: INFINITY]];
+  [scope define: SY(@"+inf.0") as: [NSNumber numberWithLongLong: LLONG_MAX]];
 
 
   [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"not")
