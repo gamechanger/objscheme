@@ -53,8 +53,8 @@ extern ObSSymbol* S_THE_ENVIRONMENT;
 extern ObSSymbol* S_COND;
 extern ObSSymbol* S_ELSE;
 
-extern ObSConstant* B_FALSE;
-extern ObSConstant* B_TRUE;
+extern NSNumber* B_FALSE;
+extern NSNumber* B_TRUE;
 
 extern ObSConstant* C_NULL;
 
@@ -66,6 +66,7 @@ extern ObSConstant* UNSPECIFIED;
 + (id)parseOneToken:(ObSInPort*)inPort;
 + (id)parseString:(NSString*)string;
 + (id)read:(ObSInPort*)inPort;
++ (BOOL)isTrue:(id)token;
 + (BOOL)isFalse:(id)token;
 + (void)loadFile:(NSString*)filename;
 + (void)loadFile:(NSString*)filename intoScope:(ObSScope*)scope;
