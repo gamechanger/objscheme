@@ -10,6 +10,7 @@
 #import "ObjScheme.h"
 #import "ObSCollectible.h"
 #import "ObSGarbageCollector.h"
+#import "ObSSchemeBacked.h"
 
 
 #define OSAssertFalse(code) source = (code);\
@@ -531,6 +532,25 @@ typedef void (^Thunk)(void);
 
   [root release];
   [gc release];
+}
+
+- (void) testObjCPassedBools {
+  ObSSchemeBacked* scheme = [[ObSSchemeBacked alloc] initWithScope: [ObjScheme globalScope]];
+  NSString* source = @"(define (echo input) input) (define (echo2 input index) (NSArray:objectAtIndex input index))";
+  [ObjScheme loadSource: source intoScope: [ObjScheme globalScope]];
+
+  id returnValue = [scheme callFunctionNamed: @"echo" withArgument: @YES];
+  STAssertTrue( [ObjScheme isTrue: returnValue], @"Failed to treat @YES as true saw %@", returnValue );
+
+  returnValue = [scheme callFunctionNamed: @"echo" withArgument: @NO];
+  STAssertTrue( [ObjScheme isFalse: returnValue], @"Failed to treat @NO as false saw %@", returnValue );
+
+  returnValue = [scheme callFunctionNamed: @"echo2" withArguments: @[ @[@YES, @NO], @0 ]];
+  STAssertTrue( [ObjScheme isTrue: returnValue], @"Failed to treat @YES as true saw %@", returnValue );
+
+  returnValue = [scheme callFunctionNamed: @"echo2" withArguments: @[ @[@YES, @NO], @1 ]];
+  STAssertTrue( [ObjScheme isFalse: returnValue], @"Failed to treat @NO as false saw %@", returnValue );
+
 }
 
 @end

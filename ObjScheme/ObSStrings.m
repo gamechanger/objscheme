@@ -31,7 +31,13 @@
 
   [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"->string")
                                            fromBlock: ^(id x) {
-        return [x description];
+                                             if ( x == (id) kCFBooleanFalse ) {
+                                               return @"#f";
+                                             } else if ( x == (id) kCFBooleanTrue ) {
+                                               return @"#t";
+                                             } else {
+                                               return [x description];
+                                             }
       }]];
 
   [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"println")
