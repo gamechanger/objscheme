@@ -50,6 +50,7 @@ NSNumber* B_TRUE;
 ObSConstant* C_NULL;
 
 ObSConstant* UNSPECIFIED;
+NSNumber* INFINITY0;
 
 @interface ObjScheme ()
 
@@ -114,6 +115,8 @@ static NSMutableArray* __loaders = nil;
   C_NULL =            CONST(@"()");
 
   UNSPECIFIED =       CONST(@"#<unspecified>");
+
+  INFINITY0 =         [[NSNumber alloc] initWithLongLong: LLONG_MAX];
 }
 
 + (void)initialize {
@@ -342,7 +345,7 @@ static NSMutableArray* __loaders = nil;
       body = CONS(S_LAMBDA, CONS(lambdaArgSpec, body));
     }
 
-    id<ObSProcedure> procedure = [[ObjScheme globalScope] evaluate: body];
+    id<ObSProcedure> procedure = [[ObjScheme globalScope] evaluate: body named: macroName];
     [ObjScheme assertSyntax: [procedure conformsToProtocol: @protocol(ObSProcedure)]
                   elseRaise: @"body of define-macro must be an invocation"];
     [[ObjScheme globalScope] defineMacroNamed: macroName asProcedure: procedure];
@@ -592,6 +595,8 @@ static NSMutableArray* __loaders = nil;
 }
 
 + (void)addGlobalsToScope:(ObSScope*)scope {
+  [scope define: SY(@"+inf.0") as: INFINITY0];
+
   [scope defineFunction: [ObSNativeLambda named: SY(@"+")
                                       fromBlock: ^(NSArray* list) {
         if ( [list count] == 0 ) {
@@ -603,6 +608,10 @@ static NSMutableArray* __loaders = nil;
         BOOL useDouble = NO;
 
         for ( NSNumber* n in list ) {
+          if ( n == INFINITY0 ) {
+            return INFINITY0;
+          }
+
           if ( ! useDouble && strcmp([n objCType], @encode(int)) == 0 ) {
             intRet += [n intValue];
             doubleRet += [n doubleValue];
@@ -620,30 +629,16 @@ static NSMutableArray* __loaders = nil;
           return [NSNumber numberWithInt: intRet];
         }
 
-        /*
-        NSNumber* first = [list objectAtIndex: 0];
-
-        if ( strcmp([first objCType], @encode(int)) == 0 ) {
-          int ret = 0;
-          for ( NSNumber* number in list ) {
-            ret += [number intValue];
-          }
-          return [NSNumber numberWithInteger: ret];
-
-        } else {
-          double ret = 0;
-          for ( NSNumber* number in list ) {
-            ret += [number doubleValue];
-          }
-          return [NSNumber numberWithDouble: ret];
-        }
-        */
       }]];
 
   [scope defineFunction: [ObSNativeLambda named: SY(@"-")
                                       fromBlock: ^(NSArray* list) {
         NSNumber* first = [list objectAtIndex: 0];
         NSNumber* second = [list objectAtIndex: 1];
+        if ( first == INFINITY0 || second == INFINITY0 ) {
+          return INFINITY0;
+        }
+
         if ( strcmp([first objCType], @encode(int)) == 0 ) {
           return [NSNumber numberWithInteger: [first intValue]-[second intValue]];
 
@@ -688,7 +683,7 @@ static NSMutableArray* __loaders = nil;
                                         NSNumber* second = [list objectAtIndex: 1];
 
                                         if ( [second floatValue] == 0.0 )
-                                          return [NSNumber numberWithLongLong: LLONG_MAX];
+                                          return INFINITY0;
 
                                         if ( [first floatValue] == 0.0 )
                                           return first;
@@ -700,17 +695,15 @@ static NSMutableArray* __loaders = nil;
                                       fromBlock: ^(NSArray* list) {
                                         NSNumber* first = [list objectAtIndex: 0];
                                         NSNumber* second = [list objectAtIndex: 1];
-                                        
+
                                         if ( [second floatValue] == 0.0 )
-                                          return [NSNumber numberWithLongLong: LLONG_MAX];
-                                        
+                                          return INFINITY0;
+
                                         if ( [first floatValue] == 0.0 )
                                           return first;
-                                        
+
                                         return [NSNumber numberWithDouble: [first doubleValue]/[second doubleValue]];
                                       }]];
-  
-  [scope define: SY(@"+inf.0") as: [NSNumber numberWithLongLong: LLONG_MAX]];
 
 
   [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"not")

@@ -28,20 +28,24 @@
 
   if ( (self = [self init]) ) {
     if ( [parameters isKindOfClass: [ObSCons class]] ) {
-      _parameters = [parameters retain];
-      ObSCons* cell = _parameters;
-      ObSCons* last = nil;
+      if ( [parameters car] == S_DOT ) { // weird edge case more easily handled here
+        _listParameter = [[parameters cadr] retain];
 
-      while ( [cell isKindOfClass: [ObSCons class]] ) {
-        if ( [cell car] == S_DOT ) {
-          NSAssert(last, @". as first param invalid");
-          _listParameter = [[cell cadr] retain];
-          [last setCdr: C_NULL];
-          break;
+      } else {
+        _parameters = [parameters retain];
+        ObSCons* parameterCell = _parameters;
+        ObSCons* lastParameterCell = nil;
+
+        while ( [parameterCell isKindOfClass: [ObSCons class]] ) {
+          if ( [parameterCell car] == S_DOT ) {
+            _listParameter = [[parameterCell cadr] retain];
+            [lastParameterCell setCdr: C_NULL]; // this is mutating (truncating) the _parameters variable!!!!
+            break;
+          }
+
+          lastParameterCell = parameterCell;
+          parameterCell = [parameterCell cdr];
         }
-
-        last = cell;
-        cell = [cell cdr];
       }
 
     } else if ( parameters != C_NULL ) {
