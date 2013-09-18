@@ -33,6 +33,7 @@
 - (BOOL)definesSymbol:(ObSSymbol*)symbol;
 - (void)reportTimes;
 - (id)evaluate:(id)token;
+- (id)evaluate:(id)token named:(ObSSymbol*)name;
 - (void)defineFunction:(id<ObSProcedure>)function;
 - (void)define:(ObSSymbol*)symbol as:(id)thing;
 - (void)defineMacroNamed:(ObSSymbol*)name asProcedure:(id<ObSProcedure>)procedure;
