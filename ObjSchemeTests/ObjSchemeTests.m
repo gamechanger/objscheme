@@ -273,6 +273,11 @@ typedef void (^Thunk)(void);
   OSAssertTrue(@"(equal? '((a b)) ((lambda x x) '(a b)))");
 }
 
+- (void)testRemove {
+  id source, program, returnValue;
+  OSAssertTrue(@"(equal? (list 1 3) (remove (lambda (x) (= x 2)) (list 1 2 3)))");
+}
+
 - (void)testLets {
   id source, program, returnValue;
   NSNumber* number;

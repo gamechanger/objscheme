@@ -50,7 +50,7 @@ NSNumber* B_TRUE;
 ObSConstant* C_NULL;
 
 ObSConstant* UNSPECIFIED;
-NSNumber* INFINITY0;
+NSNumber* INF;
 
 @interface ObjScheme ()
 
@@ -116,13 +116,12 @@ static NSMutableArray* __loaders = nil;
 
   UNSPECIFIED =       CONST(@"#<unspecified>");
 
-  INFINITY0 =         [[NSNumber alloc] initWithLongLong: LLONG_MAX];
+  INF =         [[NSNumber alloc] initWithLongLong: LLONG_MAX];
 }
 
 + (void)initialize {
   if ( __constants == nil ) {
     [self initializeSymbols];
-    // For some unknown reason, using NSLiteral for this dictionary causes otest to crash.
     __constants = [[NSDictionary alloc]
                    initWithObjectsAndKeys:
                    B_FALSE, @"#f",
@@ -594,8 +593,31 @@ static NSMutableArray* __loaders = nil;
     [NSException raise: @"SyntaxError" format: @"%@", message];
 }
 
+id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
+  if ( (id)list == C_NULL ) {
+    return C_NULL;
+  }
+
+  id predicateReturn;
+
+  if ( [predicate conformsToProtocol: @protocol(ObSUnaryLambda)] ) {
+    id<ObSUnaryLambda> native = (id<ObSUnaryLambda>)predicate;
+    predicateReturn = [native callNatively: [list car]];
+
+  } else {
+    predicateReturn = [predicate callWith: CONS([list car], C_NULL)];
+  }
+
+  if ( predicateReturn == B_FALSE ) {
+    return CONS([list car], srfi1_remove(predicate, [list cdr]));
+
+  } else {
+    return srfi1_remove(predicate, [list cdr]);
+  }
+}
+
 + (void)addGlobalsToScope:(ObSScope*)scope {
-  [scope define: SY(@"+inf.0") as: INFINITY0];
+  [scope define: SY(@"+inf.0") as: INF];
 
   [scope defineFunction: [ObSNativeLambda named: SY(@"+")
                                       fromBlock: ^(NSArray* list) {
@@ -608,8 +630,8 @@ static NSMutableArray* __loaders = nil;
         BOOL useDouble = NO;
 
         for ( NSNumber* n in list ) {
-          if ( n == INFINITY0 ) {
-            return INFINITY0;
+          if ( n == INF ) {
+            return INF;
           }
 
           if ( ! useDouble && strcmp([n objCType], @encode(int)) == 0 ) {
@@ -635,8 +657,8 @@ static NSMutableArray* __loaders = nil;
                                       fromBlock: ^(NSArray* list) {
         NSNumber* first = [list objectAtIndex: 0];
         NSNumber* second = [list objectAtIndex: 1];
-        if ( first == INFINITY0 || second == INFINITY0 ) {
-          return INFINITY0;
+        if ( first == INF || second == INF ) {
+          return INF;
         }
 
         if ( strcmp([first objCType], @encode(int)) == 0 ) {
@@ -683,7 +705,7 @@ static NSMutableArray* __loaders = nil;
                                         NSNumber* second = [list objectAtIndex: 1];
 
                                         if ( [second floatValue] == 0.0 )
-                                          return INFINITY0;
+                                          return INF;
 
                                         if ( [first floatValue] == 0.0 )
                                           return first;
@@ -697,7 +719,7 @@ static NSMutableArray* __loaders = nil;
                                         NSNumber* second = [list objectAtIndex: 1];
 
                                         if ( [second floatValue] == 0.0 )
-                                          return INFINITY0;
+                                          return INF;
 
                                         if ( [first floatValue] == 0.0 )
                                           return first;
@@ -867,6 +889,11 @@ static NSMutableArray* __loaders = nil;
           cell = [cons cdr];
         }
         return [NSNumber numberWithInteger: length];
+      }]];
+
+  [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"remove")
+                                            fromBlock: ^(id a, id b) {
+        return srfi1_remove(a, b);
       }]];
 
   [scope defineFunction: U_LAMBDA(@"symbol?", ^(id o) { return TRUTH([o isKindOfClass: [ObSSymbol class]]); })];
