@@ -23,10 +23,6 @@
 static NSMutableArray* _stack;
 BOOL _errorLogged = NO;
 
-+ (void)initialize {
-  _stack = [[NSMutableArray alloc] init];
-}
-
 + (ObSScope*)newGlobalChildScopeNamed:(NSString*)name {
   return [[ObSScope alloc] initWithOuterScope: [ObjScheme globalScope] name: name];
 }
@@ -217,6 +213,162 @@ static NSMutableDictionary* __times = nil;
   }
 }
 
+typedef id (^ObSInternalFunction)(ObSScope* scope, ObSCons* args, NSMutableArray* toPop, BOOL* done);
+
+static NSMutableDictionary* __evalMap;
+
++ (void)initialize {
+  _stack = [[NSMutableArray alloc] init];
+  __evalMap = [[NSMutableDictionary alloc] initWithCapacity: 30];
+  __evalMap[S_EVAL.string] = ^(ObSScope* scope, ObSCons* args, NSMutableArray* toPop, BOOL* done) {
+    [scope pushStack: S_EVAL];
+    [toPop addObject: S_EVAL];
+    *done = NO;
+    id newCode = [scope evaluate: [args car]];
+    return newCode;
+  };
+
+  __evalMap[S_OR.string] = ^(ObSScope* scope, ObSCons* args, NSMutableArray* toPop, BOOL* done) {
+    id operands = args;
+    id result = B_FALSE;
+    while ( operands != C_NULL ) {
+      ObSCons* lst = operands;
+      result = [scope evaluate: [lst car]];
+      if ( result != B_FALSE ) {
+        return result;
+      }
+      operands = [lst cdr];
+    }
+    return result;
+  };
+
+  __evalMap[S_AND.string] = ^(ObSScope* scope, ObSCons* args, NSMutableArray* toPop, BOOL* done) {
+    id operands = args;
+    id result = B_FALSE;
+    while ( operands != C_NULL ) {
+      ObSCons* lst = operands;
+      result = [scope evaluate: [lst car]];
+      if ( result == B_FALSE ) {
+        return result;
+      }
+      operands = [lst cdr];
+    }
+    return result;
+  };
+
+  __evalMap[S_COND.string] = ^(ObSScope* scope, ObSCons* args, NSMutableArray* toPop, BOOL* done) {
+    ObSCons* listOfTuples = args;
+    id ret = UNSPECIFIED;
+
+    for ( ObSCons* conditionAndResult in listOfTuples ) {
+      id left = [conditionAndResult car];
+      if ( left == S_ELSE ) {
+        *done = NO;
+        ret = [conditionAndResult cadr];
+        break;
+
+      } else {
+        id condition = [scope evaluate: left];
+        if ( condition != B_FALSE ) {
+          if ( [conditionAndResult cdr] == C_NULL ) {
+            *done = YES;
+            ret = B_TRUE;
+            break;
+
+          } else {
+            *done = NO;
+            ret = [conditionAndResult cadr];
+            break;
+          }
+        }
+      }
+    }
+
+    return ret;
+  };
+
+  __evalMap[S_LET.string] = ^(ObSScope* scope, ObSCons* args, NSMutableArray* toPop, BOOL* done) {
+    *done = YES;
+    // normal: (let ((x y)) body)
+    // named: (let name ((x y)) body)
+
+    id ret;
+
+    if ( [[args car] isKindOfClass: [ObSSymbol class]] ) { // named let
+
+      ObSSymbol* letName = [args car];
+      ObSCons* definitions = [args cadr];
+      ObSCons* body = [args cddr];
+      ObSScope* letScope = [[ObSScope alloc] initWithOuterScope: scope
+                                                           name: [NSString stringWithFormat: @"named-let %@", letName]];
+
+      NSMutableArray* argList = [[NSMutableArray alloc] initWithCapacity: 4];
+
+      for ( ObSCons* definition in definitions ) {
+        ObSSymbol* name = [definition car];
+        id expression = [definition cadr];
+        [letScope define: name as: [scope evaluate: expression]];
+        [argList addObject: name];
+      }
+
+      ObSCons* parameters = [ObjScheme list: argList];
+      [argList release];
+
+      ObSCons* expression = [ObSCons cons: S_BEGIN and: body];
+      ObSLambda* lambda = [[ObSLambda alloc] initWithParameters: parameters
+                                                     expression: expression
+                                                          scope: letScope
+                                                           name: letName];
+
+      [letScope define: letName as: lambda];
+      [lambda release];
+
+      ret = [letScope begin: body];
+      [letScope release];
+
+    } else { // normal let
+
+      ObSCons* definitions = [args car];
+      ObSCons* body = [args cdr];
+      ObSScope* letScope = [[ObSScope alloc] initWithOuterScope: scope
+                                                           name: @"let"];
+
+      for ( ObSCons* definition in definitions ) {
+        ObSSymbol* name = [definition car];
+        id expression = [definition cadr];
+        [letScope define: name as: [scope evaluate: expression]];
+      }
+
+      ret = [letScope begin: body];
+      [letScope release];
+    }
+
+    return ret;
+  };
+
+  ObSInternalFunction recursiveLet = ^(ObSScope* scope, ObSCons* args, NSMutableArray* toPop, BOOL* done) {
+
+    ObSCons* definitions = [args car];
+    ObSCons* body = [args cdr];
+    ObSScope* letScope = [[ObSScope alloc] initWithOuterScope: scope
+                                                         name: @"let*"];
+
+    for ( ObSCons* definition in definitions ) {
+      ObSSymbol* name = [definition car];
+      id expression = [definition cadr];
+      [letScope define: name as: [letScope evaluate: expression]];
+    }
+
+    id ret = [letScope begin: body];
+    [letScope release];
+    return ret;
+  };
+
+  // one or more of the following is technically wrong...
+  __evalMap[S_LET_STAR.string] = recursiveLet;
+  __evalMap[S_LETREC.string] = recursiveLet;
+}
+
 - (id)evaluate:(id)token {
   return [self evaluate: token named: nil];
 }
@@ -226,6 +378,7 @@ static NSMutableDictionary* __times = nil;
 
   @try {
     id ret;
+    NSMutableArray* toPop = [[NSMutableArray alloc] initWithCapacity: 10];
 
     while ( 1 ) {
       if ( [token isKindOfClass: [ObSSymbol class]] ) {
@@ -242,143 +395,23 @@ static NSMutableDictionary* __times = nil;
         ObSCons* rest = [list cdr];
         NSUInteger argCount = (id)rest == C_NULL ? 0 : [rest count];
 
-        if ( head == S_EVAL ) {
-          NSAssert1(argCount == 1, @"eval can have only 1 operand, not %@", rest);
-          [self pushStack: S_EVAL];
-          token = [self evaluate: [rest car]];
-          [self popStack];
-
-        } else if ( head == S_OR ) {
-
-          id operands = rest;
-          while ( operands != C_NULL ) {
-            ObSCons* lst = operands;
-            id aResult = [self evaluate: [lst car]];
-            if ( aResult != B_FALSE ) {
-              return aResult;
-            }
-            operands = [lst cdr];
-          }
-          return B_FALSE;
-
-        } else if ( head == S_AND ) {
-          id operands = rest;
-          id thing = B_FALSE;
-          while ( operands != C_NULL ) {
-            ObSCons* lst = operands;
-            thing = [self evaluate: [lst car]];
-            if ( thing == B_FALSE ) {
-              return B_FALSE;
-            }
-            operands = [lst cdr];
-          }
-          return thing;
-
-        } else if ( head == S_COND ) {
-          ObSCons* listOfTuples = rest;
-          BOOL continueEvaluation = NO;
-          for ( ObSCons* conditionAndResult in listOfTuples ) {
-            id left = [conditionAndResult car];
-            if ( left == S_ELSE ) {
-              token = [conditionAndResult cadr];
-              continueEvaluation = YES;
-              break;
+        if ( [head isKindOfClass: [ObSSymbol class]] ) {
+          BOOL done = YES;
+          ObSSymbol* symbol = head;
+          ObSInternalFunction f = __evalMap[symbol.string];
+          if ( f != nil ) {
+            id result = f(self, rest, toPop, &done);
+            if ( done ) {
+              return result;
 
             } else {
-              id condition = [self evaluate: left];
-              if ( condition != B_FALSE ) {
-                if ( [conditionAndResult cdr] == C_NULL ) {
-                  return B_TRUE;
-
-                } else {
-                  continueEvaluation = YES;
-                  token = [conditionAndResult cadr];
-                  break;
-                }
-              }
+              token = result;
+              continue;
             }
           }
+        }
 
-          if ( continueEvaluation ) {
-            continue;
-
-          } else {
-            return UNSPECIFIED;
-          }
-
-
-        } else if ( head == S_LET ) {
-          // normal: (let ((x y)) body)
-          // named: (let name ((x y)) body)
-
-          if ( [[rest car] isKindOfClass: [ObSSymbol class]] ) { // named let
-
-            ObSSymbol* letName = [rest car];
-            ObSCons* definitions = [rest cadr];
-            ObSCons* body = [rest cddr];
-            ObSScope* letScope = [[ObSScope alloc] initWithOuterScope: self
-                                                                 name: [NSString stringWithFormat: @"named-let %@", letName]];
-
-            NSMutableArray* argList = [[NSMutableArray alloc] initWithCapacity: 4];
-
-            for ( ObSCons* definition in definitions ) {
-              ObSSymbol* name = [definition car];
-              id expression = [definition cadr];
-              [letScope define: name as: [self evaluate: expression]];
-              [argList addObject: name];
-            }
-
-            ObSCons* parameters = [ObjScheme list: argList];
-            [argList release];
-
-            ObSCons* expression = [ObSCons cons: S_BEGIN and: body];
-            ObSLambda* lambda = [[ObSLambda alloc] initWithParameters: parameters
-                                                           expression: expression
-                                                                scope: letScope
-                                                                 name: letName];
-
-            [letScope define: letName as: lambda];
-            [lambda release];
-
-            ret = [letScope begin: body];
-            [letScope release];
-
-          } else { // normal let
-
-            ObSCons* definitions = [rest car];
-            ObSCons* body = [rest cdr];
-            ObSScope* letScope = [[ObSScope alloc] initWithOuterScope: self
-                                                                 name: @"let"];
-
-            for ( ObSCons* definition in definitions ) {
-              ObSSymbol* name = [definition car];
-              id expression = [definition cadr];
-              [letScope define: name as: [self evaluate: expression]];
-            }
-
-            ret = [letScope begin: body];
-            [letScope release];
-          }
-
-          break;
-
-        } else if ( head == S_LET_STAR || head == S_LETREC ) { // note: this is clearly wrong, but I don't care for now
-          ObSCons* definitions = [rest car];
-          ObSCons* body = [rest cdr];
-          ObSScope* letScope = [[ObSScope alloc] initWithOuterScope: self
-                                                               name: @"let*"];
-
-          for ( ObSCons* definition in definitions ) {
-            ObSSymbol* name = [definition car];
-            id expression = [definition cadr];
-            [letScope define: name as: [letScope evaluate: expression]];
-          }
-
-          ret = [letScope begin: body];
-          [letScope release];
-          break;
-
-        } else if ( head == S_DO ) {
+        if ( head == S_DO ) {
           ObSCons* variables = [rest car];
           ObSCons* exit = [rest cadr];
           ObSCons* loopBody = [rest cddr];
