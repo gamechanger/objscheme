@@ -462,6 +462,34 @@ static NSMutableDictionary* __evalMap;
         return [args cddr] != C_NULL ? [args caddr] : UNSPECIFIED;
       }
     });
+
+  __evalMap[S_IN.string] = Block_copy(^(ObSScope* scope, ObSCons* args, NSMutableArray* toPop, BOOL* done) {
+      *done = YES;
+
+      id ret;
+      id toFind = [scope evaluate: [args car]];
+      id list = [scope evaluate: [args cadr]];
+      if ( [list isKindOfClass: [NSArray class]] ) {
+        NSArray* a = list;
+        ret = [a containsObject: toFind] ? B_TRUE : B_FALSE;
+
+      } else if ( list == C_NULL ) {
+        ret = B_FALSE;
+
+      } else {
+        ObSCons* cons = list;
+        ret = B_FALSE;
+        for ( id ob in cons ) {
+          if ( [ob isEqual: toFind] ) {
+            ret = B_TRUE;
+            break;
+          }
+        }
+      }
+
+      return ret;
+    });
+
 }
 
 - (id)evaluate:(id)token {
@@ -506,30 +534,7 @@ static NSMutableDictionary* __evalMap;
           }
         }
 
-        if ( head == S_IN ) { // (in ob lst)
-          id toFind = [self evaluate: [rest car]];
-          id list = [self evaluate: [rest cadr]];
-          if ( [list isKindOfClass: [NSArray class]] ) {
-            NSArray* a = list;
-            ret = [a containsObject: toFind] ? B_TRUE : B_FALSE;
-
-          } else if ( list == C_NULL ) {
-            ret = B_FALSE;
-
-          } else {
-            ObSCons* cons = list;
-            ret = B_FALSE;
-            for ( id ob in cons ) {
-              if ( [ob isEqual: toFind] ) {
-                ret = B_TRUE;
-                break;
-              }
-            }
-          }
-
-          break;
-
-        } else if ( head == S_APPLY ) {
+        if ( head == S_APPLY ) {
           id function_name = [rest car];
           id function_args = [rest cadr];
           id args = [self evaluate: function_args];
