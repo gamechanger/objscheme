@@ -220,131 +220,131 @@ static NSMutableDictionary* __evalMap;
 + (void)initialize {
   _stack = [[NSMutableArray alloc] init];
   __evalMap = [[NSMutableDictionary alloc] initWithCapacity: 30];
-  __evalMap[S_EVAL.string] = ^(ObSScope* scope, ObSCons* args, NSMutableArray* toPop, BOOL* done) {
-    [scope pushStack: S_EVAL];
-    [toPop addObject: S_EVAL];
-    *done = NO;
-    id newCode = [scope evaluate: [args car]];
-    return newCode;
-  };
+  __evalMap[S_EVAL.string] = Block_copy(^(ObSScope* scope, ObSCons* args, NSMutableArray* toPop, BOOL* done) {
+      [scope pushStack: S_EVAL];
+      [toPop addObject: S_EVAL];
+      *done = NO;
+      id newCode = [scope evaluate: [args car]];
+      return newCode;
+    });
 
-  __evalMap[S_OR.string] = ^(ObSScope* scope, ObSCons* args, NSMutableArray* toPop, BOOL* done) {
-    id operands = args;
-    id result = B_FALSE;
-    while ( operands != C_NULL ) {
-      ObSCons* lst = operands;
-      result = [scope evaluate: [lst car]];
-      if ( result != B_FALSE ) {
-        return result;
+  __evalMap[S_OR.string] = Block_copy(^(ObSScope* scope, ObSCons* args, NSMutableArray* toPop, BOOL* done) {
+      id operands = args;
+      id result = B_FALSE;
+      while ( operands != C_NULL ) {
+        ObSCons* lst = operands;
+        result = [scope evaluate: [lst car]];
+        if ( result != B_FALSE ) {
+          return result;
+        }
+        operands = [lst cdr];
       }
-      operands = [lst cdr];
-    }
-    return result;
-  };
+      return result;
+    });
 
-  __evalMap[S_AND.string] = ^(ObSScope* scope, ObSCons* args, NSMutableArray* toPop, BOOL* done) {
-    id operands = args;
-    id result = B_FALSE;
-    while ( operands != C_NULL ) {
-      ObSCons* lst = operands;
-      result = [scope evaluate: [lst car]];
-      if ( result == B_FALSE ) {
-        return result;
+  __evalMap[S_AND.string] = Block_copy(^(ObSScope* scope, ObSCons* args, NSMutableArray* toPop, BOOL* done) {
+      id operands = args;
+      id result = B_FALSE;
+      while ( operands != C_NULL ) {
+        ObSCons* lst = operands;
+        result = [scope evaluate: [lst car]];
+        if ( result == B_FALSE ) {
+          return result;
+        }
+        operands = [lst cdr];
       }
-      operands = [lst cdr];
-    }
-    return result;
-  };
+      return result;
+    });
 
-  __evalMap[S_COND.string] = ^(ObSScope* scope, ObSCons* args, NSMutableArray* toPop, BOOL* done) {
-    ObSCons* listOfTuples = args;
-    id ret = UNSPECIFIED;
+  __evalMap[S_COND.string] = Block_copy(^(ObSScope* scope, ObSCons* args, NSMutableArray* toPop, BOOL* done) {
+      ObSCons* listOfTuples = args;
+      id ret = UNSPECIFIED;
 
-    for ( ObSCons* conditionAndResult in listOfTuples ) {
-      id left = [conditionAndResult car];
-      if ( left == S_ELSE ) {
-        *done = NO;
-        ret = [conditionAndResult cadr];
-        break;
+      for ( ObSCons* conditionAndResult in listOfTuples ) {
+        id left = [conditionAndResult car];
+        if ( left == S_ELSE ) {
+          *done = NO;
+          ret = [conditionAndResult cadr];
+          break;
 
-      } else {
-        id condition = [scope evaluate: left];
-        if ( condition != B_FALSE ) {
-          if ( [conditionAndResult cdr] == C_NULL ) {
-            *done = YES;
-            ret = B_TRUE;
-            break;
+        } else {
+          id condition = [scope evaluate: left];
+          if ( condition != B_FALSE ) {
+            if ( [conditionAndResult cdr] == C_NULL ) {
+              *done = YES;
+              ret = B_TRUE;
+              break;
 
-          } else {
-            *done = NO;
-            ret = [conditionAndResult cadr];
-            break;
+            } else {
+              *done = NO;
+              ret = [conditionAndResult cadr];
+              break;
+            }
           }
         }
       }
-    }
 
-    return ret;
-  };
+      return ret;
+    });
 
-  __evalMap[S_LET.string] = ^(ObSScope* scope, ObSCons* args, NSMutableArray* toPop, BOOL* done) {
-    *done = YES;
-    // normal: (let ((x y)) body)
-    // named: (let name ((x y)) body)
+  __evalMap[S_LET.string] = Block_copy(^(ObSScope* scope, ObSCons* args, NSMutableArray* toPop, BOOL* done) {
+      *done = YES;
+      // normal: (let ((x y)) body)
+      // named: (let name ((x y)) body)
 
-    id ret;
+      id ret;
 
-    if ( [[args car] isKindOfClass: [ObSSymbol class]] ) { // named let
+      if ( [[args car] isKindOfClass: [ObSSymbol class]] ) { // named let
 
-      ObSSymbol* letName = [args car];
-      ObSCons* definitions = [args cadr];
-      ObSCons* body = [args cddr];
-      ObSScope* letScope = [[ObSScope alloc] initWithOuterScope: scope
-                                                           name: [NSString stringWithFormat: @"named-let %@", letName]];
+        ObSSymbol* letName = [args car];
+        ObSCons* definitions = [args cadr];
+        ObSCons* body = [args cddr];
+        ObSScope* letScope = [[ObSScope alloc] initWithOuterScope: scope
+                                                             name: [NSString stringWithFormat: @"named-let %@", letName]];
 
-      NSMutableArray* argList = [[NSMutableArray alloc] initWithCapacity: 4];
+        NSMutableArray* argList = [[NSMutableArray alloc] initWithCapacity: 4];
 
-      for ( ObSCons* definition in definitions ) {
-        ObSSymbol* name = [definition car];
-        id expression = [definition cadr];
-        [letScope define: name as: [scope evaluate: expression]];
-        [argList addObject: name];
+        for ( ObSCons* definition in definitions ) {
+          ObSSymbol* name = [definition car];
+          id expression = [definition cadr];
+          [letScope define: name as: [scope evaluate: expression]];
+          [argList addObject: name];
+        }
+
+        ObSCons* parameters = [ObjScheme list: argList];
+        [argList release];
+
+        ObSCons* expression = [ObSCons cons: S_BEGIN and: body];
+        ObSLambda* lambda = [[ObSLambda alloc] initWithParameters: parameters
+                                                       expression: expression
+                                                            scope: letScope
+                                                             name: letName];
+
+        [letScope define: letName as: lambda];
+        [lambda release];
+
+        ret = [letScope begin: body];
+        [letScope release];
+
+      } else { // normal let
+
+        ObSCons* definitions = [args car];
+        ObSCons* body = [args cdr];
+        ObSScope* letScope = [[ObSScope alloc] initWithOuterScope: scope
+                                                             name: @"let"];
+
+        for ( ObSCons* definition in definitions ) {
+          ObSSymbol* name = [definition car];
+          id expression = [definition cadr];
+          [letScope define: name as: [scope evaluate: expression]];
+        }
+
+        ret = [letScope begin: body];
+        [letScope release];
       }
 
-      ObSCons* parameters = [ObjScheme list: argList];
-      [argList release];
-
-      ObSCons* expression = [ObSCons cons: S_BEGIN and: body];
-      ObSLambda* lambda = [[ObSLambda alloc] initWithParameters: parameters
-                                                     expression: expression
-                                                          scope: letScope
-                                                           name: letName];
-
-      [letScope define: letName as: lambda];
-      [lambda release];
-
-      ret = [letScope begin: body];
-      [letScope release];
-
-    } else { // normal let
-
-      ObSCons* definitions = [args car];
-      ObSCons* body = [args cdr];
-      ObSScope* letScope = [[ObSScope alloc] initWithOuterScope: scope
-                                                           name: @"let"];
-
-      for ( ObSCons* definition in definitions ) {
-        ObSSymbol* name = [definition car];
-        id expression = [definition cadr];
-        [letScope define: name as: [scope evaluate: expression]];
-      }
-
-      ret = [letScope begin: body];
-      [letScope release];
-    }
-
-    return ret;
-  };
+      return ret;
+    });
 
   ObSInternalFunction recursiveLet = ^(ObSScope* scope, ObSCons* args, NSMutableArray* toPop, BOOL* done) {
 
@@ -365,8 +365,103 @@ static NSMutableDictionary* __evalMap;
   };
 
   // one or more of the following is technically wrong...
-  __evalMap[S_LET_STAR.string] = recursiveLet;
-  __evalMap[S_LETREC.string] = recursiveLet;
+  __evalMap[S_LET_STAR.string] = Block_copy(recursiveLet);
+  __evalMap[S_LETREC.string] = Block_copy(recursiveLet);
+
+  __evalMap[S_DO.string] = Block_copy(^(ObSScope* scope, ObSCons* args, NSMutableArray* toPop, BOOL* done) {
+      *done = YES;
+      id ret;
+
+      ObSCons* variables = [args car];
+      ObSCons* exit = [args cadr];
+      ObSCons* loopBody = [args cddr];
+      ObSScope* doScope = [[ObSScope alloc] initWithOuterScope: scope
+                                                          name: @"do"];
+
+      NSMutableDictionary* varToStep = [[NSMutableDictionary alloc] initWithCapacity: 4];
+
+      for ( ObSCons* variable in variables ) {
+        ObSSymbol* name = [variable car];
+        id value = [variable cadr];
+        id step = [variable cddr] != C_NULL ? [variable caddr] : nil;
+        if ( step ) {
+          varToStep[name.string] = step;
+        }
+        [doScope define: name as: [scope evaluate: value]];
+      }
+
+      id exit_condition = [exit car];
+      ObSCons* exitBody = [exit cdr];
+
+      BOOL haveSteps = [varToStep count] > 0;
+
+      while ( 1 ) {
+        id testValue = [doScope evaluate: exit_condition];
+        if ( testValue != B_FALSE ) {
+          ret = B_FALSE;
+          id body = exitBody;
+
+          while ( body != C_NULL ) {
+            ObSCons* realBody = body;
+            ret = [doScope evaluate: [realBody car]];
+            body = [realBody cdr];
+          }
+
+          break;
+        }
+
+        id body = loopBody;
+        while ( body != C_NULL ) {
+          ObSCons* realBody = body;
+          [doScope evaluate: [body car]];
+          body = [realBody cdr];
+        }
+
+        if ( haveSteps ) {
+          NSMutableDictionary* changes = [[NSMutableDictionary alloc] init];
+
+          for ( NSString* var in varToStep ) {
+            changes[var] = [doScope evaluate: varToStep[var]];
+          }
+
+          if ( [changes count] ) {
+            [doScope.environ addEntriesFromDictionary: changes];
+          }
+
+          [changes release];
+        }
+      }
+
+      [varToStep release];
+      [doScope release];
+
+      return ret;
+    });
+
+  __evalMap[S_QUOTE.string] = Block_copy(^(ObSScope* scope, ObSCons* args, NSMutableArray* toPop, BOOL* done) {
+      *done = YES;
+      NSAssert1([args cdr] == C_NULL, @"quote can have only 1 operand, not %@", args);
+      return [args car];
+    });
+
+  __evalMap[S_LIST.string] = Block_copy(^(ObSScope* scope, ObSCons* args, NSMutableArray* toPop, BOOL* done) {
+      *done = YES;
+      [scope pushStack: S_LIST];
+      id ret = [[scope evaluateList: args] retain];
+      [scope popStack];
+      return ret;
+    });
+
+  __evalMap[S_IF.string] = Block_copy(^(ObSScope* scope, ObSCons* args, NSMutableArray* toPop, BOOL* done) {
+      *done = NO;
+
+      if ( [scope evaluate: [args car]] != B_FALSE ) {
+        return [args cadr];
+
+      } else {
+        return [args cddr] != C_NULL ? [args caddr] : UNSPECIFIED;
+      }
+    });
 }
 
 - (id)evaluate:(id)token {
@@ -393,12 +488,12 @@ static NSMutableDictionary* __evalMap;
         ObSCons* list = token;
         id head = [list car];
         ObSCons* rest = [list cdr];
-        NSUInteger argCount = (id)rest == C_NULL ? 0 : [rest count];
 
         if ( [head isKindOfClass: [ObSSymbol class]] ) {
           BOOL done = YES;
           ObSSymbol* symbol = head;
           ObSInternalFunction f = __evalMap[symbol.string];
+
           if ( f != nil ) {
             id result = f(self, rest, toPop, &done);
             if ( done ) {
@@ -411,90 +506,7 @@ static NSMutableDictionary* __evalMap;
           }
         }
 
-        if ( head == S_DO ) {
-          ObSCons* variables = [rest car];
-          ObSCons* exit = [rest cadr];
-          ObSCons* loopBody = [rest cddr];
-          ObSScope* doScope = [[ObSScope alloc] initWithOuterScope: self
-                                                              name: @"do"];
-
-          NSMutableDictionary* varToStep = [[NSMutableDictionary alloc] initWithCapacity: 4];
-
-          for ( ObSCons* variable in variables ) {
-            ObSSymbol* name = [variable car];
-            id value = [variable cadr];
-            id step = [variable cddr] != C_NULL ? [variable caddr] : nil;
-            if ( step ) {
-              varToStep[name.string] = step;
-            }
-            [doScope define: name as: [self evaluate: value]];
-          }
-
-          id exit_condition = [exit car];
-          ObSCons* exitBody = [exit cdr];
-
-          BOOL haveSteps = [varToStep count] > 0;
-
-          while ( 1 ) {
-            id testValue = [doScope evaluate: exit_condition];
-            if ( testValue != B_FALSE ) {
-              ret = B_FALSE;
-              id body = exitBody;
-
-              while ( body != C_NULL ) {
-                ObSCons* realBody = body;
-                ret = [doScope evaluate: [realBody car]];
-                body = [realBody cdr];
-              }
-
-              break;
-            }
-
-            id body = loopBody;
-            while ( body != C_NULL ) {
-              ObSCons* realBody = body;
-              [doScope evaluate: [body car]];
-              body = [realBody cdr];
-            }
-
-            if ( haveSteps ) {
-              NSMutableDictionary* changes = [[NSMutableDictionary alloc] init];
-
-              for ( NSString* var in varToStep ) {
-                changes[var] = [doScope evaluate: varToStep[var]];
-              }
-
-              if ( [changes count] ) {
-                [doScope.environ addEntriesFromDictionary: changes];
-              }
-
-              [changes release];
-            }
-          }
-
-          [varToStep release];
-          [doScope release];
-          break;
-
-        } else if ( head == S_QUOTE ) { // (quote exp) -> exp
-          NSAssert1(argCount == 1, @"quote can have only 1 operand, not %@", rest);
-          ret = [rest car];
-          break;
-
-        } else if ( head == S_LIST ) { // (list a b c)
-          [self pushStack: S_LIST];
-          ret = [self evaluateList: rest];
-          [self popStack];
-          break;
-
-        } else if ( head == S_IF ) { // (if test consequence alternate) <- note that full form is enforced by expansion
-          id test = [rest car];
-          id consequence = [rest cadr];
-          id alternate = argCount == 3 ? [rest caddr] : UNSPECIFIED;
-          token = [self evaluate: test] == B_FALSE ? alternate : consequence;
-          continue; // I'm being explicit here for clarity, we'll now evaluate this token
-
-        } else if ( head == S_IN ) { // (in ob lst)
+        if ( head == S_IN ) { // (in ob lst)
           id toFind = [self evaluate: [rest car]];
           id list = [self evaluate: [rest cadr]];
           if ( [list isKindOfClass: [NSArray class]] ) {
