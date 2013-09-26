@@ -244,7 +244,7 @@ static NSMutableDictionary* __evalMap;
       return result;
     });
 
-  __evalMap[S_AND.string] = Block_copy(^(ObSScope* scope, ObSCons* args, BOOL* popStackWhenDone, BOOL* done) {
+  __evalMap[S_AND.string] = Block_copy(^(ObSScope* scope, ObSSymbol* name, ObSCons* args, BOOL* popStackWhenDone, BOOL* done) {
       id operands = args;
       id result = B_FALSE;
       while ( operands != C_NULL ) {
