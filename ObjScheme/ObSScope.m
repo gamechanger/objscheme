@@ -578,7 +578,6 @@ static NSMutableDictionary* __evalMap;
 
     while ( 1 ) {
       if ( popStack ) {
-        NSLog( @"Popping %@ off stack", [_stack lastObject] );
         [self popStack];
         popStack = NO;
       }
