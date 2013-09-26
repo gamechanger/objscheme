@@ -95,3 +95,9 @@ extern ObSConstant* UNSPECIFIED;
 #define ISINT(n) (strcmp([(n) objCType], @encode(int)) == 0)
 #define ISDOUBLE(n) (strcmp([(n) objCType], @encode(double)) == 0)
 #define CONST(s) [[ObSConstant alloc] initWithName: (s)]
+#define CAR(x) ((x)->_car)
+#define CDR(x) ((x)->_cdr)
+#define CADR(x) CAR((ObSCons*)(CDR(x)))
+#define CDDR(x) CDR((ObSCons*)(CDR(x)))
+#define CADDR(x) CAR((ObSCons*)CDDR(x))
+#define CDDDR(x) CDR((ObSCons*)CDDR(x))

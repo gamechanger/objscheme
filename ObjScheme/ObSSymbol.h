@@ -8,6 +8,7 @@
 
 
 @interface ObSSymbol : NSObject {
+@public
   NSString* _string;
 }
 @property (nonatomic,readonly) NSString* string;

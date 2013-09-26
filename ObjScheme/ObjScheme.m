@@ -152,7 +152,7 @@ static NSMutableArray* __loaders = nil;
 
   } else {
     ObSCons* list = arg;
-    return CONS([proc callWith: CONS(list.car, C_NULL)], [self map: proc on: list.cdr]);
+    return CONS([proc callWith: CONS(CAR(list), C_NULL)], [self map: proc on: CDR(list)]);
   }
 }
 
@@ -212,14 +212,14 @@ static NSMutableArray* __loaders = nil;
   NSUInteger length = 0;
   while ( (id)list != C_NULL ) {
     length++;
-    list = [list cdr];
+    list = CDR(list);
   }
   return length;
 }
 
 + (ObSCons*)tailCons:(ObSCons*)list {
-  while ( list.cdr != C_NULL ) {
-    list = list.cdr;
+  while ( CDR(list) != C_NULL ) {
+    list = CDR(list);
   }
   return list;
 }
@@ -230,9 +230,9 @@ static NSMutableArray* __loaders = nil;
 
   } else {
     ObSCons* list = definitions;
-    ObSCons* definition = [list car];
-    definition = CONS([definition car], CONS([self expandToken: [definition cadr]], C_NULL));
-    return CONS(definition, [self expandLetDefinitions: [list cdr]]);
+    ObSCons* definition = CAR(list);
+    definition = CONS(CAR(definition), CONS([self expandToken: CADR(definition)], C_NULL));
+    return CONS(definition, [self expandLetDefinitions: CDR(list)]);
   }
 }
 
@@ -246,8 +246,8 @@ static NSMutableArray* __loaders = nil;
 
   } else {
     ObSCons* list = arg;
-    id token = [self expandToken: list.car atTopLevel: topLevel];
-    id tail = [self expandTokenList: list.cdr atTopLevel: topLevel];
+    id token = [self expandToken: CAR(list) atTopLevel: topLevel];
+    id tail = [self expandTokenList: CDR(list) atTopLevel: topLevel];
     return ( token == UNSPECIFIED ? tail : CONS(token, tail) );
   }
 }
@@ -269,18 +269,18 @@ static NSMutableArray* __loaders = nil;
   }
 
   ObSCons* list = token;
-  id head = list.car;
+  id head = CAR(list);
   NSUInteger length = [list count];
 
   if ( head == S_QUOTE ) { // (quote exp)
     [ObjScheme assertSyntax: (length == 2)
                   elseRaise: [NSString stringWithFormat: @"quote should have 1 arg, given %d", length-1]];
 
-    id quotee = list.cadr;
+    id quotee = CADR(list);
     if ( [quotee isKindOfClass: [ObSCons class]] ) {
       ObSCons* quotedCons = quotee;
-      if ( [quotedCons count] == 3 && [quotedCons cadr] == S_DOT ) {
-        id pair = CONS([quotedCons car], [quotedCons caddr]);
+      if ( [quotedCons count] == 3 && CADR(quotedCons) == S_DOT ) {
+        id pair = CONS(CAR(quotedCons), CADDR(quotedCons));
         return CONS(S_QUOTE, CONS(pair, C_NULL));
       }
     }
@@ -295,22 +295,22 @@ static NSMutableArray* __loaders = nil;
     id var = [list cadr];
     [ObjScheme assertSyntax: [var isMemberOfClass: [ObSSymbol class]]
                   elseRaise: @"First arg of 'set!' should be a Symbol"];
-    id expression = [self expandToken: [list caddr]];
+    id expression = [self expandToken: CADDR(list)];
     return CONS(S_SET, CONS(var, CONS(expression, C_NULL)));
 
   } else if ( head == S_DEFINE ) { // (define ...)
     [ObjScheme assertSyntax: (length >= 3) elseRaise: @"define takes at least 2 args"];
-    id defineSpec = [list cadr];
-    ObSCons* body = [list cddr];
+    id defineSpec = CADR(list);
+    ObSCons* body = CDDR(list);
 
     if ( [defineSpec isKindOfClass: [ObSCons class]] ) {
       // we're going to change (define (f args) body) => (define f (lambda (args) body)) for simplicity
       ObSCons* lambdaSpec = defineSpec;
-      ObSSymbol* lambdaName = [lambdaSpec car];
-      ObSCons* paramSpec = [lambdaSpec cdr];
+      ObSSymbol* lambdaName = CAR(lambdaSpec);
+      ObSCons* paramSpec = CDR(lambdaSpec);
       id params = paramSpec;
-      if ( params != C_NULL && [params car] == S_DOT ) {
-        params = [params cadr];
+      if ( params != C_NULL && CAR((ObSCons*)params) == S_DOT ) {
+        params = CADR((ObSCons*)params);
       }
       // => (f (params) body)
       ObSCons* lambda = CONS(S_LAMBDA, CONS(params, body));
@@ -319,7 +319,7 @@ static NSMutableArray* __loaders = nil;
     } else {
       [ObjScheme assertSyntax: [defineSpec isMemberOfClass: [ObSSymbol class]]
                     elseRaise: @"define second param must be symbol"];
-      id expression = [body car];
+      id expression = CAR(body);
       return CONS(S_DEFINE, CONS(defineSpec, CONS([ObjScheme expandToken: expression], C_NULL)));
     }
 
@@ -327,8 +327,8 @@ static NSMutableArray* __loaders = nil;
     [ObjScheme assertSyntax: topLevel elseRaise: @"define-macro must be invoked at the top level"];
     [ObjScheme assertSyntax: (length == 3) elseRaise: @"bad define-macro syntax"];
 
-    id nameOrSpec = [list cadr];
-    id body = [list caddr];
+    id nameOrSpec = CADR(list);
+    id body = CADDR(list);
     body = [ObjScheme expandToken: body];
     ObSSymbol* macroName = nil;
 
@@ -338,9 +338,9 @@ static NSMutableArray* __loaders = nil;
     } else {
       [ObjScheme assertSyntax: [nameOrSpec isKindOfClass: [ObSCons class]] elseRaise: @"bad define-macro spec"];
       ObSCons* callSpec = nameOrSpec;
-      macroName = [callSpec car];
-      id args = [nameOrSpec cdr];
-      id lambdaArgSpec = args != C_NULL && [(ObSCons*)args car] == S_DOT ? [args cadr] : args;
+      macroName = CAR(callSpec);
+      id args = CDR(callSpec);
+      id lambdaArgSpec = args != C_NULL && CAR((ObSCons*)args) == S_DOT ? CADR((ObSCons*)args) : args;
       body = CONS(S_LAMBDA, CONS(lambdaArgSpec, body));
     }
 
@@ -356,7 +356,7 @@ static NSMutableArray* __loaders = nil;
       return C_NULL;
 
     } else {
-      return CONS(S_BEGIN, [self expandTokenList: [list cdr] atTopLevel: topLevel]);
+      return CONS(S_BEGIN, [self expandTokenList: CDR(list) atTopLevel: topLevel]);
     }
 
   } else if ( head == S_LET || head == S_LET_STAR ) {
@@ -367,14 +367,14 @@ static NSMutableArray* __loaders = nil;
 
     BOOL isNamed = [[list cadr] isKindOfClass: [ObSSymbol class]];
     if ( isNamed ) {
-      ObSSymbol* name = [list cadr];
-      ObSCons* definitions = [list caddr];
-      ObSCons* body = [list cdddr];
+      ObSSymbol* name = CADR(list);
+      ObSCons* definitions = CADDR(list);
+      ObSCons* body = CDDDR(list);
       return CONS(head, CONS(name, CONS([self expandLetDefinitions: definitions], [self expandTokenList: body])));
 
     } else {
-      ObSCons* definitions = [list cadr];
-      ObSCons* body = [list cddr];
+      ObSCons* definitions = CADR(list);
+      ObSCons* body = CDDR(list);
       return CONS(head, CONS([self expandLetDefinitions: definitions], [self expandTokenList: body]));
     }
 
@@ -382,7 +382,7 @@ static NSMutableArray* __loaders = nil;
     // (lambda (x) a b) => (lambda (x) (begin a b))
     // (lambda x expr) => (lambda (x) expr)
     [ObjScheme assertSyntax: (length >= 3) elseRaise: @"not enough args for lambda"];
-    id parameters = [list cadr];
+    id parameters = CADR(list);
     if ( [parameters isKindOfClass: [ObSCons class]] ) {
       for ( id paramName in (ObSCons*)parameters ) {
         [ObjScheme assertSyntax: [paramName isKindOfClass: [ObSSymbol class]] elseRaise: [NSString stringWithFormat: @"invalid lambda parameter %@ in %@", paramName, parameters]];
@@ -392,8 +392,8 @@ static NSMutableArray* __loaders = nil;
       [ObjScheme assertSyntax: parameters == C_NULL || [parameters isKindOfClass: [ObSSymbol class]] elseRaise: [NSString stringWithFormat: @"invalid lambda parameter %@", parameters]];
     }
 
-    ObSCons* body = [list cddr];
-    id expression = [self expandToken: ([body count] == 1 ? [body car] : CONS(S_BEGIN, body))];
+    ObSCons* body = CDDR(list);
+    id expression = [self expandToken: ([body count] == 1 ? CAR(body) : CONS(S_BEGIN, body))];
 
     return CONS(S_LAMBDA, CONS(parameters, CONS(expression, C_NULL)));
 
@@ -405,7 +405,7 @@ static NSMutableArray* __loaders = nil;
     ObSSymbol* symbol = head;
     id macro = [[ObjScheme globalScope] macroNamed: symbol];
     if ( macro ) {
-      ObSCons* args = [list cdr];
+      ObSCons* args = CDR(list);
       return [ObjScheme expandToken: [macro callWith: args]];
     }
   }
@@ -419,11 +419,11 @@ static NSMutableArray* __loaders = nil;
 
   } else {
     ObSCons* cell = list;
-    if ( [proc callWith: CONS([cell car], C_NULL)] != B_FALSE ) {
-      return CONS(cell.car, [self filter: cell.cdr with: proc]);
+    if ( [proc callWith: CONS(CAR(cell), C_NULL)] != B_FALSE ) {
+      return CONS(CAR(cell), [self filter: CDR(cell) with: proc]);
 
     } else {
-      return [self filter: cell.cdr with: proc];
+      return [self filter: CDR(cell) with: proc];
     }
   }
 }
@@ -455,15 +455,15 @@ static NSMutableArray* __loaders = nil;
     ObSCons* list = token;
     NSUInteger length = [ObjScheme listLength: list];
 
-    id first = [list car];
+    id first = CAR(list);
     [ObjScheme assertSyntax: (first != S_UNQUOTESPLICING) elseRaise: @"can't splice at beginning of quasiquote"];
-    ObSCons* remainderOfList = [list cdr];
+    ObSCons* remainderOfList = CDR(list);
 
     if ( first == S_UNQUOTE ) {
       [ObjScheme assertSyntax: (length == 2) elseRaise: @"invalid unquote phrase, missing operand"];
-      return [list cadr];
+      return CADR(list);
 
-    } else if ( [first isKindOfClass: [ObSCons class]] && [(ObSCons*)first car] == S_UNQUOTESPLICING ) {
+    } else if ( [first isKindOfClass: [ObSCons class]] && CAR((ObSCons*)first) == S_UNQUOTESPLICING ) {
       ObSCons* unquoteSplicingSpec = first;
       [ObjScheme assertSyntax: ([ObjScheme listLength: unquoteSplicingSpec] == 2) elseRaise: @"invalid unquote-splicing phrase, missing operand"];
       return CONS(S_APPEND, CONS([unquoteSplicingSpec cadr], CONS([ObjScheme expandQuasiquote: remainderOfList], C_NULL)));
@@ -589,8 +589,9 @@ static NSMutableArray* __loaders = nil;
 
 
 + (void)assertSyntax:(BOOL)correct elseRaise:(NSString*)message {
-  if ( ! correct )
+  if ( ! correct ) {
     [NSException raise: @"SyntaxError" format: @"%@", message];
+  }
 }
 
 id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
@@ -602,17 +603,17 @@ id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
 
   if ( [predicate conformsToProtocol: @protocol(ObSUnaryLambda)] ) {
     id<ObSUnaryLambda> native = (id<ObSUnaryLambda>)predicate;
-    predicateReturn = [native callNatively: [list car]];
+    predicateReturn = [native callNatively: CAR(list)];
 
   } else {
-    predicateReturn = [predicate callWith: CONS([list car], C_NULL)];
+    predicateReturn = [predicate callWith: CONS(CAR(list), C_NULL)];
   }
 
   if ( predicateReturn == B_FALSE ) {
-    return CONS([list car], srfi1_remove(predicate, [list cdr]));
+    return CONS(CAR(list), srfi1_remove(predicate, CDR(list)));
 
   } else {
-    return srfi1_remove(predicate, [list cdr]);
+    return srfi1_remove(predicate, CDR(list));
   }
 }
 
@@ -774,7 +775,7 @@ id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
 
         } else if ( [o isKindOfClass: [ObSCons class]] ) {
           ObSCons* cons = o;
-          id cdr = cons.cdr;
+          id cdr = CDR(cons);
           return TRUTH(cdr == C_NULL || [cdr isKindOfClass: [ObSCons class]]);
 
         } else {
@@ -790,11 +791,11 @@ id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
           return [ObjScheme boolToTruth: NO];
 
         ObSCons* tail = list;
-        id item = [tail car];
+        id item = CAR(tail);
 
-        while ( [tail cdr] != C_NULL ) {
-          tail = [tail cdr];
-          item = [tail car];
+        while ( CDR(tail) != C_NULL ) {
+          tail = CDR(tail);
+          item = CAR(tail);
         }
 
         return item;
@@ -836,48 +837,49 @@ id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
                                            fromBlock: ^(id o) {
         NSAssert1([o isKindOfClass: [ObSCons class]], @"invalid operand for car %@", o);
         ObSCons* cons = o;
-        return [cons car];
+        return CAR(cons);
       }]];
 
   [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"cdr")
                                            fromBlock: ^(id o) {
         NSAssert1([o isKindOfClass: [ObSCons class]], @"invalid operand for car %@", o);
         ObSCons* cons = o;
-        return [cons cdr];
+        return CDR(cons);
       }]];
 
   [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"cadr")
                                            fromBlock: ^(id o) {
         NSAssert1([o isKindOfClass: [ObSCons class]], @"invalid operand for car %@", o);
         ObSCons* cons = o;
-        return [cons cadr];
+        return CADR(cons);
       }]];
 
   [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"caddr")
                                            fromBlock: ^(id o) {
         NSAssert1([o isKindOfClass: [ObSCons class]], @"invalid operand for car %@", o);
         ObSCons* cons = o;
-        return [cons caddr];
+        return CADDR(cons);
       }]];
 
   [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"cddr")
                                            fromBlock: ^(id o) {
         NSAssert1([o isKindOfClass: [ObSCons class]], @"invalid operand for car %@", o);
         ObSCons* cons = o;
-        return [cons cddr];
+        return CDDR(cons);
       }]];
 
   [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"cdddr")
                                            fromBlock: ^(id o) {
         NSAssert1([o isKindOfClass: [ObSCons class]], @"invalid operand for car %@", o);
         ObSCons* cons = o;
-        return [cons cdddr];
+        return CDDDR(cons);
       }]];
 
   [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"length")
                                            fromBlock: ^(id o) {
-        if ( o == C_NULL )
+        if ( o == C_NULL ) {
           return [NSNumber numberWithInteger: 0];
+        }
 
         NSAssert1([o isKindOfClass: [ObSCons class]], @"invalid operand for length, should be list %@", o);
         int length = 0;
@@ -886,7 +888,7 @@ id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
           NSAssert([o isKindOfClass: [ObSCons class]], @"length called on non-list, %@", o);
           length++;
           ObSCons* cons = cell;
-          cell = [cons cdr];
+          cell = CDR(cons);
         }
         return [NSNumber numberWithInteger: length];
       }]];
@@ -909,7 +911,7 @@ id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
           ObSCons* cons = o;
 
           while ( 1 ) {
-            o = [cons cdr];
+            o = CDR(cons);
 
             if ( o == C_NULL ) {
               return B_FALSE; // this is a list, by definition
@@ -1137,16 +1139,16 @@ id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
         while ( length-- > 0 ) {
           if ( ret == C_NULL ) {
             // this is just the first iteration, where we create the 1-length sublist
-            ret = soFar = CONS(list.car, C_NULL);
+            ret = soFar = CONS(CAR(list), C_NULL);
 
           } else {
             // from then on, we're tracking the last CONS cell, and mutating it.
-            ObSCons* nextCell = CONS(list.car, C_NULL);
+            ObSCons* nextCell = CONS(CAR(list), C_NULL);
             [soFar setCdr: nextCell];
             soFar = nextCell;
           }
           // pop!
-          list = list.cdr;
+          list = CDR(list);
         }
 
         return ret;

@@ -8,6 +8,7 @@
 
 
 @interface ObSCons : NSObject <NSFastEnumeration> {
+@public
   id _car;
   id _cdr;
 }
