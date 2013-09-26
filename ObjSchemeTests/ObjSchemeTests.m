@@ -429,7 +429,6 @@ typedef void (^Thunk)(void);
   OSAssertEquals(@"(number->string 2.2)", @"2.200000");
 
   OSAssertEqualsDouble(@"(* 0.5 1)", 0.5);
-  NSLog( @"Holy crap : %@", EXEC(@"(+ 2 0.5)") );
   OSAssertEqualsDouble(@"(+ 2 0.5)", 2.5);
   OSAssertEqualsDouble(@"(+ 2 (* 0.5 1))", 2.5);
   OSAssertEqualsDouble(@"(/ (+ 2 (* 0.5 1)) 2)", 1.25);
