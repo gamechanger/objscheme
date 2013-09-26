@@ -118,7 +118,7 @@ BOOL _errorLogged = NO;
 }
 
 - (ObSScope*)findScopeOf:(ObSSymbol*)name {
-  if ( [_environ objectForKey: name.string] != nil ) {
+  if ( [_environ objectForKey: name->_string] != nil ) {
     return self;
   }
 
@@ -131,7 +131,7 @@ BOOL _errorLogged = NO;
 }
 
 - (id)resolveSymbol:(ObSSymbol*)symbol {
-  id myValue = [_environ objectForKey: symbol.string];
+  id myValue = [_environ objectForKey: symbol->_string];
   if ( myValue ) {
     return myValue;
   }
@@ -145,11 +145,11 @@ BOOL _errorLogged = NO;
 }
 
 - (BOOL)definesSymbol:(ObSSymbol*)symbol {
-  return [_environ objectForKey: symbol.string] != nil;
+  return [_environ objectForKey: symbol->_string] != nil;
 }
 
 - (void)define:(ObSSymbol*)symbol as:(id)thing {
-  NSString* key = symbol.string;
+  NSString* key = symbol->_string;
   [_environ setObject: thing forKey: key];
 }
 
