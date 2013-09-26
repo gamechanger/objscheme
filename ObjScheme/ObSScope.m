@@ -218,6 +218,8 @@ typedef id (^ObSInternalFunction)(ObSScope* scope, ObSSymbol* name, ObSCons* arg
 static NSMutableDictionary* __evalMap;
 
 + (void)initialize {
+  [ObjScheme initialize]; // FML, need to make sure constants are initialized...
+
   _stack = [[NSMutableArray alloc] init];
   __evalMap = [[NSMutableDictionary alloc] initWithCapacity: 30];
   __evalMap[S_EVAL.string] = Block_copy(^(ObSScope* scope, ObSSymbol* name, ObSCons* args, BOOL* popStackWhenDone, BOOL* done) {

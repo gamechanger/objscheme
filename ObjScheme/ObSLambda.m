@@ -28,8 +28,9 @@
 
   if ( (self = [self init]) ) {
     if ( [parameters isKindOfClass: [ObSCons class]] ) {
-      if ( [parameters car] == S_DOT ) { // weird edge case more easily handled here
-        _listParameter = [[parameters cadr] retain];
+      ObSCons* paramList = parameters;
+      if ( CAR(paramList) == S_DOT ) { // weird edge case more easily handled here
+        _listParameter = [CADR(paramList) retain];
 
       } else {
         _parameters = [parameters retain];
@@ -37,14 +38,14 @@
         ObSCons* lastParameterCell = nil;
 
         while ( [parameterCell isKindOfClass: [ObSCons class]] ) {
-          if ( [parameterCell car] == S_DOT ) {
-            _listParameter = [[parameterCell cadr] retain];
+          if ( CAR(parameterCell) == S_DOT ) {
+            _listParameter = [CADR(parameterCell) retain];
             [lastParameterCell setCdr: C_NULL]; // this is mutating (truncating) the _parameters variable!!!!
             break;
           }
 
           lastParameterCell = parameterCell;
-          parameterCell = [parameterCell cdr];
+          parameterCell = CDR(parameterCell);
         }
       }
 
@@ -122,8 +123,8 @@
     // for each parameter, pop something off the top of arguments...
     for ( ObSSymbol* key in _parameters ) {
       NSAssert1((id)arguments != C_NULL, @"ran out of arguments for %@", _parameters);
-      [invocationScope define: key as: [arguments car]];
-      arguments = [arguments cdr];
+      [invocationScope define: key as: CAR(arguments)];
+      arguments = CDR(arguments);
     }
 
     if ( (id)arguments != C_NULL ) {
@@ -215,7 +216,7 @@
 
 - (id)callWith:(ObSCons*)list {
   NSAssert([list count] == 2, @"Oops, should pass 2 args to binary lambda %@", _name);
-  return _block([list car], [list cadr]);
+  return _block(CAR(list), CADR(list));
 }
 
 - (ObSSymbol*)name {
@@ -251,7 +252,7 @@
 
 - (id)callWith:(ObSCons*)list {
   NSAssert([list count] == 1, @"Oops, should pass 1 args to unary lambda %@", _name);
-  return _block([list car]);
+  return _block(CAR(list));
 }
 
 - (id)callNatively:(id)arg {

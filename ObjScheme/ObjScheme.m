@@ -292,7 +292,7 @@ static NSMutableArray* __loaders = nil;
 
   } else if ( head == S_SET ) { // (set! thing exp)
     [ObjScheme assertSyntax: (length == 3) elseRaise: @"Invalid 'set!' syntax"];
-    id var = [list cadr];
+    id var = CADR(list);
     [ObjScheme assertSyntax: [var isMemberOfClass: [ObSSymbol class]]
                   elseRaise: @"First arg of 'set!' should be a Symbol"];
     id expression = [self expandToken: CADDR(list)];
@@ -365,7 +365,7 @@ static NSMutableArray* __loaders = nil;
     // (let name ((x e1) (y e2)) body)
     // we special-case this so as not to accidentally try to expand the symbol names
 
-    BOOL isNamed = [[list cadr] isKindOfClass: [ObSSymbol class]];
+    BOOL isNamed = [CADR(list) isKindOfClass: [ObSSymbol class]];
     if ( isNamed ) {
       ObSSymbol* name = CADR(list);
       ObSCons* definitions = CADDR(list);
@@ -399,7 +399,7 @@ static NSMutableArray* __loaders = nil;
 
   } else if ( head == S_QUASIQUOTE ) {
     [ObjScheme assertSyntax: (length == 2) elseRaise: @"invalid quasiquote, wrong arg num"];
-    return [ObjScheme expandQuasiquote: [list cadr]];
+    return [ObjScheme expandQuasiquote: CADR(list)];
 
   } else if ( [head isKindOfClass: [ObSSymbol class]] ) {
     ObSSymbol* symbol = head;
@@ -466,7 +466,7 @@ static NSMutableArray* __loaders = nil;
     } else if ( [first isKindOfClass: [ObSCons class]] && CAR((ObSCons*)first) == S_UNQUOTESPLICING ) {
       ObSCons* unquoteSplicingSpec = first;
       [ObjScheme assertSyntax: ([ObjScheme listLength: unquoteSplicingSpec] == 2) elseRaise: @"invalid unquote-splicing phrase, missing operand"];
-      return CONS(S_APPEND, CONS([unquoteSplicingSpec cadr], CONS([ObjScheme expandQuasiquote: remainderOfList], C_NULL)));
+      return CONS(S_APPEND, CONS(CADR(unquoteSplicingSpec), CONS([ObjScheme expandQuasiquote: remainderOfList], C_NULL)));
 
     } else {
       return CONS(S_CONS, CONS([ObjScheme expandQuasiquote: first], CONS([ObjScheme expandQuasiquote: remainderOfList], C_NULL)));
@@ -544,7 +544,7 @@ static NSMutableArray* __loaders = nil;
         if ( lastCons == nil ) {
           list = lastCons = cell;
         } else {
-          lastCons.cdr = cell;
+          [lastCons setCdr: cell];
           lastCons = cell;
         }
       }
