@@ -35,15 +35,14 @@
   [super dealloc];
 }
 
-- (id)invokeWithArguments:(NSArray*)arguments {
+- (id)invokeWithArguments:(ObSCons*)arguments {
   id ret = nil;
-  ObSCons* schemeArguments = [ObjScheme list: arguments];
 
   if ( _proc != nil ) {
-    ret = [_proc callWith: schemeArguments];
+    ret = [_proc callWith: arguments];
 
   } else {
-    ret = _nativeBlock(schemeArguments);
+    ret = _nativeBlock(arguments);
   }
 
   if ( [ret conformsToProtocol: @protocol(ObSProcedure)] ) {
@@ -81,15 +80,15 @@
 }
 
 - (id)callFunctionNamed:(NSString*)string {
-  return [self callFunctionNamed: string withArguments: [NSArray array]];
+  return [self callFunctionNamed: string withArguments: (ObSCons*)C_NULL];
 }
 
 - (id)callFunctionNamed:(NSString*)string withArgument:(id)argument  {
   ObSBridgedProcedure* proc = [self schemeObjectForKey: string];
-  return [proc invokeWithArguments: @[argument]];
+  return [proc invokeWithArguments: CONS(argument, C_NULL)];
 }
 
-- (id)callFunctionNamed:(NSString*)string withArguments:(NSArray*)arguments  {
+- (id)callFunctionNamed:(NSString*)string withArguments:(ObSCons*)arguments  {
   ObSBridgedProcedure* proc = [self schemeObjectForKey: string];
   return [proc invokeWithArguments: arguments];
 }

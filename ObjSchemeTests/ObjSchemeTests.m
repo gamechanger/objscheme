@@ -549,10 +549,10 @@ typedef void (^Thunk)(void);
   returnValue = [scheme callFunctionNamed: @"echo" withArgument: @NO];
   STAssertTrue( [ObjScheme isFalse: returnValue], @"Failed to treat @NO as false saw %@", returnValue );
 
-  returnValue = [scheme callFunctionNamed: @"echo2" withArguments: @[ @[@YES, @NO], @0 ]];
+  returnValue = [scheme callFunctionNamed: @"echo2" withArguments: CONS( (@[@YES, @NO]), CONS(@0, C_NULL)) ];
   STAssertTrue( [ObjScheme isTrue: returnValue], @"Failed to treat @YES as true saw %@", returnValue );
 
-  returnValue = [scheme callFunctionNamed: @"echo2" withArguments: @[ @[@YES, @NO], @1 ]];
+  returnValue = [scheme callFunctionNamed: @"echo2" withArguments: CONS( (@[@YES, @NO]), CONS(@1, C_NULL)) ];
   STAssertTrue( [ObjScheme isFalse: returnValue], @"Failed to treat @NO as false saw %@", returnValue );
 
 }
