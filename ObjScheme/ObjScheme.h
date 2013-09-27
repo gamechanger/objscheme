@@ -62,16 +62,16 @@ extern ObSConstant* UNSPECIFIED;
 
 
 @interface ObjScheme : NSObject
-+ (ObSScope*)globalScope;
-+ (id)parseOneToken:(ObSInPort*)inPort;
-+ (id)parseString:(NSString*)string;
+- (ObSScope*)globalScope;
+- (void)loadFile:(NSString*)filename;
+- (void)loadFile:(NSString*)filename intoScope:(ObSScope*)scope;
+- (void)loadSource:(NSString*)source intoScope:(ObSScope*)scope;
+- (void)loadInPort:(ObSInPort*)port intoScope:(ObSScope*)scope forFilename:(NSString*)filename;
+- (id)parseOneToken:(ObSInPort*)inPort;
+- (id)parseString:(NSString*)string;
 + (id)read:(ObSInPort*)inPort;
 + (BOOL)isTrue:(id)token;
 + (BOOL)isFalse:(id)token;
-+ (void)loadFile:(NSString*)filename;
-+ (void)loadFile:(NSString*)filename intoScope:(ObSScope*)scope;
-+ (void)loadSource:(NSString*)source intoScope:(ObSScope*)scope;
-+ (void)loadInPort:(ObSInPort*)port intoScope:(ObSScope*)scope forFilename:(NSString*)filename;
 + (void)addFileLoader:(id<ObSFileLoader>)loader;
 + (void)removeFileLoader:(id<ObSFileLoader>)loader;
 
