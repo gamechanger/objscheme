@@ -46,8 +46,13 @@
 
   } else {
     ObSCons* cons = obj;
-    return [cons->_car isEqual: _car] && [cons->_cdr isEqual: _cdr];
+    return (cons->_car == _car || [cons->_car isEqual: _car]) &&
+      ( cons->_cdr == _cdr || [cons->_cdr isEqual: _cdr] );
   }
+}
+
+- (NSUInteger)hash {
+  return (NSUInteger)self;
 }
 
 - (BOOL)isList {

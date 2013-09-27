@@ -599,18 +599,11 @@ id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
     return C_NULL;
   }
 
-  id predicateReturn;
-
-  if ( [predicate conformsToProtocol: @protocol(ObSUnaryLambda)] ) {
-    id<ObSUnaryLambda> native = (id<ObSUnaryLambda>)predicate;
-    predicateReturn = [native callNatively: CAR(list)];
-
-  } else {
-    predicateReturn = [predicate callWith: CONS(CAR(list), C_NULL)];
-  }
+  id item = CAR(list);
+  id predicateReturn = [predicate callWithSingleArg: item];
 
   if ( predicateReturn == B_FALSE ) {
-    return CONS(CAR(list), srfi1_remove(predicate, CDR(list)));
+    return CONS(item, srfi1_remove(predicate, CDR(list)));
 
   } else {
     return srfi1_remove(predicate, CDR(list));
@@ -1181,16 +1174,8 @@ id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
         if ( b != C_NULL ) {
           id<ObSProcedure> proc = a;
           ObSCons* list = b;
-          if ( [a conformsToProtocol: @protocol(ObSUnaryLambda)] ) {
-            id<ObSUnaryLambda> unary = a;
-            for ( id item in list ) {
-              [unary callNatively: item];
-            }
-
-          } else {
-            for ( id item in list ) {
-              [proc callWith: CONS(item, C_NULL)];
-            }
+          for ( id item in list ) {
+            [proc callWithSingleArg: item];
           }
         }
         return UNSPECIFIED;

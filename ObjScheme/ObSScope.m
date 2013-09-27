@@ -16,7 +16,8 @@
 #import "ObSGarbageCollector.h"
 
 
-@implementation ObSScope
+@implementation ObSScope {
+}
 
 @synthesize outer=_outerScope, environ=_environ;
 
@@ -85,7 +86,7 @@ BOOL _errorLogged = NO;
 }
 
 - (NSArray*)children {
-  NSMutableArray* children = [NSMutableArray arrayWithCapacity: [_environ count]];
+  NSMutableArray* children = [NSMutableArray arrayWithCapacity: [_environ count] + ( _outerScope == nil ? 0 : 1 )];
   for ( id value in [_environ allValues] ) {
     if ( [value isKindOfClass: [ObSCollectible class]] ) {
       [children addObject: value];
@@ -99,6 +100,9 @@ BOOL _errorLogged = NO;
   return children;
 }
 
+/*
+ * Used in GarbageCollection.
+ */
 - (void)releaseChildren {
   [_environ removeAllObjects];
 }
@@ -163,16 +167,14 @@ BOOL _errorLogged = NO;
 
   } else {
     ObSCons* list = arg;
-    return CONS([self evaluate: CAR(list)], [self evaluateList: CDR(list)]);
+    return CONS([self evaluate: CAR(list) named: nil], [self evaluateList: CDR(list)]);
   }
 }
 
 - (id)begin:(ObSCons*)expressions {
-  NSAssert( [expressions isKindOfClass: [ObSCons class]], @"invalid begin block %@", expressions);
-
   id ret = nil;
   for ( id expression in expressions ) {
-    ret = [self evaluate: expression];
+    ret = [self evaluate: expression named: nil];
   }
   NSAssert(ret, @"Empty begin statement");
   return ret;
@@ -226,16 +228,18 @@ static NSMutableDictionary* __evalMap;
       [scope pushStack: S_EVAL];
       *popStackWhenDone = YES;
       *done = NO;
-      id newCode = [scope evaluate: CAR(args)];
+      id newCode = [scope evaluate: CAR(args) named: nil];
       return newCode;
     });
 
   __evalMap[S_OR.string] = Block_copy(^(ObSScope* scope, ObSSymbol* name, ObSCons* args, BOOL* popStackWhenDone, BOOL* done) {
+      *done = YES;
+
       id operands = args;
       id result = B_FALSE;
       while ( operands != C_NULL ) {
         ObSCons* lst = operands;
-        result = [scope evaluate: CAR(lst)];
+        result = [scope evaluate: CAR(lst) named: nil];
         if ( result != B_FALSE ) {
           return result;
         }
@@ -245,11 +249,13 @@ static NSMutableDictionary* __evalMap;
     });
 
   __evalMap[S_AND.string] = Block_copy(^(ObSScope* scope, ObSSymbol* name, ObSCons* args, BOOL* popStackWhenDone, BOOL* done) {
+      *done = YES;
+
       id operands = args;
       id result = B_FALSE;
       while ( operands != C_NULL ) {
         ObSCons* lst = operands;
-        result = [scope evaluate: CAR(lst)];
+        result = [scope evaluate: CAR(lst) named: nil];
         if ( result == B_FALSE ) {
           return result;
         }
@@ -259,6 +265,8 @@ static NSMutableDictionary* __evalMap;
     });
 
   __evalMap[S_COND.string] = Block_copy(^(ObSScope* scope, ObSSymbol* name, ObSCons* args, BOOL* popStackWhenDone, BOOL* done) {
+      *done = YES;
+
       ObSCons* listOfTuples = args;
       id ret = UNSPECIFIED;
 
@@ -270,7 +278,7 @@ static NSMutableDictionary* __evalMap;
           break;
 
         } else {
-          id condition = [scope evaluate: left];
+          id condition = [scope evaluate: left named: nil];
           if ( condition != B_FALSE ) {
             if ( CDR(conditionAndResult) == C_NULL ) {
               *done = YES;
@@ -309,7 +317,7 @@ static NSMutableDictionary* __evalMap;
         for ( ObSCons* definition in definitions ) {
           ObSSymbol* name = CAR(definition);
           id expression = CADR(definition);
-          [letScope define: name as: [scope evaluate: expression]];
+          [letScope define: name as: [scope evaluate: expression named: nil]];
           [argList addObject: name];
         }
 
@@ -338,7 +346,7 @@ static NSMutableDictionary* __evalMap;
         for ( ObSCons* definition in definitions ) {
           ObSSymbol* name = CAR(definition);
           id expression = CADR(definition);
-          [letScope define: name as: [scope evaluate: expression]];
+          [letScope define: name as: [scope evaluate: expression named: nil]];
         }
 
         ret = [letScope begin: body];
@@ -358,7 +366,7 @@ static NSMutableDictionary* __evalMap;
     for ( ObSCons* definition in definitions ) {
       ObSSymbol* symbol = CAR(definition);
       id expression = CADR(definition);
-      [letScope define: symbol as: [letScope evaluate: expression]];
+      [letScope define: symbol as: [letScope evaluate: expression named: nil]];
     }
 
     id ret = [letScope begin: body];
@@ -389,7 +397,7 @@ static NSMutableDictionary* __evalMap;
         if ( step ) {
           varToStep[name.string] = step;
         }
-        [doScope define: name as: [scope evaluate: value]];
+        [doScope define: name as: [scope evaluate: value named: nil]];
       }
 
       id exit_condition = CAR(exit);
@@ -398,14 +406,14 @@ static NSMutableDictionary* __evalMap;
       BOOL haveSteps = [varToStep count] > 0;
 
       while ( 1 ) {
-        id testValue = [doScope evaluate: exit_condition];
+        id testValue = [doScope evaluate: exit_condition named: nil];
         if ( testValue != B_FALSE ) {
           ret = B_FALSE;
           id body = exitBody;
 
           while ( body != C_NULL ) {
             ObSCons* realBody = body;
-            ret = [doScope evaluate: CAR(realBody)];
+            ret = [doScope evaluate: CAR(realBody) named: nil];
             body = CDR(realBody);
           }
 
@@ -415,7 +423,7 @@ static NSMutableDictionary* __evalMap;
         id body = loopBody;
         while ( body != C_NULL ) {
           ObSCons* realBody = body;
-          [doScope evaluate: CAR(realBody)];
+          [doScope evaluate: CAR(realBody) named: nil];
           body = CDR(realBody);
         }
 
@@ -423,7 +431,7 @@ static NSMutableDictionary* __evalMap;
           NSMutableDictionary* changes = [[NSMutableDictionary alloc] init];
 
           for ( NSString* var in varToStep ) {
-            changes[var] = [doScope evaluate: varToStep[var]];
+            changes[var] = [doScope evaluate: varToStep[var] named: nil];
           }
 
           if ( [changes count] ) {
@@ -457,7 +465,7 @@ static NSMutableDictionary* __evalMap;
   __evalMap[S_IF.string] = Block_copy(^(ObSScope* scope, ObSSymbol* name, ObSCons* args, BOOL* popStackWhenDone, BOOL* done) {
       *done = NO;
 
-      if ( [scope evaluate: CAR(args)] != B_FALSE ) {
+      if ( [scope evaluate: CAR(args) named: nil] != B_FALSE ) {
         return CADR(args);
 
       } else {
@@ -469,8 +477,8 @@ static NSMutableDictionary* __evalMap;
       *done = YES;
 
       id ret;
-      id toFind = [scope evaluate: CAR(args)];
-      id list = [scope evaluate: CADR(args)];
+      id toFind = [scope evaluate: CAR(args) named: nil];
+      id list = [scope evaluate: CADR(args) named: nil];
       if ( [list isKindOfClass: [NSArray class]] ) {
         NSArray* a = list;
         ret = [a containsObject: toFind] ? B_TRUE : B_FALSE;
@@ -496,8 +504,8 @@ static NSMutableDictionary* __evalMap;
       *done = YES;
       id function_name = CAR(args);
       id function_args = CADR(args);
-      id fargs = [scope evaluate: function_args];
-      id proc = [scope evaluate: function_name];
+      id fargs = [scope evaluate: function_args named: nil];
+      id proc = [scope evaluate: function_name named: nil];
       [scope pushStack: function_name];
       id ret = [proc callWith: fargs];
       [scope popStack];
@@ -510,7 +518,7 @@ static NSMutableDictionary* __evalMap;
       ObSSymbol* symbol = CAR(args);
       id expression = CADR(args);
       ObSScope* definingScope = [scope findScopeOf: symbol]; // I do this first, which can fail, so we don't bother executing predicate
-      [definingScope define: symbol as: [scope evaluate: expression]];
+      [definingScope define: symbol as: [scope evaluate: expression named: nil]];
       [scope popStack];
       return UNSPECIFIED;
     });
@@ -548,16 +556,16 @@ static NSMutableDictionary* __evalMap;
       } else {
         id ret = B_FALSE;
         for ( id expression in args ) {
-          ret = [scope evaluate: expression];
+          ret = [scope evaluate: expression named: nil];
         }
         return ret;
       }
     });
 
   __evalMap[S_LOAD.string] = Block_copy(^(ObSScope* scope, ObSSymbol* name, ObSCons* args, BOOL* popStackWhenDone, BOOL* done) {
-      NSString* filename = [scope evaluate: CAR(args)];
+      NSString* filename = [scope evaluate: CAR(args) named: nil];
       if ( (id)CDR(args) != C_NULL ) {
-        scope = [scope evaluate: CADR(args)];
+        scope = [scope evaluate: CADR(args) named: nil];
       }
       [ObjScheme loadFile: filename intoScope: scope];
       return UNSPECIFIED;
@@ -613,7 +621,7 @@ static NSMutableDictionary* __evalMap;
           }
         }
 
-        id<ObSProcedure> procedure = [self evaluate: head];
+        id<ObSProcedure> procedure = [self evaluate: head named: nil];
         ObSCons* args = [self evaluateList: rest];
         [self pushStack: head];
         //NSTimeInterval start = [NSDate timeIntervalSinceReferenceDate];

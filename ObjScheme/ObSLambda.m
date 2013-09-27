@@ -116,6 +116,16 @@
   }
 }
 
+- (id)callWithSingleArg:(id)arg {
+  ObSScope* invocationScope = [self newInvocationScope];
+  ObSSymbol* argName = CAR((ObSCons*)_parameters);
+  [invocationScope define: argName as: arg];
+  id ret = [invocationScope evaluate: _expression];
+  [self doneWithInvocationScope: invocationScope];
+  [invocationScope release];
+  return ret;
+}
+
 - (id)callWith:(ObSCons*)arguments {
   ObSScope* invocationScope = [self newInvocationScope];
 
@@ -179,9 +189,22 @@
   return _block;
 }
 
+- (id)callWithSingleArg:(id)arg {
+  NSArray* args = [[NSArray alloc] initWithObjects: arg, nil];
+  id ret = _block(args);
+  [args release];
+  return ret;
+}
+
+static NSArray* __emptyNativeArgs = nil;
+
 - (id)callWith:(ObSCons*)arguments {
+  if ( __emptyNativeArgs == nil ) {
+    __emptyNativeArgs = [[NSArray alloc] init];
+  }
+
   if ( (id)arguments == C_NULL ) {
-    return _block([NSArray array]);
+    return _block(__emptyNativeArgs);
 
   } else {
     return _block([arguments toArray]);
@@ -212,6 +235,11 @@
   Block_release(_block);
   [_name release];
   [super dealloc];
+}
+
+- (id)callWithSingleArg:(id)arg {
+  [NSException raise: @"InvalidArgument" format: @"%@ needs 2 args, not %@", self.name, arg];
+  return nil;
 }
 
 - (id)callWith:(ObSCons*)list {
@@ -255,7 +283,7 @@
   return _block(CAR(list));
 }
 
-- (id)callNatively:(id)arg {
+- (id)callWithSingleArg:(id)arg {
   return _block(arg);
 }
 
@@ -286,6 +314,11 @@
   Block_release(_block);
   [_name release];
   [super dealloc];
+}
+
+- (id)callWithSingleArg:(id)arg {
+  [NSException raise: @"InvalidArgument" format: @"%@ is a no-arg function, but you called it with %@", self.name, arg];
+  return nil;
 }
 
 - (id)callWith:(ObSCons*)list {
