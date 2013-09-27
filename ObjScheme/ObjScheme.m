@@ -523,7 +523,7 @@ id appendListsToList(ObSCons* lists, ObSCons* aList) {
   id token = [ObjScheme parseOneToken: port];
 
   while ( token != _EOF ) {
-    [scope evaluate: token];
+    [scope evaluate: token named: nil];
     token = [ObjScheme parseOneToken: port];
   }
 

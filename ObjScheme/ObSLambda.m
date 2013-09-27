@@ -120,7 +120,7 @@
   ObSScope* invocationScope = [self newInvocationScope];
   ObSSymbol* argName = CAR((ObSCons*)_parameters);
   [invocationScope define: argName as: arg];
-  id ret = [invocationScope evaluate: _expression];
+  id ret = [invocationScope evaluate: _expression named: nil];
   [self doneWithInvocationScope: invocationScope];
   [invocationScope release];
   return ret;
@@ -149,7 +149,7 @@
     [invocationScope define: _listParameter as: arguments];
   }
 
-  id ret = [invocationScope evaluate: _expression];
+  id ret = [invocationScope evaluate: _expression named: nil];
   [self doneWithInvocationScope: invocationScope];
   [invocationScope release];
   return ret;
