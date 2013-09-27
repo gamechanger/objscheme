@@ -190,25 +190,11 @@
 }
 
 - (id)callWithSingleArg:(id)arg {
-  NSArray* args = [[NSArray alloc] initWithObjects: arg, nil];
-  id ret = _block(args);
-  [args release];
-  return ret;
+  return _block(CONS(arg, C_NULL));
 }
 
-static NSArray* __emptyNativeArgs = nil;
-
 - (id)callWith:(ObSCons*)arguments {
-  if ( __emptyNativeArgs == nil ) {
-    __emptyNativeArgs = [[NSArray alloc] init];
-  }
-
-  if ( (id)arguments == C_NULL ) {
-    return _block(__emptyNativeArgs);
-
-  } else {
-    return _block([arguments toArray]);
-  }
+  return _block(arguments);
 }
 
 @end

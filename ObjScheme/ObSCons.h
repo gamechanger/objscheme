@@ -16,6 +16,7 @@
 + (ObSCons*)cons:(id)a and:(id)b;
 - (id)initWithCar:(id)car cdr:(id)cdr;
 - (NSArray*)toArray;
+- (NSMutableArray*)toMutableArray;
 - (NSUInteger)count;
 - (ObSCons*)clone;
 - (void)setCdr:(id)cdr;

@@ -147,7 +147,7 @@ static NSMutableArray* __loaders = nil;
 }
 
 + (id)map:(id<ObSProcedure>)proc on:(id)arg {
-  if ( arg == C_NULL ) {
+  if ( EMPTY(arg) ) {
     return C_NULL;
 
   } else {
@@ -205,7 +205,7 @@ static NSMutableArray* __loaders = nil;
 }
 
 + (BOOL)isEmptyList:(id)token {
-  return token == C_NULL;
+  return EMPTY(token);
 }
 
 + (NSUInteger)listLength:(ObSCons*)list {
@@ -224,8 +224,20 @@ static NSMutableArray* __loaders = nil;
   return list;
 }
 
+id appendListsToList(ObSCons* lists, ObSCons* aList) {
+  if ( EMPTY(lists) ) {
+    return aList;
+  }
+
+  if ( EMPTY(aList) ) {
+    return appendListsToList( CDR(lists), CAR(lists) );
+  }
+
+  return CONS(CAR(aList), appendListsToList( lists, CDR(aList) ));
+}
+
 + (id)expandLetDefinitions:(id)definitions {
-  if ( definitions == C_NULL ) {
+  if ( EMPTY(definitions) ) {
     return C_NULL;
 
   } else {
@@ -241,7 +253,7 @@ static NSMutableArray* __loaders = nil;
 }
 
 + (id)expandTokenList:(id)arg atTopLevel:(BOOL)topLevel {
-  if ( arg == C_NULL ) {
+  if ( EMPTY(arg) ) {
     return C_NULL;
 
   } else {
@@ -389,7 +401,7 @@ static NSMutableArray* __loaders = nil;
       }
 
     } else {
-      [ObjScheme assertSyntax: parameters == C_NULL || [parameters isKindOfClass: [ObSSymbol class]] elseRaise: [NSString stringWithFormat: @"invalid lambda parameter %@", parameters]];
+      [ObjScheme assertSyntax: EMPTY(parameters) || [parameters isKindOfClass: [ObSSymbol class]] elseRaise: [NSString stringWithFormat: @"invalid lambda parameter %@", parameters]];
     }
 
     ObSCons* body = CDDR(list);
@@ -414,7 +426,7 @@ static NSMutableArray* __loaders = nil;
 }
 
 + (id)filter:(id)list with:(id<ObSProcedure>)proc {
-  if ( list == C_NULL ) {
+  if ( EMPTY(list) ) {
     return C_NULL;
 
   } else {
@@ -595,7 +607,7 @@ static NSMutableArray* __loaders = nil;
 }
 
 id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
-  if ( (id)list == C_NULL ) {
+  if ( EMPTY(list) ) {
     return C_NULL;
   }
 
@@ -614,7 +626,7 @@ id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
   [scope define: SY(@"+inf.0") as: INF];
 
   [scope defineFunction: [ObSNativeLambda named: SY(@"+")
-                                      fromBlock: ^(NSArray* list) {
+                                      fromBlock: ^(ObSCons* list) {
         if ( [list count] == 0 ) {
           return [NSNumber numberWithInteger: 0];
         }
@@ -648,9 +660,9 @@ id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
       }]];
 
   [scope defineFunction: [ObSNativeLambda named: SY(@"-")
-                                      fromBlock: ^(NSArray* list) {
-        NSNumber* first = [list objectAtIndex: 0];
-        NSNumber* second = [list objectAtIndex: 1];
+                                      fromBlock: ^(ObSCons* list) {
+        NSNumber* first = CAR(list);
+        NSNumber* second = CADR(list);
         if ( first == INF || second == INF ) {
           return INF;
         }
@@ -664,8 +676,8 @@ id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
       }]];
 
   [scope defineFunction: [ObSNativeLambda named: SY(@"*")
-                                      fromBlock: ^(NSArray* list) {
-        if ( [list count] == 0 ) {
+                                      fromBlock: ^(ObSCons* list) {
+        if ( EMPTY(list) ) {
           return [NSNumber numberWithInteger: 0];
         }
 
@@ -694,62 +706,66 @@ id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
       }]];
 
   [scope defineFunction: [ObSNativeLambda named: SY(@"/")
-                                      fromBlock: ^(NSArray* list) {
-                                        NSNumber* first = [list objectAtIndex: 0];
-                                        NSNumber* second = [list objectAtIndex: 1];
+                                      fromBlock: ^(ObSCons* list) {
+        NSNumber* first = CAR(list);
+        NSNumber* second = CADR(list);
 
-                                        if ( [second floatValue] == 0.0 )
-                                          return INF;
+        if ( [second floatValue] == 0.0 ) {
+          return INF;
+        }
 
-                                        if ( [first floatValue] == 0.0 )
-                                          return first;
+        if ( [first floatValue] == 0.0 ) {
+          return first;
+        }
 
-                                        return [NSNumber numberWithDouble: [first doubleValue]/[second doubleValue]];
-                                      }]];
+        return [NSNumber numberWithDouble: [first doubleValue] / [second doubleValue]];
+      }]];
 
   [scope defineFunction: [ObSNativeLambda named: SY(@"safe-divide")
-                                      fromBlock: ^(NSArray* list) {
-                                        NSNumber* first = [list objectAtIndex: 0];
-                                        NSNumber* second = [list objectAtIndex: 1];
+                                      fromBlock: ^(ObSCons* list) {
+        NSNumber* first = CAR(list);
+        NSNumber* second = CADR(list);
 
-                                        if ( [second floatValue] == 0.0 )
-                                          return INF;
+        if ( [second floatValue] == 0.0 ) {
+          return INF;
+        }
 
-                                        if ( [first floatValue] == 0.0 )
-                                          return first;
+        if ( [first floatValue] == 0.0 ) {
+          return first;
+        }
 
-                                        return [NSNumber numberWithDouble: [first doubleValue]/[second doubleValue]];
-                                      }]];
+        return [NSNumber numberWithDouble: [first doubleValue] / [second doubleValue]];
+      }]];
 
 
   [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"not")
                                                  fromBlock: ^(id object) { return object == B_FALSE ? B_TRUE : B_FALSE; }]];
 
   [scope defineFunction: [ObSNativeLambda named: SY(@">")
-                                      fromBlock: ^(NSArray* list) {
-        NSNumber* first = [list objectAtIndex: 0];
-        NSNumber* second = [list objectAtIndex: 1];
+                                      fromBlock: ^(ObSCons* list) {
+        NSNumber* first = CAR(list);
+        NSNumber* second = CADR(list);
         return [first doubleValue] > [second doubleValue] ? B_TRUE : B_FALSE;
       }]];
 
   [scope defineFunction: [ObSNativeLambda named: SY(@"<")
-                                      fromBlock: ^(NSArray* list) {
-        NSNumber* first = [list objectAtIndex: 0];
-        NSNumber* second = [list objectAtIndex: 1];
+                                      fromBlock: ^(ObSCons* list) {
+        NSNumber* first = CAR(list);
+        NSNumber* second = CADR(list);
         return [first doubleValue] < [second doubleValue] ? B_TRUE : B_FALSE;
       }]];
 
   [scope defineFunction: [ObSNativeLambda named: SY(@">=")
-                                      fromBlock: ^(NSArray* list) {
-        NSNumber* first = [list objectAtIndex: 0];
-        NSNumber* second = [list objectAtIndex: 1];
+                                      fromBlock: ^(ObSCons* list) {
+        NSNumber* first = CAR(list);
+        NSNumber* second = CADR(list);
         return [first doubleValue] >= [second doubleValue] ? B_TRUE : B_FALSE;
       }]];
 
   [scope defineFunction: [ObSNativeLambda named: SY(@"<=")
-                                      fromBlock: ^(NSArray* list) {
-        NSNumber* first = [list objectAtIndex: 0];
-        NSNumber* second = [list objectAtIndex: 1];
+                                      fromBlock: ^(ObSCons* list) {
+        NSNumber* first = CAR(list);
+        NSNumber* second = CADR(list);
         return [first doubleValue] <= [second doubleValue] ? B_TRUE : B_FALSE;
       }]];
 
@@ -763,25 +779,26 @@ id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
 
   [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"list?")
                                            fromBlock: ^(id o) {
-        if ( o == C_NULL ) {
+        if ( EMPTY(o) ) {
           return B_TRUE;
 
         } else if ( [o isKindOfClass: [ObSCons class]] ) {
           ObSCons* cons = o;
           id cdr = CDR(cons);
-          return TRUTH(cdr == C_NULL || [cdr isKindOfClass: [ObSCons class]]);
+          return TRUTH(EMPTY(cdr) || [cdr isKindOfClass: [ObSCons class]]);
 
         } else {
           return B_FALSE;
         }
       }]];
 
-  [scope defineFunction: U_LAMBDA(@"null?", ^(id o) { return TRUTH(o == C_NULL); })];
+  [scope defineFunction: U_LAMBDA(@"null?", ^(id o) { return TRUTH(EMPTY(o)); })];
 
   [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"last")
                                             fromBlock: ^(id list) {
-        if ( list == C_NULL )
+        if ( EMPTY(list) ) {
           return [ObjScheme boolToTruth: NO];
+        }
 
         ObSCons* tail = list;
         id item = CAR(tail);
@@ -870,7 +887,7 @@ id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
 
   [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"length")
                                            fromBlock: ^(id o) {
-        if ( o == C_NULL ) {
+        if ( EMPTY(o) ) {
           return [NSNumber numberWithInteger: 0];
         }
 
@@ -896,7 +913,7 @@ id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
 
   [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"pair?")
                                            fromBlock: ^(id o) {
-        if ( o == C_NULL || ! [o isKindOfClass: [ObSCons class]] ) {
+        if ( EMPTY(o) || ! [o isKindOfClass: [ObSCons class]] ) {
           return B_FALSE;
 
         } else {
@@ -906,7 +923,7 @@ id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
           while ( 1 ) {
             o = CDR(cons);
 
-            if ( o == C_NULL ) {
+            if ( EMPTY(o) ) {
               return B_FALSE; // this is a list, by definition
             }
 
@@ -938,10 +955,10 @@ id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
         return TRUTH([o conformsToProtocol: @protocol(ObSProcedure)]);
       }]];
 
-  [scope defineFunction: U_LAMBDA(@"symbol->string", ^(id o) { ObSSymbol* s = o; return s.string; })];
+         [scope defineFunction: U_LAMBDA(@"symbol->string", ^(id o) { ObSSymbol* s = o; return s.string; })];
   [scope defineFunction: U_LAMBDA(@"string->symbol", ^(id o) { return [ObSSymbol symbolFromString: o]; })];
   [scope defineFunction: [ObSNativeLambda named: SY(@"string-append")
-                                      fromBlock: ^(NSArray* strings) {
+                                      fromBlock: ^(ObSCons* strings) {
         NSMutableString* string = [NSMutableString string];
         for ( NSString* s in strings ) {
           [string appendString: s];
@@ -970,14 +987,14 @@ id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
   [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"map")
                                             fromBlock: ^(id proc, id args) {
         NSAssert1( [proc conformsToProtocol: @protocol(ObSProcedure)], @"map: proc is %@", proc );
-        NSAssert1( args == C_NULL || [args isKindOfClass: [ObSCons class]], @"map: args is '%@'", args );
+        NSAssert1( EMPTY(args) || [args isKindOfClass: [ObSCons class]], @"map: args is '%@'", args );
         return [ObjScheme map: (id<ObSProcedure>)proc on: (ObSCons*)args];
       }]];
 
   [scope defineFunction: U_LAMBDA(@"display", ^(id x) { NSLog(@"%@", x); return B_FALSE; })];
 
   [scope defineFunction: [ObSNativeLambda named: SY(@"newline")
-                                      fromBlock: ^(NSArray* array) {
+                                      fromBlock: ^(ObSCons* array) {
         NSLog(@"");
         return B_FALSE; }]];
 
@@ -1025,15 +1042,15 @@ id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
   [scope defineFunction: B_LAMBDA(@"string-startswith?", ^(id a, id b) { return [ObjScheme boolToTruth: [(NSString*)a hasPrefix: (NSString*)b]]; })];
   [scope defineFunction: B_LAMBDA(@"string-endswith?", ^(id a, id b) { return [ObjScheme boolToTruth: [(NSString*)a hasSuffix: (NSString*)b]]; })];
   [scope defineFunction: [ObSNativeLambda named: SY(@"string-substring")
-                                      fromBlock: ^(NSArray* args) {
-        NSString* string = [args objectAtIndex: 0];
-        NSInteger firstIdx = [(NSNumber*)[args objectAtIndex: 1] intValue];
+                                      fromBlock: ^(ObSCons* args) {
+        NSString* string = CAR(args);
+        NSInteger firstIdx = [(NSNumber*)CADR(args) intValue];
         if ( firstIdx < 0 ) {
           firstIdx = [string length] + firstIdx; // + is right, it's negative
         }
 
-        if ( [args count] == 3 ) {
-          NSInteger secondIdx = [(NSNumber*)[args objectAtIndex: 2] intValue];
+        if ( CDDR(args) != C_NULL ) {
+          NSInteger secondIdx = [(NSNumber*)CADDR(args) integerValue];
           if ( secondIdx < 0 ) {
             secondIdx = [string length] + secondIdx; // + is right, it's negative
           }
@@ -1049,7 +1066,7 @@ id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
   [scope defineFunction: B_LAMBDA(@"split", ^(id s1, id s2) { NSString* str = s1; NSString* d = s2; return [ObjScheme list: [str componentsSeparatedByString: d]]; })];
 
   [scope defineFunction: [ObSNativeLambda named: SY(@"max")
-                                      fromBlock: ^(NSArray* args) {
+                                      fromBlock: ^(ObSCons* args) {
         NSNumber* max = nil;
         double maxDouble = 0.0;
 
@@ -1066,7 +1083,7 @@ id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
       }]];
 
   [scope defineFunction: [ObSNativeLambda named: SY(@"min")
-                                      fromBlock: ^(NSArray* args) {
+                                      fromBlock: ^(ObSCons* args) {
         NSNumber* min = nil;
         double minDouble = 0.0;
 
@@ -1083,13 +1100,13 @@ id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
       }]];
 
   [scope defineFunction: [ObSNativeLambda named: SY(@"make-vector")
-                                      fromBlock: ^(NSArray* args) {
-        int size = [(NSNumber*)[args objectAtIndex: 0] intValue];
+                                      fromBlock: ^(ObSCons* args) {
+        int size = [(NSNumber*)CAR(args) intValue];
         NSMutableArray* vector = [NSMutableArray arrayWithCapacity: size];
 
         id fill = UNSPECIFIED;
-        if ( [args count] > 1 ) {
-          fill = [args objectAtIndex: 1];
+        if ( CDR(args) != C_NULL ) {
+          fill = CADR(args);
         }
 
         for ( int i = 0; i < size; i++ ) {
@@ -1100,22 +1117,22 @@ id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
       }]];
 
   [scope defineFunction: [ObSNativeLambda named: SY(@"vector")
-                                      fromBlock: ^(NSArray* args) {
-        return args;
+                                      fromBlock: ^(ObSCons* args) {
+        return [args toMutableArray];
       }]];
 
-  [scope defineFunction: U_LAMBDA(@"vector-length", ^(id a) { return [NSNumber numberWithInteger: [(NSArray*)a count]]; })];
+         [scope defineFunction: U_LAMBDA(@"vector-length", ^(id a) { return [NSNumber numberWithInteger: [(NSArray*)a count]]; })];
 
   [scope defineFunction: U_LAMBDA(@"vector?", ^(id a) { return TRUTH([a isKindOfClass: [NSArray class]]); })];
 
-  [scope defineFunction: U_LAMBDA(@"vector->list", ^(id a) { return [ObjScheme list: (NSArray*)a]; })];
-  [scope defineFunction: U_LAMBDA(@"list->vector", ^(id a) { if ( a == C_NULL ) { return (id)[NSArray array]; } else { return (id)[(ObSCons*)a toArray]; } })];
+         [scope defineFunction: U_LAMBDA(@"vector->list", ^(id a) { return [ObjScheme list: (NSArray*)a]; })];
+         [scope defineFunction: U_LAMBDA(@"list->vector", ^(id a) { if ( EMPTY(a) ) { return (id)[NSArray array]; } else { return (id)[(ObSCons*)a toArray]; } })];
   [scope defineFunction: B_LAMBDA(@"vector-ref", ^(id a, id b) { return [(NSArray*)a objectAtIndex: [(NSNumber*)b intValue]]; })];
   [scope defineFunction: [ObSNativeLambda named: SY(@"vector-set!")
-                                      fromBlock: ^(NSArray* args) {
-        NSMutableArray* vector = [args objectAtIndex: 0];
-        int index = [(NSNumber*)[args objectAtIndex: 1] intValue];
-        id value = [args objectAtIndex: 2];
+                                      fromBlock: ^(ObSCons* args) {
+        NSMutableArray* vector = CAR(args);
+        int index = [(NSNumber*)CADR(args) intValue];
+        id value = CADDR(args);
         [vector replaceObjectAtIndex: index withObject: value];
         return UNSPECIFIED;
       }]];
@@ -1130,7 +1147,7 @@ id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
 
         // if length == 0, we'll just return C_NULL, which is correct
         while ( length-- > 0 ) {
-          if ( ret == C_NULL ) {
+          if ( EMPTY(ret) ) {
             // this is just the first iteration, where we create the 1-length sublist
             ret = soFar = CONS(CAR(list), C_NULL);
 
@@ -1150,8 +1167,8 @@ id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
   [scope defineFunction: U_LAMBDA(@"vector->immutable-vector", ^(id a) { return [NSArray arrayWithArray: (NSArray*)a]; })];
   [scope defineFunction: U_LAMBDA(@"immutable?", ^(id a) { return TRUTH([a isKindOfClass: [NSString class]] || ( [a isKindOfClass: [NSArray class]] && ! [a isKindOfClass: [NSMutableArray class]] )); })];
   [scope defineFunction: [ObSNativeLambda named: SY(@"vector-immutable")
-                                      fromBlock: ^(NSArray* params) {
-        return [NSArray arrayWithArray: params];
+                                      fromBlock: ^(ObSCons* params) {
+        return [params toArray];
       }]];
   [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"vector-fill!")
                                             fromBlock: ^(id a, id value) {
@@ -1197,24 +1214,11 @@ id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
       }]];
 
   [scope defineFunction: [ObSNativeLambda named: S_APPEND
-                                      fromBlock: ^(NSArray* array) {
-        ObSCons* list = (id)C_NULL;
-
-        for ( id thing in array ) {
-          if ( thing == (id)C_NULL ) {
-            continue;
-          }
-
-          ObSCons* subList = thing;
-          if ( list == (id)C_NULL ) {
-            list = [subList clone];
-
-          } else {
-            [[ObjScheme tailCons: list] setCdr: [subList clone]];
-          }
+                                      fromBlock: ^(ObSCons* args) {
+        if ( EMPTY(args) ) {
+          return (id)args;
         }
-
-        return (id)list;
+        return appendListsToList(CDR(args), CAR(args));
       }]];
 
   // TODO:

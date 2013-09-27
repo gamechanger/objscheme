@@ -37,12 +37,13 @@
 
 - (id)invokeWithArguments:(NSArray*)arguments {
   id ret = nil;
+  ObSCons* schemeArguments = [ObjScheme list: arguments];
+
   if ( _proc != nil ) {
-    ObSCons* schemeArguments = [ObjScheme list: arguments];
     ret = [_proc callWith: schemeArguments];
 
   } else {
-    ret = _nativeBlock(arguments);
+    ret = _nativeBlock(schemeArguments);
   }
 
   if ( [ret conformsToProtocol: @protocol(ObSProcedure)] ) {

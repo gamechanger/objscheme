@@ -28,11 +28,11 @@
                                            fromBlock: ^(id a) { return [(NSDictionary*)a allKeys]; }]];
 
   [scope defineFunction: [ObSNativeLambda named: SY(@"NSDictionary:dictionaryWithObjectsAndKeys")
-                                      fromBlock: ^(NSArray* args) {
+                                      fromBlock: ^(ObSCons* args) {
         NSMutableDictionary* dict = [NSMutableDictionary dictionary];
-        NSUInteger length = [args count];
-        for ( NSUInteger i = 0; i < length-1; i++ ) {
-          [dict setObject: [args objectAtIndex: i] forKey: [args objectAtIndex: i+1]];
+        while ( (id)args != C_NULL ) {
+          [dict setObject: CAR(args) forKey: CADR(args)];
+          args = CDDR(args);
         }
         return dict;
       }]];
@@ -41,27 +41,25 @@
                                            fromBlock: ^() { return [NSMutableDictionary dictionary]; }]];
 
   [scope defineFunction: [ObSNativeLambda named: SY(@"NSMutableDictionary:setObjectForKey")
-                                      fromBlock: ^(NSArray* args) {
-        NSMutableDictionary* dict = [args objectAtIndex: 0];
-        id value = [args objectAtIndex: 1];
-        id key = [args objectAtIndex: 2];
-        [dict setObject: value forKey: key];
+                                      fromBlock: ^(ObSCons* args) {
+        NSMutableDictionary* dict = CAR(args);
+        [dict setObject: CADR(args) forKey: CADDR(args)];
         return UNSPECIFIED;
       }]];
 
   [scope defineFunction: [ObSNativeLambda named: SY(@"NSMutableDictionary:dictionaryWithObjectsAndKeys")
-                                      fromBlock: ^(NSArray* args) {
+                                      fromBlock: ^(ObSCons* args) {
         NSMutableDictionary* dict = [NSMutableDictionary dictionary];
-        NSUInteger length = [args count];
-        for ( NSUInteger i = 0; i < length-1; i+=2 ) {
-          [dict setObject: [args objectAtIndex: i] forKey: [args objectAtIndex: i+1]];
+        while ( (id)args != C_NULL ) {
+          [dict setObject: CAR(args) forKey: CADR(args)];
+          args = CDDR(args);
         }
         return dict;
       }]];
 
   [scope defineFunction: [ObSNativeLambda named: SY(@"NSArray:array")
-                                      fromBlock: ^(NSArray* args) {
-        return [[args copy] autorelease];
+                                      fromBlock: ^(ObSCons* args) {
+        return EMPTY(args) ? [NSArray array] : [args toArray];
       }]];
 
   [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"NSMutableArray:reversedArrayFromArray")
@@ -90,10 +88,10 @@
       }]];
 
   [scope defineFunction: [ObSNativeLambda named: SY(@"NSArray:subarrayFromIndexToIndex")
-                                      fromBlock: ^(NSArray* args) {
-        NSArray* a = [args objectAtIndex: 0];
-        NSUInteger startIndex = [(NSNumber*)[args objectAtIndex: 1] intValue];
-        NSInteger endIndex = [(NSNumber*)[args objectAtIndex: 2] intValue];
+                                      fromBlock: ^(ObSCons* args) {
+        NSArray* a = CAR(args);
+        NSUInteger startIndex = [(NSNumber*)CADR(args) intValue];
+        NSInteger endIndex = [(NSNumber*)CADDR(args) intValue];
         if ( endIndex < 0 ) {
           endIndex = [a count] + endIndex;
         }
@@ -116,8 +114,8 @@
                                             fromBlock: ^(id a, id b) { return [(NSArray*)a objectAtIndex: [(NSNumber*)b intValue]]; }]];
 
   [scope defineFunction: [ObSNativeLambda named: SY(@"NSMutableArray:array")
-                                      fromBlock: ^(NSArray* args) {
-        return [NSMutableArray arrayWithArray: args];
+                                      fromBlock: ^(ObSCons* args) {
+        return EMPTY(args) ? [NSMutableArray array] : [args toMutableArray];
       }]];
 
   [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"NSMutableArray:addObject")
@@ -133,10 +131,10 @@
       }]];
 
   [scope defineFunction: [ObSNativeLambda named: SY(@"NSMutableArray:setObjectAtIndex")
-                                      fromBlock: ^(NSArray* args) {
-        NSMutableArray* array = [args objectAtIndex: 0];
-        id object = [args objectAtIndex: 1];
-        int index = [(NSNumber*)[args objectAtIndex: 2] intValue];
+                                      fromBlock: ^(ObSCons* args) {
+        NSMutableArray* array = CAR(args);
+        id object = CADR(args);
+        int index = [(NSNumber*)CADDR(args) intValue];
         [array replaceObjectAtIndex: index withObject: object];
         return UNSPECIFIED;
       }]];

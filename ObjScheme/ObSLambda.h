@@ -41,7 +41,7 @@
 
 
 
-typedef id (^ObSNativeBlock)(NSArray*);
+typedef id (^ObSNativeBlock)(ObSCons*);
 
 @interface ObSNativeLambda : NSObject <ObSProcedure> {
   ObSNativeBlock _block;
