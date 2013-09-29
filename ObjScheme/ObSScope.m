@@ -32,9 +32,8 @@ BOOL _errorLogged = NO;
   if ( (self = [super init]) ) {
     _name = [name retain];
     _outerScope = [outer retain];
-    _macros = [[NSMutableDictionary alloc] init];
+    _macros = _outerScope ? nil : [[NSMutableDictionary alloc] init]; // only used in root
     _environ = [[NSMutableDictionary alloc] init];
-    _loadedFiles = [[NSMutableSet alloc] init];
     _inheritedGC = outer ? [outer garbageCollector] : nil;
     _rootGC = _inheritedGC ? nil : [[ObSGarbageCollector alloc] initWithRoot: self];
     [[self garbageCollector] startTracking: self];
@@ -112,12 +111,15 @@ BOOL _errorLogged = NO;
 }
 
 - (BOOL)isFilenameLoaded:(NSString*)filename {
-  if ( [_loadedFiles containsObject: filename] )
+  if ( _loadedFiles && [_loadedFiles containsObject: filename] )
     return YES;
   return _outerScope == nil ? NO : [_outerScope isFilenameLoaded: filename];
 }
 
 - (void)recordFilenameLoaded:(NSString*)filename {
+  if ( ! _loadedFiles ) {
+    _loadedFiles = [[NSMutableSet alloc] init];
+  }
   [_loadedFiles addObject: filename];
 }
 
@@ -648,15 +650,17 @@ static NSMutableDictionary* __evalMap;
 }
 
 - (void)defineMacroNamed:(ObSSymbol*)name asProcedure:(id<ObSProcedure>)procedure {
-  [_macros setObject: procedure forKey: name.string];
+  if ( _macros ) {
+    [_macros setObject: procedure forKey: name.string];
+  }
 }
 
 - (BOOL)hasMacroNamed:(ObSSymbol*)name {
-  return [_macros objectForKey: name.string] != nil;
+  return _macros && [_macros objectForKey: name.string] != nil;
 }
 
 - (id<ObSProcedure>)macroNamed:(ObSSymbol*)name {
-  return [_macros objectForKey: name.string];
+  return _macros ?  [_macros objectForKey: name.string] : nil;
 }
 
 @end

@@ -494,6 +494,8 @@ typedef void (^Thunk)(void);
 - (void)testGarbageCollectionIndirectly {
   id aScope = EXEC(@"(the-environment)");
   STAssertTrue([aScope isKindOfClass: [ObSScope class]], @"wow, it's not a scope?" );
+  ObSScope* asScope = aScope;
+  [asScope garbageCollector].synchronous = YES;
 
   NSAutoreleasePool* autoreleasePool = [[NSAutoreleasePool alloc] init];
   aScope = EXEC(@"(let* ((x (lambda () #t))) (the-environment))");
@@ -526,6 +528,7 @@ typedef void (^Thunk)(void);
   tertiary.onDealloc = ^() { tertiaryGone = YES; };
 
   ObSGarbageCollector* gc = [[ObSGarbageCollector alloc] initWithRoot: root];
+  gc.synchronous = YES;
   [gc startTracking: secondary];
   [gc startTracking: tertiary];
   [gc runGarbageCollection];
