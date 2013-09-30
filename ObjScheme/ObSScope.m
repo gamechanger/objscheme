@@ -623,12 +623,13 @@ static NSMutableDictionary* __evalMap;
           }
         }
 
-        id<ObSProcedure> procedure = [self evaluate: head named: nil];
+        id<ObSProcedure> procedure = [self evaluate: head named: name];
         ObSCons* args = [self evaluateList: rest];
         [self pushStack: head];
         //NSTimeInterval start = [NSDate timeIntervalSinceReferenceDate];
         id ret = [procedure callWith: args];
-        //[self recordTimeForFunction: functionName.string time: [NSDate timeIntervalSinceReferenceDate] - start];
+        //NSString* functionName = [head isKindOfClass: [ObSSymbol class]] ? ((ObSSymbol*)head)->_string : name ? name->_string : @"?";
+        //[self recordTimeForFunction: functionName time: [NSDate timeIntervalSinceReferenceDate] - start];
         [self popStack];
         return ret;
       }

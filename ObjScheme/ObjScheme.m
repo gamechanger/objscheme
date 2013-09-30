@@ -165,10 +165,13 @@ static NSMutableArray* __loaders = nil;
 
 + (ObSScope*)globalScope {
   if ( __globalScope == nil ) {
-    __globalScope = [[ObSScope alloc] initWithOuterScope: nil name: @"global"];
-    [ObjScheme addGlobalsToScope: __globalScope];
-    [ObSNS initializeBridgeFunctions: __globalScope];
-    [ObSStrings addToScope: __globalScope];
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        __globalScope = [[ObSScope alloc] initWithOuterScope: nil name: @"global"];
+        [ObjScheme addGlobalsToScope: __globalScope];
+        [ObSNS initializeBridgeFunctions: __globalScope];
+        [ObSStrings addToScope: __globalScope];
+      });
   }
   return __globalScope;
 }
@@ -180,11 +183,13 @@ static NSMutableArray* __loaders = nil;
 + (id)atomFromToken:(id)token {
   NSAssert(token != nil, @"Nil token not valid");
   id constantValue = [__constants objectForKey: token];
-  if ( constantValue != nil )
+  if ( constantValue != nil ) {
     return constantValue;
+  }
 
-  if ( [token isMemberOfClass: [ObSSymbol class]] )
+  if ( [token isMemberOfClass: [ObSSymbol class]] ) {
     return token; // symbols are atomic
+  }
 
   NSString* string = token;
   if ( [string hasPrefix: @"\""] ) {
@@ -359,7 +364,7 @@ id appendListsToList(ObSCons* lists, ObSCons* aList) {
       ObSCons* callSpec = nameOrSpec;
       macroName = CAR(callSpec);
       id args = CDR(callSpec);
-      id lambdaArgSpec = args != C_NULL && CAR((ObSCons*)args) == S_DOT ? CADR((ObSCons*)args) : args;
+      id lambdaArgSpec = EMPTY(args) && CAR((ObSCons*)args) == S_DOT ? CADR((ObSCons*)args) : args;
       body = CONS(S_LAMBDA, CONS(lambdaArgSpec, body));
     }
 
@@ -1226,6 +1231,60 @@ id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
           return (id)args;
         }
         return appendListsToList(CDR(args), CAR(args));
+      }]];
+
+  /*
+(define (jlist:find-match test jlst)
+  (if (jlist:empty? jlst)
+      #f
+      (do ((count (jlist:length jlst))
+           (idx 1 (+ idx 1))
+           (item (jlist:first jlst) (if (= idx count) #f (jlist:get jlst idx))))
+          ((or (not item) (test item)) item))))
+
+(define (jlist:find-matches test jlst)
+  (if (jlist:empty? jlst)
+      (jlist)
+      (let ((matches (jlist)))
+        (jlist:for-each
+         (lambda (x) (if (test x)
+                         (if (jlist:empty? matches)
+                             (set! matches (jlist x))
+                             (jlist:append! matches x)))) jlst)
+        matches)))
+  */
+
+  [[ObjScheme globalScope] defineFunction: [ObSNativeLambda named: SY(@"find-match")
+                                                        fromBlock: ^(ObSCons* args) {
+        id<ObSProcedure> testFunction = CAR(args);
+        NSArray* inputArray = CADR(args);
+
+        id ret = B_FALSE;
+
+        for ( id item in inputArray ) {
+          if ( [testFunction callWithSingleArg: item] != B_FALSE ) {
+            ret = item;
+            break;
+          }
+        }
+
+        return ret;
+      }]];
+
+  [[ObjScheme globalScope] defineFunction: [ObSNativeLambda named: SY(@"find-matches")
+                                                        fromBlock: ^(ObSCons* args) {
+        id<ObSProcedure> testFunction = CAR(args);
+        NSArray* inputArray = CADR(args);
+
+        NSMutableArray* ret = [NSMutableArray array];
+
+        for ( id item in inputArray ) {
+          if ( [testFunction callWithSingleArg: item] != B_FALSE ) {
+            [ret addObject: item];
+          }
+        }
+
+        return (id)ret;
       }]];
 
   // TODO:

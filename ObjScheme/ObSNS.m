@@ -179,11 +179,11 @@
 
   [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"list->NSMutableArray")
                                            fromBlock: ^(id x) {
-        if ( [ObjScheme isEmptyList: x] ) {
+        if ( EMPTY(x) ) {
           return [NSMutableArray array];
 
         } else {
-          return [NSMutableArray arrayWithArray: [(ObSCons*)x toArray]];
+          return [(ObSCons*)x toMutableArray];
         }
       }]];
 }

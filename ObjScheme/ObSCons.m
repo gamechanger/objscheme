@@ -11,11 +11,7 @@
 
 @implementation ObSCons
 
-+ (void)initialize {
-}
-
 + (ObSCons*)cons:(id)a and:(id)b {
-
   return [[[ObSCons alloc] initWithCar: a cdr: b] autorelease];
 }
 
@@ -164,7 +160,7 @@
   NSUInteger length = 0;
   while ( [cell isKindOfClass: [ObSCons class]] ) {
     length++;
-    cell = ((ObSCons*)cell)->_cdr;
+    cell = cell->_cdr;
   }
   return length;
 }

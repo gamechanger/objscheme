@@ -229,7 +229,7 @@
 }
 
 - (id)callWith:(ObSCons*)list {
-  NSAssert([list count] == 2, @"Oops, should pass 2 args to binary lambda %@", _name);
+  NSAssert( ! EMPTY(CDR(list)), @"Oops, should pass 2 args to binary lambda %@", _name);
   return _block(CAR(list), CADR(list));
 }
 
@@ -265,7 +265,7 @@
 }
 
 - (id)callWith:(ObSCons*)list {
-  NSAssert([list count] == 1, @"Oops, should pass 1 args to unary lambda %@", _name);
+  NSAssert( EMPTY(CDR(list)), @"Oops, should pass 1 args to unary lambda %@", _name);
   return _block(CAR(list));
 }
 
@@ -308,7 +308,7 @@
 }
 
 - (id)callWith:(ObSCons*)list {
-  NSAssert((id)list == C_NULL, @"Oops, should pass 0 args to thunk lambda %@", _name);
+  NSAssert(EMPTY(list), @"Oops, should pass 0 args to thunk lambda %@", _name);
   return _block();
 }
 
