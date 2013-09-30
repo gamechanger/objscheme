@@ -9,10 +9,10 @@
 @class ObSGarbageCollector;
 
 @interface ObSCollectible : NSObject {
+@public
   __weak ObSGarbageCollector* _garbageCollector;
 }
 
-- (void)setGarbageCollector:(ObSGarbageCollector*)gc;
 - (NSArray*)children;
 - (void)releaseChildren;
 

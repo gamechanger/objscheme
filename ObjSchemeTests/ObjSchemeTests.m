@@ -429,7 +429,6 @@ typedef void (^Thunk)(void);
   OSAssertEquals(@"(number->string 2.2)", @"2.200000");
 
   OSAssertEqualsDouble(@"(* 0.5 1)", 0.5);
-  NSLog( @"Holy crap : %@", EXEC(@"(+ 2 0.5)") );
   OSAssertEqualsDouble(@"(+ 2 0.5)", 2.5);
   OSAssertEqualsDouble(@"(+ 2 (* 0.5 1))", 2.5);
   OSAssertEqualsDouble(@"(/ (+ 2 (* 0.5 1)) 2)", 1.25);
@@ -495,6 +494,8 @@ typedef void (^Thunk)(void);
 - (void)testGarbageCollectionIndirectly {
   id aScope = EXEC(@"(the-environment)");
   STAssertTrue([aScope isKindOfClass: [ObSScope class]], @"wow, it's not a scope?" );
+  ObSScope* asScope = aScope;
+  [asScope garbageCollector].synchronous = YES;
 
   NSAutoreleasePool* autoreleasePool = [[NSAutoreleasePool alloc] init];
   aScope = EXEC(@"(let* ((x (lambda () #t))) (the-environment))");
@@ -527,6 +528,7 @@ typedef void (^Thunk)(void);
   tertiary.onDealloc = ^() { tertiaryGone = YES; };
 
   ObSGarbageCollector* gc = [[ObSGarbageCollector alloc] initWithRoot: root];
+  gc.synchronous = YES;
   [gc startTracking: secondary];
   [gc startTracking: tertiary];
   [gc runGarbageCollection];
@@ -550,10 +552,10 @@ typedef void (^Thunk)(void);
   returnValue = [scheme callFunctionNamed: @"echo" withArgument: @NO];
   STAssertTrue( [ObjScheme isFalse: returnValue], @"Failed to treat @NO as false saw %@", returnValue );
 
-  returnValue = [scheme callFunctionNamed: @"echo2" withArguments: @[ @[@YES, @NO], @0 ]];
+  returnValue = [scheme callFunctionNamed: @"echo2" withArguments: CONS( (@[@YES, @NO]), CONS(@0, C_NULL)) ];
   STAssertTrue( [ObjScheme isTrue: returnValue], @"Failed to treat @YES as true saw %@", returnValue );
 
-  returnValue = [scheme callFunctionNamed: @"echo2" withArguments: @[ @[@YES, @NO], @1 ]];
+  returnValue = [scheme callFunctionNamed: @"echo2" withArguments: CONS( (@[@YES, @NO]), CONS(@1, C_NULL)) ];
   STAssertTrue( [ObjScheme isFalse: returnValue], @"Failed to treat @NO as false saw %@", returnValue );
 
 }

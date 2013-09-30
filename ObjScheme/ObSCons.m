@@ -10,13 +10,8 @@
 #import "ObjScheme.h"
 
 @implementation ObSCons
-@synthesize car=_car, cdr=_cdr;
-
-+ (void)initialize {
-}
 
 + (ObSCons*)cons:(id)a and:(id)b {
-
   return [[[ObSCons alloc] initWithCar: a cdr: b] autorelease];
 }
 
@@ -47,16 +42,24 @@
 
   } else {
     ObSCons* cons = obj;
-    return [[cons car] isEqual: _car] && [[cons cdr] isEqual: _cdr];
+    return (cons->_car == _car || [cons->_car isEqual: _car]) &&
+      ( cons->_cdr == _cdr || [cons->_cdr isEqual: _cdr] );
   }
 }
 
+- (NSUInteger)hash {
+  return (NSUInteger)self;
+}
+
 - (BOOL)isList {
-  id cdr = [self cdr];
-  while ( cdr != C_NULL ) {
-    if ( ! [cdr isKindOfClass: [ObSCons class]] )
-      return NO;
+  id x = _cdr;
+  while ( x != C_NULL ) {
+    if ( ! [x isKindOfClass: [ObSCons class]] ) {
+      return NO; // this is a pair, it terminates with a value
+    }
+    x = ((ObSCons*)x)->_cdr;
   }
+
   return YES;
 }
 
@@ -80,11 +83,11 @@
 
     if ( [cell isKindOfClass: [ObSCons class]] ) {
       ObSCons* next = cell;
-      id value = [next car];
+      id value = next->_car;
       NSString* format = [value isKindOfClass: [NSString class]] ? @"\"%@\"" : @"%@";
       [d appendFormat: format, value];
 
-      cell = [next cdr];
+      cell = next->_cdr;
 
     } else {
       [d appendFormat: @". %@", cell];
@@ -100,9 +103,9 @@
   ObSCons* cons = self;
 
   while ( 1 ) {
-    [array addObject: cons.car];
+    [array addObject: CAR(cons)];
 
-    id cdr = cons.cdr;
+    id cdr = CDR(cons);
 
     if ( cdr == C_NULL ) {
       break;
@@ -131,7 +134,7 @@
     }
 
     ObSCons* cell = current;
-    current = cell.cdr;
+    current = CDR(cell);
   }
 
   state->state = (unsigned long)current;
@@ -147,31 +150,9 @@
 
   } else {
     ObSCons* cell = current;
-    stackbuf[0] = cell.car;
+    stackbuf[0] = CAR(cell);
     return 1;
   }
-}
-
-- (id)cadr {
-  ObSCons* next = [self cdr];
-  return [next car];
-}
-
-- (id)caddr {
-  ObSCons* next = [self cdr];
-  next = [next cdr];
-  return [next car];
-}
-
-- (id)cddr {
-  ObSCons* next = [self cdr];
-  return [next cdr];
-}
-
-- (id)cdddr {
-  ObSCons* next = [self cdr];
-  ObSCons* further = [next cdr];
-  return [further cdr];
 }
 
 - (NSUInteger)count {
@@ -179,15 +160,33 @@
   NSUInteger length = 0;
   while ( [cell isKindOfClass: [ObSCons class]] ) {
     length++;
-    cell = [cell cdr];
+    cell = cell->_cdr;
   }
   return length;
 }
 
 - (NSArray*)toArray {
+  return [self toMutableArray];
+}
+
+- (NSArray*)toMutableArray {
   NSMutableArray* array = [NSMutableArray array];
   [self populateArray: array];
   return array;
+}
+
+- (void)setCdr:(id)cdr {
+  if ( cdr != _cdr ) {
+    [_cdr release];
+    _cdr = [cdr retain];
+  }
+}
+
+- (void)setCar:(id)car {
+  if ( car != _car ) {
+    [_car release];
+    _car = [car retain];
+  }
 }
 
 @end

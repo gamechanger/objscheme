@@ -8,19 +8,17 @@
 
 
 @interface ObSCons : NSObject <NSFastEnumeration> {
+@public
   id _car;
   id _cdr;
 }
-@property (nonatomic, retain) id car;
-@property (nonatomic, retain) id cdr;
 
 + (ObSCons*)cons:(id)a and:(id)b;
 - (id)initWithCar:(id)car cdr:(id)cdr;
-- (id)cadr;
-- (id)caddr;
-- (id)cddr;
-- (id)cdddr;
 - (NSArray*)toArray;
+- (NSMutableArray*)toMutableArray;
 - (NSUInteger)count;
 - (ObSCons*)clone;
+- (void)setCdr:(id)cdr;
+- (void)setCar:(id)car;
 @end

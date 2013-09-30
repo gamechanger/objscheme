@@ -14,10 +14,6 @@
 @class ObSScope;
 
 
-@protocol ObSUnaryLambda <NSObject>
-- (id)callNatively:(id)arg;
-@end
-
 
 @interface ObSLambda : ObSCollectible <ObSProcedure> {
   ObSSymbol* _listParameter;
@@ -45,7 +41,7 @@
 
 
 
-typedef id (^ObSNativeBlock)(NSArray*);
+typedef id (^ObSNativeBlock)(ObSCons*);
 
 @interface ObSNativeLambda : NSObject <ObSProcedure> {
   ObSNativeBlock _block;
@@ -82,7 +78,7 @@ typedef id (^ObSNativeBinaryBlock)(id,id);
 
 typedef id (^ObSNativeUnaryBlock)(id);
 
-@interface ObSNativeUnaryLambda : NSObject <ObSProcedure,ObSUnaryLambda> {
+@interface ObSNativeUnaryLambda : NSObject <ObSProcedure> {
   ObSNativeUnaryBlock _block;
   ObSSymbol* _name;
 }
@@ -91,7 +87,6 @@ typedef id (^ObSNativeUnaryBlock)(id);
 
 + (id)named:(ObSSymbol*)name fromBlock:(ObSNativeUnaryBlock)block;
 - (id)initWithBlock:(ObSNativeUnaryBlock)block name:(ObSSymbol*)name;
-- (id)callWith:(ObSCons*)arguments;
 
 @end
 
@@ -109,6 +104,5 @@ typedef id (^ObSNativeThunkBlock)();
 
 + (id)named:(ObSSymbol*)name fromBlock:(ObSNativeThunkBlock)block;
 - (id)initWithBlock:(ObSNativeThunkBlock)block name:(ObSSymbol*)name;
-- (id)callWith:(ObSCons*)arguments;
 
 @end

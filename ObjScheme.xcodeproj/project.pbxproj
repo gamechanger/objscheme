@@ -564,7 +564,7 @@
 				GCC_PREFIX_HEADER = "ObjScheme/ObjScheme-Prefix.pch";
 				INFOPLIST_FILE = "ObjSchemeTests/ObjSchemeTests-Info.plist";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				TEST_AFTER_BUILD = YES;
+				TEST_AFTER_BUILD = NO;
 				WRAPPER_EXTENSION = octest;
 			};
 			name = Debug;
@@ -580,7 +580,7 @@
 				GCC_PREFIX_HEADER = "ObjScheme/ObjScheme-Prefix.pch";
 				INFOPLIST_FILE = "ObjSchemeTests/ObjSchemeTests-Info.plist";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				TEST_AFTER_BUILD = YES;
+				TEST_AFTER_BUILD = NO;
 				WRAPPER_EXTENSION = octest;
 			};
 			name = Release;
