@@ -180,13 +180,17 @@
 }
 
 - (void)setCdr:(id)cdr {
-  [_cdr release];
-  _cdr = [cdr retain];
+  if ( cdr != _cdr ) {
+    [_cdr release];
+    _cdr = [cdr retain];
+  }
 }
 
 - (void)setCar:(id)car {
-  [_car release];
-  _car = [car retain];
+  if ( car != _car ) {
+    [_car release];
+    _car = [car retain];
+  }
 }
 
 @end

@@ -34,11 +34,11 @@ typedef void (*DispatchFunction)(dispatch_queue_t, void (^block)(void));
 
 - (void)startTracking:(ObSCollectible*)collectible {
   [_collectibles addObject: collectible];
-  [collectible setGarbageCollector: self];
+  collectible->_garbageCollector = self;
 }
 
 - (void)stopTracking:(ObSCollectible*)collectible {
-  [collectible setGarbageCollector: nil];
+  collectible->_garbageCollector = nil;
   [_collectibles removeObject: collectible];
 }
 
