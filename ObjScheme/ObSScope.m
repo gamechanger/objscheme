@@ -57,7 +57,7 @@ BOOL _errorLogged = NO;
     _environ = [[NSMutableDictionary alloc] init];
     _inheritedGC = [outer garbageCollector];
     _rootGC = nil;
-    _evalMap = outer.evalMap;
+    self.evalMap = outer.evalMap;
     [[self garbageCollector] startTracking: self];
   }
   return self;
@@ -250,7 +250,7 @@ typedef id (^ObSInternalFunction)(ObSScope* scope, ObSSymbol* name, ObSCons* arg
 - (void)buildEvaluationMap {
   stack = [[NSMutableArray alloc] init];
   NSMutableDictionary* evalMap = [[NSMutableDictionary alloc] initWithCapacity: 30];
-  _evalMap = evalMap;
+  self.evalMap = evalMap;
   evalMap[S_EVAL.string] = Block_copy(^(ObSScope* scope, ObSSymbol* name, ObSCons* args, BOOL* popStackWhenDone, BOOL* done) {
       [scope pushStack: S_EVAL];
       *popStackWhenDone = YES;
@@ -601,6 +601,7 @@ typedef id (^ObSInternalFunction)(ObSScope* scope, ObSSymbol* name, ObSCons* arg
   evalMap[S_THE_ENVIRONMENT.string] = Block_copy(^(ObSScope* scope, ObSSymbol* name, ObSCons* args, BOOL* popStackWhenDone, BOOL* done) {
       return scope;
     });
+  [evalMap release];
 }
 
 - (id)evaluate:(id)token {
