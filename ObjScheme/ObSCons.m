@@ -169,7 +169,7 @@
   return [self toMutableArray];
 }
 
-- (NSArray*)toMutableArray {
+- (NSMutableArray*)toMutableArray {
   NSMutableArray* array = [NSMutableArray array];
   [self populateArray: array];
   return array;
