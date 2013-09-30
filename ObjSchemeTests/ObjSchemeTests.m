@@ -85,8 +85,8 @@ typedef void (^Thunk)(void);
 }
 
 - (oneway void)release {
-  if ( [self garbageCollector] != nil && [self retainCount] == 2 ) {
-    [[self garbageCollector] stopTracking: self];
+  if ( _garbageCollector != nil && [self retainCount] == 2 ) {
+    [_garbageCollector stopTracking: self];
   }
 
   [super release];
