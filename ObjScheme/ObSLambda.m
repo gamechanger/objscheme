@@ -28,8 +28,9 @@
 
   if ( (self = [self init]) ) {
     if ( [parameters isKindOfClass: [ObSCons class]] ) {
-      if ( [parameters car] == S_DOT ) { // weird edge case more easily handled here
-        _listParameter = [[parameters cadr] retain];
+      ObSCons* paramList = parameters;
+      if ( CAR(paramList) == S_DOT ) { // weird edge case more easily handled here
+        _listParameter = [CADR(paramList) retain];
 
       } else {
         _parameters = [parameters retain];
@@ -37,14 +38,14 @@
         ObSCons* lastParameterCell = nil;
 
         while ( [parameterCell isKindOfClass: [ObSCons class]] ) {
-          if ( [parameterCell car] == S_DOT ) {
-            _listParameter = [[parameterCell cadr] retain];
+          if ( CAR(parameterCell) == S_DOT ) {
+            _listParameter = [CADR(parameterCell) retain];
             [lastParameterCell setCdr: C_NULL]; // this is mutating (truncating) the _parameters variable!!!!
             break;
           }
 
           lastParameterCell = parameterCell;
-          parameterCell = [parameterCell cdr];
+          parameterCell = CDR(parameterCell);
         }
       }
 
@@ -115,6 +116,16 @@
   }
 }
 
+- (id)callWithSingleArg:(id)arg {
+  ObSScope* invocationScope = [self newInvocationScope];
+  ObSSymbol* argName = CAR((ObSCons*)_parameters);
+  [invocationScope define: argName as: arg];
+  id ret = [invocationScope evaluate: _expression named: nil];
+  [self doneWithInvocationScope: invocationScope];
+  [invocationScope release];
+  return ret;
+}
+
 - (id)callWith:(ObSCons*)arguments {
   ObSScope* invocationScope = [self newInvocationScope];
 
@@ -122,8 +133,8 @@
     // for each parameter, pop something off the top of arguments...
     for ( ObSSymbol* key in _parameters ) {
       NSAssert1((id)arguments != C_NULL, @"ran out of arguments for %@", _parameters);
-      [invocationScope define: key as: [arguments car]];
-      arguments = [arguments cdr];
+      [invocationScope define: key as: CAR(arguments)];
+      arguments = CDR(arguments);
     }
 
     if ( (id)arguments != C_NULL ) {
@@ -138,7 +149,7 @@
     [invocationScope define: _listParameter as: arguments];
   }
 
-  id ret = [invocationScope evaluate: _expression];
+  id ret = [invocationScope evaluate: _expression named: nil];
   [self doneWithInvocationScope: invocationScope];
   [invocationScope release];
   return ret;
@@ -178,13 +189,12 @@
   return _block;
 }
 
-- (id)callWith:(ObSCons*)arguments {
-  if ( (id)arguments == C_NULL ) {
-    return _block([NSArray array]);
+- (id)callWithSingleArg:(id)arg {
+  return _block(CONS(arg, C_NULL));
+}
 
-  } else {
-    return _block([arguments toArray]);
-  }
+- (id)callWith:(ObSCons*)arguments {
+  return _block(arguments);
 }
 
 @end
@@ -213,9 +223,14 @@
   [super dealloc];
 }
 
+- (id)callWithSingleArg:(id)arg {
+  [NSException raise: @"InvalidArgument" format: @"%@ needs 2 args, not %@", self.name, arg];
+  return nil;
+}
+
 - (id)callWith:(ObSCons*)list {
-  NSAssert([list count] == 2, @"Oops, should pass 2 args to binary lambda %@", _name);
-  return _block([list car], [list cadr]);
+  NSAssert( ! EMPTY(CDR(list)), @"Oops, should pass 2 args to binary lambda %@", _name);
+  return _block(CAR(list), CADR(list));
 }
 
 - (ObSSymbol*)name {
@@ -250,11 +265,11 @@
 }
 
 - (id)callWith:(ObSCons*)list {
-  NSAssert([list count] == 1, @"Oops, should pass 1 args to unary lambda %@", _name);
-  return _block([list car]);
+  NSAssert( EMPTY(CDR(list)), @"Oops, should pass 1 args to unary lambda %@", _name);
+  return _block(CAR(list));
 }
 
-- (id)callNatively:(id)arg {
+- (id)callWithSingleArg:(id)arg {
   return _block(arg);
 }
 
@@ -287,8 +302,13 @@
   [super dealloc];
 }
 
+- (id)callWithSingleArg:(id)arg {
+  [NSException raise: @"InvalidArgument" format: @"%@ is a no-arg function, but you called it with %@", self.name, arg];
+  return nil;
+}
+
 - (id)callWith:(ObSCons*)list {
-  NSAssert((id)list == C_NULL, @"Oops, should pass 0 args to thunk lambda %@", _name);
+  NSAssert(EMPTY(list), @"Oops, should pass 0 args to thunk lambda %@", _name);
   return _block();
 }
 

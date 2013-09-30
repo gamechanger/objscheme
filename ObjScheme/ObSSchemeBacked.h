@@ -16,7 +16,7 @@
 + (ObSBridgedProcedure*)bridge:(id<ObSProcedure>)schemeProc;
 - (id)initWithProcedure:(id<ObSProcedure>)schemeProc;
 - (id)initWithNativeBlock:(ObSNativeBlock)nativeBlock;
-- (id)invokeWithArguments:(NSArray*)arguments;
+- (id)invokeWithArguments:(ObSCons*)arguments;
 @end
 
 
@@ -32,7 +32,7 @@
 - (void)setSchemeObject:(id)object forKey:(NSString*)key;
 - (void)setGlobalSchemeObject:(id)object forKey:(NSString*)key;
 - (id)callFunctionNamed:(NSString*)string;
-- (id)callFunctionNamed:(NSString*)string withArguments:(NSArray*)arguments;
+- (id)callFunctionNamed:(NSString*)string withArguments:(ObSCons*)arguments;
 - (id)callFunctionNamed:(NSString*)string withArgument:(id)argument;
 
 @end

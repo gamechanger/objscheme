@@ -47,8 +47,8 @@
       }]];
 
   [scope defineFunction: [ObSNativeLambda named: SY(@"format")
-                                      fromBlock: ^(NSArray* args) {
-        NSString* formatString = [args objectAtIndex: 1];
+                                      fromBlock: ^(ObSCons* args) {
+        NSString* formatString = CADR(args);
 
         NSError* error = NULL;
         NSRegularExpression* regex = [NSRegularExpression regularExpressionWithPattern: @"~s"
@@ -59,7 +59,8 @@
           return (id)formatString;
         }
 
-        NSArray* formatArgs = [args subarrayWithRange: NSMakeRange(2, [args count]-2)];
+        NSArray* argArray = [args toArray];
+        NSArray* formatArgs = [argArray subarrayWithRange: NSMakeRange(2, [argArray count]-2)];
         NSUInteger numArgs = [formatArgs count];
 
         NSMutableString* string = [NSMutableString string];

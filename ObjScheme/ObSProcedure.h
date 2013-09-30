@@ -12,5 +12,6 @@
 
 @protocol ObSProcedure <NSObject>
 - (id)callWith:(ObSCons*)args;
+- (id)callWithSingleArg:(id)arg;
 - (ObSSymbol*)name;
 @end

@@ -12,10 +12,6 @@
 
 @implementation ObSCollectible
 
-- (void)setGarbageCollector:(ObSGarbageCollector*)gc {
-  _garbageCollector = gc;
-}
-
 - (NSArray*)children {
   [NSException raise: @"Not Implemented" format: @"OMG"];
   return nil;

@@ -11,7 +11,10 @@
 @interface ObSGarbageCollector : NSObject {
   NSMutableSet* _collectibles;
   __weak ObSCollectible* _root;
+  BOOL _synchronous;
 }
+
+@property (nonatomic,assign) BOOL synchronous;
 
 - (id)initWithRoot:(ObSCollectible*)root;
 
