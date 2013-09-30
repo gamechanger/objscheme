@@ -180,7 +180,7 @@
   [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"list->NSMutableArray")
                                            fromBlock: ^(id x) {
         if ( EMPTY(x) ) {
-          return [NSMutableArray array];
+          return (NSMutableArray*) [NSMutableArray array];
 
         } else {
           return [(ObSCons*)x toMutableArray];
