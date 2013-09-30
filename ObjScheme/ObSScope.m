@@ -15,27 +15,52 @@
 #import "ObSLambda.h"
 #import "ObSGarbageCollector.h"
 
+@interface ObSScope ()
+
+@property (nonatomic, retain) NSDictionary* evalMap;
+@property (nonatomic, retain) NSMutableArray* stack;
+
+@end
 
 @implementation ObSScope {
+  __weak ObSGarbageCollector* _inheritedGC;
+  __weak ObjScheme* _context;
 }
 
-@synthesize outer=_outerScope, environ=_environ;
+@synthesize outer=_outerScope, environ=_environ, context=_context, evalMap=_evalMap, stack=_stack;
 
-static NSMutableArray* _stack;
 BOOL _errorLogged = NO;
 
-+ (ObSScope*)newGlobalChildScopeNamed:(NSString*)name {
-  return [[ObSScope alloc] initWithOuterScope: [ObjScheme globalScope] name: name];
+- (id)initWithContext:(ObjScheme*)context name:(NSString*)name {
+  if ( (self = [super init]) ) {
+    _name = [name retain];
+    _outerScope = nil;
+    _context = [context retain];
+    _macros = [[NSMutableDictionary alloc] init];
+    _environ = [[NSMutableDictionary alloc] init];
+    _loadedFiles = [[NSMutableSet alloc] init];
+    _inheritedGC = nil;
+    _rootGC = [[ObSGarbageCollector alloc] initWithRoot: self];
+    _stack = [[NSMutableArray alloc] init];
+    [self buildEvaluationMap];
+    [[self garbageCollector] startTracking: self];
+  }
+  return self;
 }
 
 - (id)initWithOuterScope:(ObSScope*)outer name:(NSString*)name {
   if ( (self = [super init]) ) {
+    NSAssert(outer, @"outer scope is nil!");
+
     _name = [name retain];
     _outerScope = [outer retain];
+    _context = [outer.context retain];
     _macros = _outerScope ? nil : [[NSMutableDictionary alloc] init]; // only used in root
     _environ = [[NSMutableDictionary alloc] init];
-    _inheritedGC = outer ? [outer garbageCollector] : nil;
-    _rootGC = _inheritedGC ? nil : [[ObSGarbageCollector alloc] initWithRoot: self];
+    _inheritedGC = [outer garbageCollector];
+    _rootGC = nil;
+    self.stack = outer.stack;
+    self.evalMap = outer.evalMap;
     [[self garbageCollector] startTracking: self];
   }
   return self;
@@ -81,6 +106,12 @@ BOOL _errorLogged = NO;
   _loadedFiles = nil;
   [_rootGC release];
   _rootGC = nil;
+  [_context release];
+  _context = nil;
+  [_evalMap release];
+  _evalMap = nil;
+  [_stack release];
+  _stack = nil;
   [super dealloc];
 }
 
@@ -219,14 +250,14 @@ static NSMutableDictionary* __times = nil;
 
 typedef id (^ObSInternalFunction)(ObSScope* scope, ObSSymbol* name, ObSCons* args, BOOL* popStackWhenDone, BOOL* done);
 
-static NSMutableDictionary* __evalMap;
-
 + (void)initialize {
   [ObjScheme initialize]; // FML, need to make sure constants are initialized...
+}
 
-  _stack = [[NSMutableArray alloc] init];
-  __evalMap = [[NSMutableDictionary alloc] initWithCapacity: 30];
-  __evalMap[S_EVAL.string] = Block_copy(^(ObSScope* scope, ObSSymbol* name, ObSCons* args, BOOL* popStackWhenDone, BOOL* done) {
+- (void)buildEvaluationMap {
+  NSMutableDictionary* evalMap = [[NSMutableDictionary alloc] initWithCapacity: 30];
+  self.evalMap = evalMap;
+  evalMap[S_EVAL.string] = Block_copy(^(ObSScope* scope, ObSSymbol* name, ObSCons* args, BOOL* popStackWhenDone, BOOL* done) {
       [scope pushStack: S_EVAL];
       *popStackWhenDone = YES;
       *done = NO;
@@ -234,7 +265,7 @@ static NSMutableDictionary* __evalMap;
       return newCode;
     });
 
-  __evalMap[S_OR.string] = Block_copy(^(ObSScope* scope, ObSSymbol* name, ObSCons* args, BOOL* popStackWhenDone, BOOL* done) {
+  evalMap[S_OR.string] = Block_copy(^(ObSScope* scope, ObSSymbol* name, ObSCons* args, BOOL* popStackWhenDone, BOOL* done) {
       *done = YES;
 
       id operands = args;
@@ -250,7 +281,7 @@ static NSMutableDictionary* __evalMap;
       return result;
     });
 
-  __evalMap[S_AND.string] = Block_copy(^(ObSScope* scope, ObSSymbol* name, ObSCons* args, BOOL* popStackWhenDone, BOOL* done) {
+  evalMap[S_AND.string] = Block_copy(^(ObSScope* scope, ObSSymbol* name, ObSCons* args, BOOL* popStackWhenDone, BOOL* done) {
       *done = YES;
 
       id operands = args;
@@ -266,7 +297,7 @@ static NSMutableDictionary* __evalMap;
       return result;
     });
 
-  __evalMap[S_COND.string] = Block_copy(^(ObSScope* scope, ObSSymbol* name, ObSCons* args, BOOL* popStackWhenDone, BOOL* done) {
+  evalMap[S_COND.string] = Block_copy(^(ObSScope* scope, ObSSymbol* name, ObSCons* args, BOOL* popStackWhenDone, BOOL* done) {
       *done = YES;
 
       ObSCons* listOfTuples = args;
@@ -299,7 +330,7 @@ static NSMutableDictionary* __evalMap;
       return ret;
     });
 
-  __evalMap[S_LET.string] = Block_copy(^(ObSScope* scope, ObSSymbol* name, ObSCons* args, BOOL* popStackWhenDone, BOOL* done) {
+  evalMap[S_LET.string] = Block_copy(^(ObSScope* scope, ObSSymbol* name, ObSCons* args, BOOL* popStackWhenDone, BOOL* done) {
       *done = YES;
       // normal: (let ((x y)) body)
       // named: (let name ((x y)) body)
@@ -377,10 +408,10 @@ static NSMutableDictionary* __evalMap;
   };
 
   // one or more of the following is technically wrong...
-  __evalMap[S_LET_STAR.string] = Block_copy(recursiveLet);
-  __evalMap[S_LETREC.string] = Block_copy(recursiveLet);
+  evalMap[S_LET_STAR.string] = Block_copy(recursiveLet);
+  evalMap[S_LETREC.string] = Block_copy(recursiveLet);
 
-  __evalMap[S_DO.string] = Block_copy(^(ObSScope* scope, ObSSymbol* name, ObSCons* args, BOOL* popStackWhenDone, BOOL* done) {
+  evalMap[S_DO.string] = Block_copy(^(ObSScope* scope, ObSSymbol* name, ObSCons* args, BOOL* popStackWhenDone, BOOL* done) {
       *done = YES;
       id ret;
 
@@ -450,13 +481,13 @@ static NSMutableDictionary* __evalMap;
       return ret;
     });
 
-  __evalMap[S_QUOTE.string] = Block_copy(^(ObSScope* scope, ObSSymbol* name, ObSCons* args, BOOL* popStackWhenDone, BOOL* done) {
+  evalMap[S_QUOTE.string] = Block_copy(^(ObSScope* scope, ObSSymbol* name, ObSCons* args, BOOL* popStackWhenDone, BOOL* done) {
       *done = YES;
       NSAssert1(CDR(args) == C_NULL, @"quote can have only 1 operand, not %@", args);
       return CAR(args);
     });
 
-  __evalMap[S_LIST.string] = Block_copy(^(ObSScope* scope, ObSSymbol* name, ObSCons* args, BOOL* popStackWhenDone, BOOL* done) {
+  evalMap[S_LIST.string] = Block_copy(^(ObSScope* scope, ObSSymbol* name, ObSCons* args, BOOL* popStackWhenDone, BOOL* done) {
       *done = YES;
       [scope pushStack: S_LIST];
       id ret = [[scope evaluateList: args] retain];
@@ -464,7 +495,7 @@ static NSMutableDictionary* __evalMap;
       return ret;
     });
 
-  __evalMap[S_IF.string] = Block_copy(^(ObSScope* scope, ObSSymbol* name, ObSCons* args, BOOL* popStackWhenDone, BOOL* done) {
+  evalMap[S_IF.string] = Block_copy(^(ObSScope* scope, ObSSymbol* name, ObSCons* args, BOOL* popStackWhenDone, BOOL* done) {
       *done = NO;
 
       if ( [scope evaluate: CAR(args) named: nil] != B_FALSE ) {
@@ -475,7 +506,7 @@ static NSMutableDictionary* __evalMap;
       }
     });
 
-  __evalMap[S_IN.string] = Block_copy(^(ObSScope* scope, ObSSymbol* name, ObSCons* args, BOOL* popStackWhenDone, BOOL* done) {
+  evalMap[S_IN.string] = Block_copy(^(ObSScope* scope, ObSSymbol* name, ObSCons* args, BOOL* popStackWhenDone, BOOL* done) {
       *done = YES;
 
       id ret;
@@ -502,7 +533,7 @@ static NSMutableDictionary* __evalMap;
       return ret;
     });
 
-  __evalMap[S_APPLY.string] = Block_copy(^(ObSScope* scope, ObSSymbol* name, ObSCons* args, BOOL* popStackWhenDone, BOOL* done) {
+  evalMap[S_APPLY.string] = Block_copy(^(ObSScope* scope, ObSSymbol* name, ObSCons* args, BOOL* popStackWhenDone, BOOL* done) {
       *done = YES;
       id function_name = CAR(args);
       id function_args = CADR(args);
@@ -514,7 +545,7 @@ static NSMutableDictionary* __evalMap;
       return ret;
     });
 
-  __evalMap[S_SET.string] = Block_copy(^(ObSScope* scope, ObSSymbol* name, ObSCons* args, BOOL* popStackWhenDone, BOOL* done) {
+  evalMap[S_SET.string] = Block_copy(^(ObSScope* scope, ObSSymbol* name, ObSCons* args, BOOL* popStackWhenDone, BOOL* done) {
       *done = YES;
       [scope pushStack: S_SET];
       ObSSymbol* symbol = CAR(args);
@@ -525,7 +556,7 @@ static NSMutableDictionary* __evalMap;
       return UNSPECIFIED;
     });
 
-  __evalMap[S_DEFINE.string] = Block_copy(^(ObSScope* scope, ObSSymbol* name, ObSCons* args, BOOL* popStackWhenDone, BOOL* done) {
+  evalMap[S_DEFINE.string] = Block_copy(^(ObSScope* scope, ObSSymbol* name, ObSCons* args, BOOL* popStackWhenDone, BOOL* done) {
       *done = YES;
       [scope pushStack: S_DEFINE];
       ObSSymbol* variableName = CAR(args);
@@ -535,7 +566,7 @@ static NSMutableDictionary* __evalMap;
       return UNSPECIFIED;
     });
 
-  __evalMap[S_LAMBDA.string] = Block_copy(^(ObSScope* scope, ObSSymbol* name, ObSCons* args, BOOL* popStackWhenDone, BOOL* done) {
+  evalMap[S_LAMBDA.string] = Block_copy(^(ObSScope* scope, ObSSymbol* name, ObSCons* args, BOOL* popStackWhenDone, BOOL* done) {
       *done = YES;
 
       [scope pushStack: S_LAMBDA];
@@ -549,7 +580,7 @@ static NSMutableDictionary* __evalMap;
       return lambda;
     });
 
-  __evalMap[S_BEGIN.string] = Block_copy(^(ObSScope* scope, ObSSymbol* name, ObSCons* args, BOOL* popStackWhenDone, BOOL* done) {
+  evalMap[S_BEGIN.string] = Block_copy(^(ObSScope* scope, ObSSymbol* name, ObSCons* args, BOOL* popStackWhenDone, BOOL* done) {
       *done = YES;
 
       if ( (id)args == C_NULL ) {
@@ -564,18 +595,19 @@ static NSMutableDictionary* __evalMap;
       }
     });
 
-  __evalMap[S_LOAD.string] = Block_copy(^(ObSScope* scope, ObSSymbol* name, ObSCons* args, BOOL* popStackWhenDone, BOOL* done) {
+  evalMap[S_LOAD.string] = Block_copy(^(ObSScope* scope, ObSSymbol* name, ObSCons* args, BOOL* popStackWhenDone, BOOL* done) {
       NSString* filename = [scope evaluate: CAR(args) named: nil];
       if ( (id)CDR(args) != C_NULL ) {
         scope = [scope evaluate: CADR(args) named: nil];
       }
-      [ObjScheme loadFile: filename intoScope: scope];
+      [_context loadFile: filename intoScope: scope];
       return UNSPECIFIED;
     });
 
-  __evalMap[S_THE_ENVIRONMENT.string] = Block_copy(^(ObSScope* scope, ObSSymbol* name, ObSCons* args, BOOL* popStackWhenDone, BOOL* done) {
+  evalMap[S_THE_ENVIRONMENT.string] = Block_copy(^(ObSScope* scope, ObSSymbol* name, ObSCons* args, BOOL* popStackWhenDone, BOOL* done) {
       return scope;
     });
+  [evalMap release];
 }
 
 - (id)evaluate:(id)token {
@@ -608,7 +640,7 @@ static NSMutableDictionary* __evalMap;
         if ( [head isKindOfClass: [ObSSymbol class]] ) {
           BOOL done = YES;
           ObSSymbol* symbol = head;
-          ObSInternalFunction f = __evalMap[symbol->_string];
+          ObSInternalFunction f = _evalMap[symbol->_string];
 
           if ( f != nil ) {
             id result = f(self, name, rest, &popStack, &done);
