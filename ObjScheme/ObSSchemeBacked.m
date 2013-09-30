@@ -65,8 +65,13 @@
   return self;
 }
 
+- (void) dealloc {
+  [_scope release];
+  [super dealloc];
+}
+
 - (void)loadFile:(NSString*)file {
-  [ObjScheme loadFile: file intoScope: _scope];
+  [_scope.context loadFile: file intoScope: _scope];
 }
 
 - (id)schemeObjectForKey:(NSString*)key {

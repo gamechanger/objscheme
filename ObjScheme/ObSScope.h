@@ -11,23 +11,23 @@
 @class ObSSymbol;
 @protocol ObSProcedure;
 @class ObSGarbageCollector;
+@class ObjScheme;
 
 @interface ObSScope : ObSCollectible {
   ObSScope* _outerScope;
   NSMutableDictionary* _macros;
   NSMutableDictionary* _environ;
   NSMutableSet* _loadedFiles;
-  __weak ObSGarbageCollector* _inheritedGC;
   ObSGarbageCollector* _rootGC;
   NSString* _name;
 }
 
 @property (nonatomic,retain) ObSScope* outer;
+@property (nonatomic,retain) ObjScheme* context;
 @property (nonatomic,retain) NSMutableDictionary* environ;
 @property (nonatomic,retain) NSString* name;
 
-+ (ObSScope*)newGlobalChildScopeNamed:(NSString*)name;
-
+- (id)initWithContext:(ObjScheme*)context name:(NSString*)name;
 - (id)initWithOuterScope:(ObSScope*)outer name:(NSString*)name;
 - (id)resolveSymbol:(ObSSymbol*)variable;
 - (BOOL)definesSymbol:(ObSSymbol*)symbol;

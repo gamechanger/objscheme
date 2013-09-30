@@ -56,11 +56,11 @@ NSNumber* INF;
 
 + (id)atomFromToken:(NSString*)token;
 + (NSString*)unpackStringLiteral:(NSString*)string;
-+ (id)expandToken:(id)token;
-+ (id)expandToken:(id)token atTopLevel:(BOOL)topLevel;
+- (id)expandToken:(id)token;
+- (id)expandToken:(id)token atTopLevel:(BOOL)topLevel;
 + (void)assertSyntax:(BOOL)correct elseRaise:(NSString*)message;
 + (id)expandQuasiquote:(id)token;
-+ (void)addGlobalsToScope:(ObSScope*)scope;
+- (void)addGlobalsToScope:(ObSScope*)scope;
 
 @end
 
@@ -69,10 +69,11 @@ NSNumber* INF;
 
 // ------ ObjScheme top-level
 
-@implementation ObjScheme
+@implementation ObjScheme {
+  ObSScope* _globalScope;
+}
 
 static NSDictionary* __constants = nil;
-static ObSScope* __globalScope = nil;
 static NSMutableArray* __loaders = nil;
 
 + (void)initializeSymbols {
@@ -163,17 +164,20 @@ static NSMutableArray* __loaders = nil;
   }
 }
 
-+ (ObSScope*)globalScope {
-  if ( __globalScope == nil ) {
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        __globalScope = [[ObSScope alloc] initWithOuterScope: nil name: @"global"];
-        [ObjScheme addGlobalsToScope: __globalScope];
-        [ObSNS initializeBridgeFunctions: __globalScope];
-        [ObSStrings addToScope: __globalScope];
-      });
+- (void)dealloc {
+  _globalScope.context = nil;
+  [_globalScope release];
+  [super dealloc];
+}
+
+- (ObSScope*)globalScope {
+  if ( _globalScope == nil ) {
+    _globalScope = [[ObSScope alloc] initWithContext: self name: @"global"];
+    [self addGlobalsToScope: _globalScope];
+    [ObSNS initializeBridgeFunctions: _globalScope];
+    [ObSStrings addToScope: _globalScope];
   }
-  return __globalScope;
+  return _globalScope;
 }
 
 + (NSString*)unpackStringLiteral:(NSString*)string {
@@ -248,7 +252,7 @@ id appendListsToList(ObSCons* lists, ObSCons* aList) {
   return CONS(CAR(aList), appendListsToList( lists, CDR(aList) ));
 }
 
-+ (id)expandLetDefinitions:(id)definitions {
+- (id)expandLetDefinitions:(id)definitions {
   if ( EMPTY(definitions) ) {
     return C_NULL;
 
@@ -260,11 +264,11 @@ id appendListsToList(ObSCons* lists, ObSCons* aList) {
   }
 }
 
-+ (id)expandTokenList:(id)arg {
+- (id)expandTokenList:(id)arg {
   return [self expandTokenList: arg atTopLevel: NO];
 }
 
-+ (id)expandTokenList:(id)arg atTopLevel:(BOOL)topLevel {
+- (id)expandTokenList:(id)arg atTopLevel:(BOOL)topLevel {
   if ( EMPTY(arg) ) {
     return C_NULL;
 
@@ -276,7 +280,7 @@ id appendListsToList(ObSCons* lists, ObSCons* aList) {
   }
 }
 
-+ (id)expandToken:(id)token {
+- (id)expandToken:(id)token {
   return [self expandToken: token atTopLevel: NO];
 }
 
@@ -285,7 +289,7 @@ id appendListsToList(ObSCons* lists, ObSCons* aList) {
  * @param  token     The token to expand & validate.
  * @param  topLevel  Whether this is the top-level scope.
  */
-+ (id)expandToken:(id)token atTopLevel:(BOOL)topLevel {
+- (id)expandToken:(id)token atTopLevel:(BOOL)topLevel {
   [ObjScheme assertSyntax: token != C_NULL elseRaise: @"Empty list is not a program"];
 
   if ( ! [token isKindOfClass: [ObSCons class]] ) {
@@ -338,13 +342,13 @@ id appendListsToList(ObSCons* lists, ObSCons* aList) {
       }
       // => (f (params) body)
       ObSCons* lambda = CONS(S_LAMBDA, CONS(params, body));
-      return [ObjScheme expandToken: CONS(S_DEFINE, CONS(lambdaName, CONS(lambda, C_NULL)))];
+      return [self expandToken: CONS(S_DEFINE, CONS(lambdaName, CONS(lambda, C_NULL)))];
 
     } else {
       [ObjScheme assertSyntax: [defineSpec isMemberOfClass: [ObSSymbol class]]
                     elseRaise: @"define second param must be symbol"];
       id expression = CAR(body);
-      return CONS(S_DEFINE, CONS(defineSpec, CONS([ObjScheme expandToken: expression], C_NULL)));
+      return CONS(S_DEFINE, CONS(defineSpec, CONS([self expandToken: expression], C_NULL)));
     }
 
   } else if ( head == S_DEFINEMACRO ) { // (define-macro symbol proc) or (define-macro (symbol args) body)
@@ -353,7 +357,7 @@ id appendListsToList(ObSCons* lists, ObSCons* aList) {
 
     id nameOrSpec = CADR(list);
     id body = CADDR(list);
-    body = [ObjScheme expandToken: body];
+    body = [self expandToken: body];
     ObSSymbol* macroName = nil;
 
     if ( [nameOrSpec isKindOfClass: [ObSSymbol class]] ) {
@@ -368,10 +372,10 @@ id appendListsToList(ObSCons* lists, ObSCons* aList) {
       body = CONS(S_LAMBDA, CONS(lambdaArgSpec, body));
     }
 
-    id<ObSProcedure> procedure = [[ObjScheme globalScope] evaluate: body named: macroName];
+    id<ObSProcedure> procedure = [[self globalScope] evaluate: body named: macroName];
     [ObjScheme assertSyntax: [procedure conformsToProtocol: @protocol(ObSProcedure)]
                   elseRaise: @"body of define-macro must be an invocation"];
-    [[ObjScheme globalScope] defineMacroNamed: macroName asProcedure: procedure];
+    [[self globalScope] defineMacroNamed: macroName asProcedure: procedure];
 
     return UNSPECIFIED;
 
@@ -427,10 +431,10 @@ id appendListsToList(ObSCons* lists, ObSCons* aList) {
 
   } else if ( [head isKindOfClass: [ObSSymbol class]] ) {
     ObSSymbol* symbol = head;
-    id macro = [[ObjScheme globalScope] macroNamed: symbol];
+    id macro = [[self globalScope] macroNamed: symbol];
     if ( macro ) {
       ObSCons* args = CDR(list);
-      return [ObjScheme expandToken: [macro callWith: args]];
+      return [self expandToken: [macro callWith: args]];
     }
   }
 
@@ -498,11 +502,11 @@ id appendListsToList(ObSCons* lists, ObSCons* aList) {
   }
 }
 
-+ (void)loadFile:(NSString*)filename {
-  [self loadFile: filename intoScope: [ObjScheme globalScope]];
+- (void)loadFile:(NSString*)filename {
+  [self loadFile: filename intoScope: [self globalScope]];
 }
 
-+ (void)loadFile:(NSString*)filename intoScope:(ObSScope*)scope {
+- (void)loadFile:(NSString*)filename intoScope:(ObSScope*)scope {
   for ( id<ObSFileLoader> loader in __loaders ) {
     NSString* qualifiedName = [loader qualifyFileName: filename];
     if ( ! qualifiedName ) {
@@ -525,18 +529,18 @@ id appendListsToList(ObSCons* lists, ObSCons* aList) {
   [NSException raise: @"NoSuchFile" format: @"failed to find %@ from any source", filename];
 }
 
-+ (void)loadSource:(NSString*)source intoScope:(ObSScope*)scope {
+- (void)loadSource:(NSString*)source intoScope:(ObSScope*)scope {
   ObSInPort* port = [[ObSInPort alloc] initWithString: source];
   [self loadInPort: port intoScope: scope forFilename: nil];
   [port release];
 }
 
-+ (void)loadInPort:(ObSInPort*)port intoScope:(ObSScope*)scope forFilename:(NSString*)filename {
-  id token = [ObjScheme parseOneToken: port];
+- (void)loadInPort:(ObSInPort*)port intoScope:(ObSScope*)scope forFilename:(NSString*)filename {
+  id token = [self parseOneToken: port];
 
   while ( token != _EOF ) {
     [scope evaluate: token named: nil];
-    token = [ObjScheme parseOneToken: port];
+    token = [self parseOneToken: port];
   }
 
   if ( filename ) {
@@ -547,8 +551,8 @@ id appendListsToList(ObSCons* lists, ObSCons* aList) {
 /**
  * read a program, then expand and error-check it
  */
-+ (id)parseOneToken:(ObSInPort*)inPort {
-  return [ObjScheme expandToken: [ObjScheme read: inPort] atTopLevel: YES];
+- (id)parseOneToken:(ObSInPort*)inPort {
+  return [self expandToken: [ObjScheme read: inPort] atTopLevel: YES];
 }
 
 + (id)readAheadFromToken:(id)token andPort:(ObSInPort*)inPort {
@@ -607,8 +611,8 @@ id appendListsToList(ObSCons* lists, ObSCons* aList) {
   }
 }
 
-+ (id)parseString:(NSString*)string {
-  return [ObjScheme parseOneToken: [[[ObSInPort alloc] initWithString: string] autorelease]];
+- (id)parseString:(NSString*)string {
+  return [self parseOneToken: [[[ObSInPort alloc] initWithString: string] autorelease]];
 }
 
 
@@ -634,7 +638,7 @@ id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
   }
 }
 
-+ (void)addGlobalsToScope:(ObSScope*)scope {
+- (void)addGlobalsToScope:(ObSScope*)scope {
   [scope define: SY(@"+inf.0") as: INF];
 
   [scope defineFunction: [ObSNativeLambda named: SY(@"+")
@@ -990,7 +994,7 @@ id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
 
   [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"string-split")
                                             fromBlock: ^(id string, id sep) {
-        // TODO: this should *really* enforce that 'sep' is a character, not a string, but it's all Doug's fault.
+        // this should *really* enforce that 'sep' is a character, not a string, but it's all Doug's fault.
         return [ObjScheme list: [(NSString*)string componentsSeparatedByString: sep]];
       }]];
 
@@ -1233,28 +1237,7 @@ id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
         return appendListsToList(CDR(args), CAR(args));
       }]];
 
-  /*
-(define (jlist:find-match test jlst)
-  (if (jlist:empty? jlst)
-      #f
-      (do ((count (jlist:length jlst))
-           (idx 1 (+ idx 1))
-           (item (jlist:first jlst) (if (= idx count) #f (jlist:get jlst idx))))
-          ((or (not item) (test item)) item))))
-
-(define (jlist:find-matches test jlst)
-  (if (jlist:empty? jlst)
-      (jlist)
-      (let ((matches (jlist)))
-        (jlist:for-each
-         (lambda (x) (if (test x)
-                         (if (jlist:empty? matches)
-                             (set! matches (jlist x))
-                             (jlist:append! matches x)))) jlst)
-        matches)))
-  */
-
-  [[ObjScheme globalScope] defineFunction: [ObSNativeLambda named: SY(@"find-match")
+  [[self globalScope] defineFunction: [ObSNativeLambda named: SY(@"find-match")
                                                         fromBlock: ^(ObSCons* args) {
         id<ObSProcedure> testFunction = CAR(args);
         NSArray* inputArray = CADR(args);
@@ -1271,7 +1254,7 @@ id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
         return ret;
       }]];
 
-  [[ObjScheme globalScope] defineFunction: [ObSNativeLambda named: SY(@"find-matches")
+  [[self globalScope] defineFunction: [ObSNativeLambda named: SY(@"find-matches")
                                                         fromBlock: ^(ObSCons* args) {
         id<ObSProcedure> testFunction = CAR(args);
         NSArray* inputArray = CADR(args);
@@ -1286,26 +1269,6 @@ id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
 
         return (id)ret;
       }]];
-
-  // TODO:
-  /*
-    - (vector-copy! dest dest-start src [src-start src-end])
-    - error <= and replace Exceptions with (error) results which cause a return...? would that work...?
-    - floor/ceiling
-    - member? (member? thing list)
-    - reduce (reduce combiner list)
-    - write (and something for formatting properly...)
-
-    - SOON:
-    - char (#\a) support?
-
-    - MAYBE:
-    - I/O: load, read, write, read-char, open-input-file, close-input-port, open-output-file, close-output-port, eof-object?
-    - port?
-
-    - SOME DAY:
-    - call/cc
-   */
 }
 
 + (BOOL)isTrue:(id)token {
