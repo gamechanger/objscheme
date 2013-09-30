@@ -122,19 +122,26 @@ static NSMutableArray* __loaders = nil;
 + (void)initialize {
   if ( __constants == nil ) {
     [self initializeSymbols];
-    __constants = [[NSDictionary alloc]
-                   initWithObjectsAndKeys:
-                   B_FALSE, @"#f",
-                   B_TRUE, @"#t",
-                   [NSNumber numberWithInteger: 0], @"0",
-                   [NSNumber numberWithDouble: 0.0], @"0.0",
-                   nil];
+
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        __constants = [[NSDictionary alloc]
+                        initWithObjectsAndKeys:
+                          B_FALSE, @"#f",
+                        B_TRUE, @"#t",
+                        [NSNumber numberWithInteger: 0], @"0",
+                        [NSNumber numberWithDouble: 0.0], @"0.0",
+                        nil];
+      });
   }
 
   if ( __loaders == nil ) {
-    id<ObSFileLoader> bundleLoader = [[ObSBundleFileLoader alloc] init];
-    __loaders = [[NSMutableArray alloc] initWithObjects: bundleLoader, nil];
-    [bundleLoader release];
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        id<ObSFileLoader> bundleLoader = [[ObSBundleFileLoader alloc] init];
+        __loaders = [[NSMutableArray alloc] initWithObjects: bundleLoader, nil];
+        [bundleLoader release];
+      });
   }
 }
 
