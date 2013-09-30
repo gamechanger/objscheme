@@ -18,6 +18,7 @@
 @interface ObSScope ()
 
 @property (nonatomic, retain) NSDictionary* evalMap;
+@property (nonatomic, retain) NSMutableArray* stack;
 
 @end
 
@@ -26,9 +27,8 @@
   __weak ObjScheme* _context;
 }
 
-@synthesize outer=_outerScope, environ=_environ, context=_context, evalMap=_evalMap;
+@synthesize outer=_outerScope, environ=_environ, context=_context, evalMap=_evalMap, stack=_stack;
 
-static NSMutableArray* stack;
 BOOL _errorLogged = NO;
 
 - (id)initWithContext:(ObjScheme*)context name:(NSString*)name {
@@ -41,6 +41,7 @@ BOOL _errorLogged = NO;
     _loadedFiles = [[NSMutableSet alloc] init];
     _inheritedGC = nil;
     _rootGC = [[ObSGarbageCollector alloc] initWithRoot: self];
+    _stack = [[NSMutableArray alloc] init];
     [self buildEvaluationMap];
     [[self garbageCollector] startTracking: self];
   }
@@ -58,6 +59,7 @@ BOOL _errorLogged = NO;
     _environ = [[NSMutableDictionary alloc] init];
     _inheritedGC = [outer garbageCollector];
     _rootGC = nil;
+    self.stack = outer.stack;
     self.evalMap = outer.evalMap;
     [[self garbageCollector] startTracking: self];
   }
@@ -106,6 +108,10 @@ BOOL _errorLogged = NO;
   _rootGC = nil;
   [_context release];
   _context = nil;
+  [_evalMap release];
+  _evalMap = nil;
+  [_stack release];
+  _stack = nil;
   [super dealloc];
 }
 
@@ -208,11 +214,11 @@ BOOL _errorLogged = NO;
 }
 
 - (void)pushStack:(id)token {
-  [stack addObject: token];
+  [_stack addObject: token];
 }
 
 - (void)popStack {
-  [stack removeLastObject];
+  [_stack removeLastObject];
 }
 
 static NSMutableDictionary* __times = nil;
@@ -249,7 +255,6 @@ typedef id (^ObSInternalFunction)(ObSScope* scope, ObSSymbol* name, ObSCons* arg
 }
 
 - (void)buildEvaluationMap {
-  stack = [[NSMutableArray alloc] init];
   NSMutableDictionary* evalMap = [[NSMutableDictionary alloc] initWithCapacity: 30];
   self.evalMap = evalMap;
   evalMap[S_EVAL.string] = Block_copy(^(ObSScope* scope, ObSSymbol* name, ObSCons* args, BOOL* popStackWhenDone, BOOL* done) {
@@ -667,10 +672,10 @@ typedef id (^ObSInternalFunction)(ObSScope* scope, ObSSymbol* name, ObSCons* arg
       _errorLogged = YES;
       NSLog( @"Error %@", e );
       NSLog( @"Evaluating %@", token );
-      for ( int i = [stack count]-1; i >= 0; i-- ) {
-        NSLog( @" @ %@", [stack objectAtIndex: i] );
+      for ( int i = [_stack count]-1; i >= 0; i-- ) {
+        NSLog( @" @ %@", [_stack objectAtIndex: i] );
       }
-      [stack removeAllObjects];
+      [_stack removeAllObjects];
     }
 
     [e raise];
