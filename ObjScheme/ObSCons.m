@@ -170,7 +170,7 @@
 }
 
 - (NSArray*)toArray {
-  return [[[self toMutableArray] copy] autorelease]; // could do the copy/autorelease dance, but lazy.
+  return [self toMutableArray];
 }
 
 - (NSArray*)toMutableArray {

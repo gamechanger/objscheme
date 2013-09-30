@@ -1175,7 +1175,7 @@ id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
   [scope defineFunction: U_LAMBDA(@"immutable?", ^(id a) { return TRUTH([a isKindOfClass: [NSString class]] || ( [a isKindOfClass: [NSArray class]] && ! [a isKindOfClass: [NSMutableArray class]] )); })];
   [scope defineFunction: [ObSNativeLambda named: SY(@"vector-immutable")
                                       fromBlock: ^(ObSCons* params) {
-        return [params toArray];
+        return [NSArray arrayWithArray: [params toArray]];
       }]];
   [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"vector-fill!")
                                             fromBlock: ^(id a, id value) {
