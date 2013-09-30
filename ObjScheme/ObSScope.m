@@ -53,6 +53,7 @@ BOOL _errorLogged = NO;
 
     _name = [name retain];
     _outerScope = [outer retain];
+    _context = [outer.context retain];
     _macros = _outerScope ? nil : [[NSMutableDictionary alloc] init]; // only used in root
     _environ = [[NSMutableDictionary alloc] init];
     _inheritedGC = [outer garbageCollector];
