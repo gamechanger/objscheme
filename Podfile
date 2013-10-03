@@ -1,5 +1,5 @@
 platform :ios, "5.0"
-workspace 'objc/GCStatEngine'
-xcodeproj 'objc/GCStatEngine/GCStatEngine.xcodeproj'
+workspace 'ObjScheme'
+xcodeproj 'ObjScheme.xcodeproj'
 
 podspec :path => 'ObjScheme.podspec'
