@@ -10,80 +10,7 @@
 	<string>46</string>
 	<key>objects</key>
 	<dict>
-		<key>0CB23D7A38CF4BFD91E4A823</key>
-		<dict>
-			<key>attributes</key>
-			<dict>
-				<key>LastUpgradeCheck</key>
-				<string>0450</string>
-			</dict>
-			<key>buildConfigurationList</key>
-			<string>CCB59153C1A74C9A97AA3472</string>
-			<key>compatibilityVersion</key>
-			<string>Xcode 3.2</string>
-			<key>developmentRegion</key>
-			<string>English</string>
-			<key>hasScannedForEncodings</key>
-			<string>0</string>
-			<key>isa</key>
-			<string>PBXProject</string>
-			<key>knownRegions</key>
-			<array>
-				<string>en</string>
-			</array>
-			<key>mainGroup</key>
-			<string>477276BFF0A849C5818067EF</string>
-			<key>productRefGroup</key>
-			<string>8577CD67F9C14434B3714F09</string>
-			<key>projectDirPath</key>
-			<string></string>
-			<key>projectReferences</key>
-			<array/>
-			<key>projectRoot</key>
-			<string></string>
-			<key>targets</key>
-			<array/>
-		</dict>
-		<key>477276BFF0A849C5818067EF</key>
-		<dict>
-			<key>children</key>
-			<array>
-				<string>7430B09D9CAD43BE8E3010BE</string>
-				<string>8577CD67F9C14434B3714F09</string>
-				<string>96DB073DB31E44E69C2913BA</string>
-				<string>A91485D66A314314813643AA</string>
-			</array>
-			<key>isa</key>
-			<string>PBXGroup</string>
-			<key>sourceTree</key>
-			<string>&lt;group&gt;</string>
-		</dict>
-		<key>6D04C5AFD3E141A387FD44D4</key>
-		<dict>
-			<key>buildSettings</key>
-			<dict>
-				<key>IPHONEOS_DEPLOYMENT_TARGET</key>
-				<string>5.0</string>
-				<key>STRIP_INSTALLED_PRODUCT</key>
-				<string>NO</string>
-			</dict>
-			<key>isa</key>
-			<string>XCBuildConfiguration</string>
-			<key>name</key>
-			<string>Release</string>
-		</dict>
-		<key>7430B09D9CAD43BE8E3010BE</key>
-		<dict>
-			<key>children</key>
-			<array/>
-			<key>isa</key>
-			<string>PBXGroup</string>
-			<key>name</key>
-			<string>Frameworks</string>
-			<key>sourceTree</key>
-			<string>&lt;group&gt;</string>
-		</dict>
-		<key>8577CD67F9C14434B3714F09</key>
+		<key>018E840F67E547A3B987D331</key>
 		<dict>
 			<key>children</key>
 			<array/>
@@ -94,7 +21,7 @@
 			<key>sourceTree</key>
 			<string>&lt;group&gt;</string>
 		</dict>
-		<key>925FBFED206C4318892550E5</key>
+		<key>33D9E03DC7C949CE85F0A113</key>
 		<dict>
 			<key>buildSettings</key>
 			<dict>
@@ -108,7 +35,94 @@
 			<key>name</key>
 			<string>Debug</string>
 		</dict>
-		<key>96DB073DB31E44E69C2913BA</key>
+		<key>61EAA893293049028E235544</key>
+		<dict>
+			<key>buildConfigurations</key>
+			<array>
+				<string>33D9E03DC7C949CE85F0A113</string>
+				<string>949BA65A2E8A4E399301F692</string>
+			</array>
+			<key>defaultConfigurationIsVisible</key>
+			<string>0</string>
+			<key>defaultConfigurationName</key>
+			<string>Release</string>
+			<key>isa</key>
+			<string>XCConfigurationList</string>
+		</dict>
+		<key>949BA65A2E8A4E399301F692</key>
+		<dict>
+			<key>buildSettings</key>
+			<dict>
+				<key>IPHONEOS_DEPLOYMENT_TARGET</key>
+				<string>5.0</string>
+				<key>STRIP_INSTALLED_PRODUCT</key>
+				<string>NO</string>
+			</dict>
+			<key>isa</key>
+			<string>XCBuildConfiguration</string>
+			<key>name</key>
+			<string>Release</string>
+		</dict>
+		<key>A8E8644CEEA54721B0279A65</key>
+		<dict>
+			<key>children</key>
+			<array>
+				<string>E3420A826DDC43DCBA61C625</string>
+				<string>018E840F67E547A3B987D331</string>
+				<string>F97E347B662946E0A99D160F</string>
+				<string>FE670DEB0F3643668E2F9DC9</string>
+			</array>
+			<key>isa</key>
+			<string>PBXGroup</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>B5C0F86CEF3046BCAEB5726F</key>
+		<dict>
+			<key>attributes</key>
+			<dict>
+				<key>LastUpgradeCheck</key>
+				<string>0450</string>
+			</dict>
+			<key>buildConfigurationList</key>
+			<string>61EAA893293049028E235544</string>
+			<key>compatibilityVersion</key>
+			<string>Xcode 3.2</string>
+			<key>developmentRegion</key>
+			<string>English</string>
+			<key>hasScannedForEncodings</key>
+			<string>0</string>
+			<key>isa</key>
+			<string>PBXProject</string>
+			<key>knownRegions</key>
+			<array>
+				<string>en</string>
+			</array>
+			<key>mainGroup</key>
+			<string>A8E8644CEEA54721B0279A65</string>
+			<key>productRefGroup</key>
+			<string>018E840F67E547A3B987D331</string>
+			<key>projectDirPath</key>
+			<string></string>
+			<key>projectReferences</key>
+			<array/>
+			<key>projectRoot</key>
+			<string></string>
+			<key>targets</key>
+			<array/>
+		</dict>
+		<key>E3420A826DDC43DCBA61C625</key>
+		<dict>
+			<key>children</key>
+			<array/>
+			<key>isa</key>
+			<string>PBXGroup</string>
+			<key>name</key>
+			<string>Frameworks</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+		</dict>
+		<key>F97E347B662946E0A99D160F</key>
 		<dict>
 			<key>children</key>
 			<array/>
@@ -119,7 +133,7 @@
 			<key>sourceTree</key>
 			<string>&lt;group&gt;</string>
 		</dict>
-		<key>A91485D66A314314813643AA</key>
+		<key>FE670DEB0F3643668E2F9DC9</key>
 		<dict>
 			<key>includeInIndex</key>
 			<string>1</string>
@@ -136,22 +150,8 @@
 			<key>xcLanguageSpecificationIdentifier</key>
 			<string>xcode.lang.ruby</string>
 		</dict>
-		<key>CCB59153C1A74C9A97AA3472</key>
-		<dict>
-			<key>buildConfigurations</key>
-			<array>
-				<string>925FBFED206C4318892550E5</string>
-				<string>6D04C5AFD3E141A387FD44D4</string>
-			</array>
-			<key>defaultConfigurationIsVisible</key>
-			<string>0</string>
-			<key>defaultConfigurationName</key>
-			<string>Release</string>
-			<key>isa</key>
-			<string>XCConfigurationList</string>
-		</dict>
 	</dict>
 	<key>rootObject</key>
-	<string>0CB23D7A38CF4BFD91E4A823</string>
+	<string>B5C0F86CEF3046BCAEB5726F</string>
 </dict>
 </plist>
