@@ -11,3 +11,6 @@ then
     exit 1
 fi
 
+# clean out old stuff
+git reset --hard && git clean -fd
+rake test
