@@ -14,18 +14,18 @@
 + (void)initializeBridgeFunctions:(ObSScope*)scope {
 
   [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"NSDictionary:objectForKey")
-                                            fromBlock: ^(id a, id b) {
-        id val = [(NSMutableDictionary*)a objectForKey: b];
+                                            fromBlock: ^(id dict, id key) {
+        id val = [(NSMutableDictionary*)dict objectForKey: key];
         return ( val == nil ? B_FALSE : val );
       }]];
 
   [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"NSDictionary:containsKey?")
-                                            fromBlock: ^(id a, id b) {
-        return [(NSMutableDictionary*)a objectForKey: b] != nil ? B_TRUE : B_FALSE;
+                                            fromBlock: ^(id dict, id key) {
+        return [(NSMutableDictionary*)dict objectForKey: key] != nil ? B_TRUE : B_FALSE;
       }]];
 
   [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"NSDictionary:keys")
-                                           fromBlock: ^(id a) { return [(NSDictionary*)a allKeys]; }]];
+                                           fromBlock: ^(id dict) { return [(NSDictionary*)dict allKeys]; }]];
 
   [scope defineFunction: [ObSNativeLambda named: SY(@"NSDictionary:dictionaryWithObjectsAndKeys")
                                       fromBlock: ^(ObSCons* args) {
@@ -55,6 +55,18 @@
           args = CDDR(args);
         }
         return dict;
+      }]];
+
+  [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"NSMutableDictionary:removeObjectForKey")
+                                            fromBlock: ^(id dict, id key) {
+        [(NSMutableDictionary*)dict removeObjectForKey: key];
+        return [ObjScheme unspecified];
+      }]];
+
+  [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"NSMutableDictionary:removeAllObjects")
+                                           fromBlock: ^(id dict) {
+        [(NSMutableDictionary*)dict removeAllObjects];
+        return [ObjScheme unspecified];
       }]];
 
   [scope defineFunction: [ObSNativeLambda named: SY(@"NSArray:array")
