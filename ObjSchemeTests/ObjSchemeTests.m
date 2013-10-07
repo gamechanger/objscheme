@@ -451,8 +451,8 @@ typedef void (^Thunk)(void);
   OSAssertTrue(@"(NSDictionary:containsKey? (NSDictionary:dictionaryWithObjectsAndKeys 3 \"age\") \"age\")");
   OSAssertTrue(@"(equal? 3 (NSDictionary:objectForKey (NSDictionary:dictionaryWithObjectsAndKeys 3 \"age\") \"age\"))");
   OSAssertTrue(@"(equal? 7 (begin (define d (NSMutableDictionary:dictionary)) (NSMutableDictionary:setObjectForKey d 7 \"height\") (NSDictionary:objectForKey d \"height\")))");
-  OSAssertTrue(@"(NSMutableDictionary:isEqualToDictionary (let ((d (NSMutableDictionary:dictionaryWithObjectsAndKeys 0 \"k0\" 1 \"k1\"))) (NSMutableDictionary:removeObjectForKey d \"k0\") d) (NSMutableDictionary:dictionaryWithObjectsAndKeys 1 \"k1\"))");
-  OSAssertTrue(@"(NSMutableDictionary:isEqualToDictionary (let ((d (NSMutableDictionary:dictionaryWithObjectsAndKeys 0 \"k0\" 1 \"k1\") \"k0\")) (NSMutableDictionary:removeAllObjects d) d)(NSMutableDictionary:dictionary))");
+  OSAssertTrue(@"(equal? (let ((d (NSMutableDictionary:dictionaryWithObjectsAndKeys 0 \"k0\" 1 \"k1\"))) (NSMutableDictionary:removeObjectForKey d \"k0\") d) (NSMutableDictionary:dictionaryWithObjectsAndKeys 1 \"k1\"))");
+  OSAssertTrue(@"(equal? (let ((d (NSMutableDictionary:dictionaryWithObjectsAndKeys 0 \"k0\" 1 \"k1\") \"k0\")) (NSMutableDictionary:removeAllObjects d) d)(NSMutableDictionary:dictionary))");
   OSAssertTrue(@"(equal? (NSArray:array \"age\") (NSDictionary:keys (NSDictionary:dictionaryWithObjectsAndKeys 3 \"age\")))");
 }
 

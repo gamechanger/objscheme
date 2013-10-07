@@ -69,11 +69,6 @@
         return [ObjScheme unspecified];
       }]];
   
-  [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"NSMutableDictionary:isEqualToDictionary")
-                                            fromBlock: ^(id a, id b) {
-        return [(NSMutableDictionary*)a isEqualToDictionary: (NSMutableDictionary*)b] ? B_TRUE: B_FALSE;
-      }]];
-
   [scope defineFunction: [ObSNativeLambda named: SY(@"NSArray:array")
                                       fromBlock: ^(ObSCons* args) {
         return EMPTY(args) ? [NSArray array] : [args toArray];
