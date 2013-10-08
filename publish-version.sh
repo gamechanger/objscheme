@@ -1,7 +1,7 @@
 #!/bin/bash
 
 currentBranch=$(git branch | sed -n '/\* /s///p')
-if [ $currentBranch != "master" ]
+if [ "$currentBranch" != "master" ]
 then
     echo You are not on master.  You need to be on master to run this script.
     exit 1
