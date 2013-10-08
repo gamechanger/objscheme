@@ -37,6 +37,16 @@
         return dict;
       }]];
 
+  [scope defineFunction: [ObSNativeLambda named: SY(@"NSMutableDictionary:whitelist")
+                                      fromBlock: ^(ObSCons* args) {
+        NSDictionary* dict = CAR(args);
+        NSMutableDictionary* new_dict = [NSMutableDictionary dictionary];
+        for ( id key in CDR(args) ) {
+          new_dict[key] = dict[key];
+        }
+        return new_dict;
+      }]];
+
   [scope defineFunction: [ObSNativeThunkLambda named: SY(@"NSMutableDictionary:dictionary")
                                            fromBlock: ^() { return [NSMutableDictionary dictionary]; }]];
 
