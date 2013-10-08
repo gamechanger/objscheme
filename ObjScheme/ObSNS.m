@@ -40,11 +40,11 @@
   [scope defineFunction: [ObSNativeLambda named: SY(@"NSMutableDictionary:whitelist")
                                       fromBlock: ^(ObSCons* args) {
         NSDictionary* dict = CAR(args);
-        NSMutableDictionary* new_dict = [NSMutableDictionary dictionary];
+        NSMutableDictionary* newDict = [NSMutableDictionary dictionary];
         for ( id key in CDR(args) ) {
-          new_dict[key] = dict[key];
+          newDict[key] = dict[key];
         }
-        return new_dict;
+        return newDict;
       }]];
 
   [scope defineFunction: [ObSNativeLambda named: SY(@"NSDictionary:fold")
