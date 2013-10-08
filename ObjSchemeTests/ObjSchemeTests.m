@@ -454,6 +454,8 @@ typedef void (^Thunk)(void);
   OSAssertTrue(@"(equal? (let ((d (NSMutableDictionary:dictionaryWithObjectsAndKeys 0 \"k0\" 1 \"k1\"))) (NSMutableDictionary:removeObjectForKey d \"k0\") d) (NSMutableDictionary:dictionaryWithObjectsAndKeys 1 \"k1\"))");
   OSAssertTrue(@"(equal? (let ((d (NSMutableDictionary:dictionaryWithObjectsAndKeys 0 \"k0\" 1 \"k1\") \"k0\")) (NSMutableDictionary:removeAllObjects d) d)(NSMutableDictionary:dictionary))");
   OSAssertTrue(@"(equal? (NSMutableDictionary:whitelist (NSMutableDictionary:dictionaryWithObjectsAndKeys 0 \"k0\" 1 \"k1\") \"k1\") (NSMutableDictionary:dictionaryWithObjectsAndKeys 1 \"k1\"))");
+  OSAssertTrue(@"(equal? (NSDictionary:fold (lambda (_ v acc) (+ acc v)) 1 (NSMutableDictionary:dictionaryWithObjectsAndKeys 2 \"foo\" 3 \"bar\")) 6)")
+  OSAssertTrue(@"(equal? (NSDictionary:fold (lambda (k v acc) (NSMutableDictionary:setObjectForKey acc k (+ v 1))) (NSMutableDictionary:dictionary) (NSMutableDictionary:dictionaryWithObjectsAndKeys 2 \"foo\" 3 \"bar\")) (NSMutableDictionary:dictionaryWithObjectsAndKeys 3 \"foo\" 4 \"bar\"))")
   OSAssertTrue(@"(equal? (NSArray:array \"age\") (NSDictionary:keys (NSDictionary:dictionaryWithObjectsAndKeys 3 \"age\")))");
 }
 

@@ -47,6 +47,17 @@
         return new_dict;
       }]];
 
+  [scope defineFunction: [ObSNativeLambda named: SY(@"NSDictionary:fold")
+                                      fromBlock: ^(ObSCons* args) {
+        id<ObSProcedure> proc = CAR(args);
+        id acc = CADR(args);
+        NSDictionary* dict = CADDR(args);
+        for ( id key in dict ) {
+          acc = [proc callWith: CONS(key, CONS(dict[key], CONS(acc, C_NULL)))];
+        }
+        return acc;
+     }]];
+
   [scope defineFunction: [ObSNativeThunkLambda named: SY(@"NSMutableDictionary:dictionary")
                                            fromBlock: ^() { return [NSMutableDictionary dictionary]; }]];
 
