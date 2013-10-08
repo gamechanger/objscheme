@@ -56,7 +56,7 @@
           acc = [proc callWith: CONS(key, CONS(dict[key], CONS(acc, C_NULL)))];
         }
         return acc;
-     }]];
+      }]];
 
   [scope defineFunction: [ObSNativeThunkLambda named: SY(@"NSMutableDictionary:dictionary")
                                            fromBlock: ^() { return [NSMutableDictionary dictionary]; }]];
