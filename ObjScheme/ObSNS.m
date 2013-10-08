@@ -60,7 +60,7 @@
   [scope defineFunction: [ObSNativeLambda named: SY(@"NSMutableDictionary:dictionaryWithObjectsAndKeys")
                                       fromBlock: ^(ObSCons* args) {
         NSMutableDictionary* dict = [NSMutableDictionary dictionary];
-        while ( (id)args != C_NULL ) {
+        while ( ! EMPTY(args) ) {
           [dict setObject: CAR(args) forKey: CADR(args)];
           args = CDDR(args);
         }
