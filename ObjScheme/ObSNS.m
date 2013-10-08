@@ -37,6 +37,27 @@
         return dict;
       }]];
 
+  [scope defineFunction: [ObSNativeLambda named: SY(@"NSMutableDictionary:whitelist")
+                                      fromBlock: ^(ObSCons* args) {
+        NSDictionary* dict = CAR(args);
+        NSMutableDictionary* newDict = [NSMutableDictionary dictionary];
+        for ( id key in CDR(args) ) {
+          newDict[key] = dict[key];
+        }
+        return newDict;
+      }]];
+
+  [scope defineFunction: [ObSNativeLambda named: SY(@"NSDictionary:fold")
+                                      fromBlock: ^(ObSCons* args) {
+        id<ObSProcedure> proc = CAR(args);
+        id acc = CADR(args);
+        NSDictionary* dict = CADDR(args);
+        for ( id key in dict ) {
+          acc = [proc callWith: CONS(key, CONS(dict[key], CONS(acc, C_NULL)))];
+        }
+        return acc;
+      }]];
+
   [scope defineFunction: [ObSNativeThunkLambda named: SY(@"NSMutableDictionary:dictionary")
                                            fromBlock: ^() { return [NSMutableDictionary dictionary]; }]];
 
@@ -50,7 +71,7 @@
   [scope defineFunction: [ObSNativeLambda named: SY(@"NSMutableDictionary:dictionaryWithObjectsAndKeys")
                                       fromBlock: ^(ObSCons* args) {
         NSMutableDictionary* dict = [NSMutableDictionary dictionary];
-        while ( (id)args != C_NULL ) {
+        while ( ! EMPTY(args) ) {
           [dict setObject: CAR(args) forKey: CADR(args)];
           args = CDDR(args);
         }
