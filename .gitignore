@@ -3,3 +3,4 @@ xcuserdata
 build
 *.un~
 Pods
+test-reports/*
