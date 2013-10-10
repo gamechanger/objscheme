@@ -17,7 +17,7 @@ fi
 set -e
 ruby generate-podspec.rb $1 > ObjScheme.podspec
 git add ObjScheme.podspec
-git commit -m "Update podspec"
+git commit -m "Update podspec" || true
 git push origin master
 
 git tag -a $1 -m "Create tag"
