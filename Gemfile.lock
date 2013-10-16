@@ -21,11 +21,13 @@ GEM
       nap (~> 0.5)
     cocoapods-downloader (0.2.0)
     colored (1.2)
+    erubis (2.7.0)
     escape (0.0.4)
     i18n (0.6.5)
     json (1.8.0)
     multi_json (1.8.0)
     nap (0.5.1)
+    ocunit2junit (1.3)
     open4 (1.3.0)
     xcodeproj (0.10.1)
       activesupport (~> 3.0)
@@ -36,3 +38,5 @@ PLATFORMS
 
 DEPENDENCIES
   cocoapods (= 0.24)
+  erubis (~> 2.7.0)
+  ocunit2junit (~> 1.3)
