@@ -4,3 +4,5 @@ build
 *.un~
 Pods
 test-reports/*
+*~
+.idea
