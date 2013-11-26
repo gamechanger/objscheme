@@ -26,5 +26,9 @@ namespace :test do
   end
 end
 
+task :analyze do
+  sh "xctool -workspace ObjScheme.xcworkspace -scheme ObjScheme analyze"
+end
+
 task :test => "test:default"
 
