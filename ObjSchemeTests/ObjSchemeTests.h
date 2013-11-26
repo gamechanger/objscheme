@@ -6,8 +6,8 @@
 //  Copyright (c) 2012 GameChanger. All rights reserved.
 //
 
-#import <SenTestingKit/SenTestingKit.h>
+#import <XCTest/XCTest.h>
 
-@interface ObjSchemeTests : SenTestCase
+@interface ObjSchemeTests : XCTestCase
 
 @end
