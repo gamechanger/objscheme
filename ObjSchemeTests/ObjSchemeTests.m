@@ -16,33 +16,33 @@
 #define OSAssertFalse(code) source = (code);\
  program = [_objSContext parseString: source];\
  returnValue = [[_objSContext globalScope] evaluate: program];\
- STAssertTrue([ObjScheme isFalse: returnValue], @"%@ => %@", source, returnValue);
+ XCTAssertTrue([ObjScheme isFalse: returnValue], @"%@ => %@", source, returnValue);
 
 #define OSAssertTrue(code) source = (code);\
  program = [_objSContext parseString: source];\
  returnValue = [[_objSContext globalScope] evaluate: program];\
- STAssertTrue(! [ObjScheme isFalse: returnValue], @"%@ => %@", source, returnValue);
+ XCTAssertTrue(! [ObjScheme isFalse: returnValue], @"%@ => %@", source, returnValue);
 
 #define OSAssertEqualsInt(code, expected) source = (code);\
  program = [_objSContext parseString: source];\
  returnValue = [[_objSContext globalScope] evaluate: program];\
- STAssertTrue([returnValue isKindOfClass: [NSNumber class]], @"%@ => %@", source, returnValue); \
+ XCTAssertTrue([returnValue isKindOfClass: [NSNumber class]], @"%@ => %@", source, returnValue); \
  number = returnValue;\
- STAssertEquals(strcmp([number objCType], @encode(int)), 0, @"%@ => %@", source, returnValue); \
- STAssertEquals([number intValue], (expected), @"%@ => %d", source, [number intValue]);
+ XCTAssertEqual(strcmp([number objCType], @encode(int)), 0, @"%@ => %@", source, returnValue); \
+ XCTAssertEqual([number intValue], (expected), @"%@ => %d", source, [number intValue]);
 
 #define OSAssertEqualsDouble(code, expected) source = (code);\
  program = [_objSContext parseString: source];\
  returnValue = [[_objSContext globalScope] evaluate: program];\
- STAssertTrue([returnValue isKindOfClass: [NSNumber class]], @"%@ isn't a number", source);\
+ XCTAssertTrue([returnValue isKindOfClass: [NSNumber class]], @"%@ isn't a number", source);\
  number = returnValue;\
- STAssertEquals(strcmp([number objCType], @encode(double)), 0, @"%@ isn't a double", source);\
- STAssertEqualsWithAccuracy([number doubleValue], (expected), 0.0001, @"%@ => %f not %f, off by %f", source, [number doubleValue], (expected), (expected)-[number doubleValue]);
+ XCTAssertEqual(strcmp([number objCType], @encode(double)), 0, @"%@ isn't a double", source);\
+ XCTAssertEqualWithAccuracy([number doubleValue], (expected), 0.0001, @"%@ => %f not %f, off by %f", source, [number doubleValue], (expected), (expected)-[number doubleValue]);
 
 #define OSAssertEquals(code, expected) source = (code);\
  program = [_objSContext parseString: source];\
  returnValue = [[_objSContext globalScope] evaluate: program];\
- STAssertEqualObjects(returnValue, expected, @"source: %@ ", source);
+ XCTAssertEqualObjects(returnValue, expected, @"source: %@ ", source);
 
 
 #define COMPILE(source) [_objSContext parseString: (source)]
@@ -125,48 +125,48 @@ typedef void (^Thunk)(void);
   ObSInPort* port = [[[ObSInPort alloc] initWithString: program] autorelease];
 
   NSString* t = [port nextToken];
-  STAssertEqualObjects(t, SY(@"("), @"port token initial paren wrong, %@", t);
+  XCTAssertEqualObjects(t, SY(@"("), @"port token initial paren wrong, %@", t);
 
   t = [port nextToken];
-  STAssertEqualObjects(t, @"display", @"port token initial paren wrong, %@", t);
+  XCTAssertEqualObjects(t, @"display", @"port token initial paren wrong, %@", t);
 
   t = [port nextToken];
-  STAssertEqualObjects(t, @"\"hi\"", @"port token initial paren wrong, %@", t);
+  XCTAssertEqualObjects(t, @"\"hi\"", @"port token initial paren wrong, %@", t);
 
   t = [port nextToken];
-  STAssertEqualObjects(t, SY(@")"), @"port token initial paren wrong, %@", t);
+  XCTAssertEqualObjects(t, SY(@")"), @"port token initial paren wrong, %@", t);
 }
 
 - (void)testGlobalScope {
   ObSScope* global = [_objSContext globalScope];
-  STAssertEquals(global, [_objSContext globalScope], @"Global scope isn't unique");
+  XCTAssertEqual(global, [_objSContext globalScope], @"Global scope isn't unique");
 }
 
 - (void)testBasicEvaluation {
   NSString* source = @"\"hi\"";
   id program = [_objSContext parseString: source];
   id returnValue = [[_objSContext globalScope] evaluate: program];
-  STAssertEqualObjects(returnValue, @"hi", @"Failed to evaluate a string literal program");
+  XCTAssertEqualObjects(returnValue, @"hi", @"Failed to evaluate a string literal program");
 
   source = @"#f";
   program = [_objSContext parseString: source];
   returnValue = [[_objSContext globalScope] evaluate: program];
-  STAssertTrue([ObjScheme isFalse: returnValue], @"return value isn't false %@", returnValue);
+  XCTAssertTrue([ObjScheme isFalse: returnValue], @"return value isn't false %@", returnValue);
 
   source = @"3";
   program = [_objSContext parseString: source];
   returnValue = [[_objSContext globalScope] evaluate: program];
-  STAssertEqualObjects([NSNumber numberWithInteger: 3], returnValue, @"uh-oh");
+  XCTAssertEqualObjects([NSNumber numberWithInteger: 3], returnValue, @"uh-oh");
 
   source = @"0.5";
   program = [_objSContext parseString: source];
   returnValue = [[_objSContext globalScope] evaluate: program];
-  STAssertEqualObjects([NSNumber numberWithDouble: 0.5], returnValue, @"uh-oh");
+  XCTAssertEqualObjects([NSNumber numberWithDouble: 0.5], returnValue, @"uh-oh");
 
   source = @"(let ((2-in-1 'bing)) 2-in-1)";
   program = [_objSContext parseString: source];
   returnValue = [[_objSContext globalScope] evaluate: program];
-  STAssertTrue([returnValue isKindOfClass: [ObSSymbol class]], @"number-prefixed string should be a symbol, not number: %@", returnValue);
+  XCTAssertTrue([returnValue isKindOfClass: [ObSSymbol class]], @"number-prefixed string should be a symbol, not number: %@", returnValue);
 }
 
 - (void)testApplyCase {
@@ -507,7 +507,7 @@ typedef void (^Thunk)(void);
 
 - (void)testGarbageCollectionIndirectly {
   id aScope = EXEC(@"(the-environment)");
-  STAssertTrue([aScope isKindOfClass: [ObSScope class]], @"wow, it's not a scope?" );
+  XCTAssertTrue([aScope isKindOfClass: [ObSScope class]], @"wow, it's not a scope?" );
   ObSScope* asScope = aScope;
   [asScope garbageCollector].synchronous = YES;
 
@@ -515,12 +515,12 @@ typedef void (^Thunk)(void);
   aScope = EXEC(@"(let* ((x (lambda () #t))) (the-environment))");
   [autoreleasePool drain];
 
-  STAssertTrue([aScope retainCount] == 2, @"Leak should mean we have RC of 2 (the GC keeps one ref, lambda the other), not %d", [aScope retainCount]);
+  XCTAssertTrue([aScope retainCount] == 2, @"Leak should mean we have RC of 2 (the GC keeps one ref, lambda the other), not %d", [aScope retainCount]);
 
   [aScope retain];
   [[_objSContext globalScope] gc];
 
-  STAssertTrue([aScope retainCount] == 2, @"GC should break the lambda-scope retain cycle, but we retained it, so GC hasn't let go yet, so it should be 2 not %d", [aScope retainCount]);
+  XCTAssertTrue([aScope retainCount] == 2, @"GC should break the lambda-scope retain cycle, but we retained it, so GC hasn't let go yet, so it should be 2 not %d", [aScope retainCount]);
   [aScope release];
 }
 
@@ -547,9 +547,9 @@ typedef void (^Thunk)(void);
   [gc startTracking: tertiary];
   [gc runGarbageCollection];
 
-  STAssertTrue(secondaryGone, @"shit, secondary didn't die!");
-  STAssertTrue(tertiaryGone, @"shit, secondary didn't die!");
-  STAssertFalse(rootGone, @"shit, secondary didn't die!");
+  XCTAssertTrue(secondaryGone, @"shit, secondary didn't die!");
+  XCTAssertTrue(tertiaryGone, @"shit, secondary didn't die!");
+  XCTAssertFalse(rootGone, @"shit, secondary didn't die!");
 
   [root release];
   [gc release];
@@ -561,16 +561,16 @@ typedef void (^Thunk)(void);
   [_objSContext loadSource: source intoScope: [_objSContext globalScope]];
 
   id returnValue = [scheme callFunctionNamed: @"echo" withArgument: @YES];
-  STAssertTrue( [ObjScheme isTrue: returnValue], @"Failed to treat @YES as true saw %@", returnValue );
+  XCTAssertTrue( [ObjScheme isTrue: returnValue], @"Failed to treat @YES as true saw %@", returnValue );
 
   returnValue = [scheme callFunctionNamed: @"echo" withArgument: @NO];
-  STAssertTrue( [ObjScheme isFalse: returnValue], @"Failed to treat @NO as false saw %@", returnValue );
+  XCTAssertTrue( [ObjScheme isFalse: returnValue], @"Failed to treat @NO as false saw %@", returnValue );
 
   returnValue = [scheme callFunctionNamed: @"echo2" withArguments: CONS( (@[@YES, @NO]), CONS(@0, C_NULL)) ];
-  STAssertTrue( [ObjScheme isTrue: returnValue], @"Failed to treat @YES as true saw %@", returnValue );
+  XCTAssertTrue( [ObjScheme isTrue: returnValue], @"Failed to treat @YES as true saw %@", returnValue );
 
   returnValue = [scheme callFunctionNamed: @"echo2" withArguments: CONS( (@[@YES, @NO]), CONS(@1, C_NULL)) ];
-  STAssertTrue( [ObjScheme isFalse: returnValue], @"Failed to treat @NO as false saw %@", returnValue );
+  XCTAssertTrue( [ObjScheme isFalse: returnValue], @"Failed to treat @NO as false saw %@", returnValue );
 
   [scheme release];
 }

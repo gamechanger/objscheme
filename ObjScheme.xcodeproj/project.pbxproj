@@ -64,7 +64,6 @@
 		FBD3F807171DD11B008181F9 /* ObSGarbageCollector.m in Sources */ = {isa = PBXBuildFile; fileRef = FBD3F801171DD11B008181F9 /* ObSGarbageCollector.m */; };
 		FBE147F515C6D22A000B79FD /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FBE147F415C6D22A000B79FD /* Foundation.framework */; };
 		FBE147FB15C6D22A000B79FD /* ObjScheme.m in Sources */ = {isa = PBXBuildFile; fileRef = FBE147FA15C6D22A000B79FD /* ObjScheme.m */; };
-		FBE1480315C6D22A000B79FD /* SenTestingKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FBE1480215C6D22A000B79FD /* SenTestingKit.framework */; };
 		FBE1480615C6D22A000B79FD /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FBE147F415C6D22A000B79FD /* Foundation.framework */; };
 		FBE1480F15C6D22A000B79FD /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = FBE1480D15C6D22A000B79FD /* InfoPlist.strings */; };
 		FBE1481215C6D22A000B79FD /* ObjSchemeTests.m in Sources */ = {isa = PBXBuildFile; fileRef = FBE1481115C6D22A000B79FD /* ObjSchemeTests.m */; };
@@ -123,8 +122,7 @@
 		FBE147F815C6D22A000B79FD /* ObjScheme-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "ObjScheme-Prefix.pch"; sourceTree = "<group>"; };
 		FBE147F915C6D22A000B79FD /* ObjScheme.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ObjScheme.h; sourceTree = "<group>"; };
 		FBE147FA15C6D22A000B79FD /* ObjScheme.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ObjScheme.m; sourceTree = "<group>"; };
-		FBE1480115C6D22A000B79FD /* ObjSchemeTests.octest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ObjSchemeTests.octest; sourceTree = BUILT_PRODUCTS_DIR; };
-		FBE1480215C6D22A000B79FD /* SenTestingKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SenTestingKit.framework; path = Library/Frameworks/SenTestingKit.framework; sourceTree = DEVELOPER_DIR; };
+		FBE1480115C6D22A000B79FD /* ObjSchemeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ObjSchemeTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		FBE1480C15C6D22A000B79FD /* ObjSchemeTests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "ObjSchemeTests-Info.plist"; sourceTree = "<group>"; };
 		FBE1480E15C6D22A000B79FD /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		FBE1481015C6D22A000B79FD /* ObjSchemeTests.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ObjSchemeTests.h; sourceTree = "<group>"; };
@@ -144,7 +142,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				FBE1480315C6D22A000B79FD /* SenTestingKit.framework in Frameworks */,
 				FBE1480615C6D22A000B79FD /* Foundation.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -168,7 +165,7 @@
 			isa = PBXGroup;
 			children = (
 				FBE147F115C6D22A000B79FD /* libObjScheme.a */,
-				FBE1480115C6D22A000B79FD /* ObjSchemeTests.octest */,
+				FBE1480115C6D22A000B79FD /* ObjSchemeTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -177,7 +174,6 @@
 			isa = PBXGroup;
 			children = (
 				FBE147F415C6D22A000B79FD /* Foundation.framework */,
-				FBE1480215C6D22A000B79FD /* SenTestingKit.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -304,8 +300,8 @@
 			);
 			name = ObjSchemeTests;
 			productName = ObjSchemeTests;
-			productReference = FBE1480115C6D22A000B79FD /* ObjSchemeTests.octest */;
-			productType = "com.apple.product-type.bundle";
+			productReference = FBE1480115C6D22A000B79FD /* ObjSchemeTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
 		};
 /* End PBXNativeTarget section */
 
@@ -569,14 +565,12 @@
 			buildSettings = {
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(SDKROOT)/Developer/Library/Frameworks",
-					"$(DEVELOPER_LIBRARY_DIR)/Frameworks",
+					"$(inherited)",
 				);
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "ObjScheme/ObjScheme-Prefix.pch";
 				INFOPLIST_FILE = "ObjSchemeTests/ObjSchemeTests-Info.plist";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				TEST_AFTER_BUILD = NO;
-				WRAPPER_EXTENSION = octest;
 			};
 			name = Debug;
 		};
@@ -585,14 +579,12 @@
 			buildSettings = {
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(SDKROOT)/Developer/Library/Frameworks",
-					"$(DEVELOPER_LIBRARY_DIR)/Frameworks",
+					"$(inherited)",
 				);
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "ObjScheme/ObjScheme-Prefix.pch";
 				INFOPLIST_FILE = "ObjSchemeTests/ObjSchemeTests-Info.plist";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				TEST_AFTER_BUILD = NO;
-				WRAPPER_EXTENSION = octest;
 			};
 			name = Release;
 		};

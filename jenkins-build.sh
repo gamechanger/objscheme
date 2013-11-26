@@ -14,4 +14,4 @@ fi
 # clean out old stuff
 git reset --hard && git clean -fd
 rm -rf test-reports
-rake test && echo "Running clang scan-build" && /Users/administrator/checker-274/scan-build -k -v -v -o $WORKSPACE/clangScanBuildReports xcodebuild -workspace ObjScheme.xcworkspace -scheme ObjScheme -sdk iphonesimulator ONLY_ACTIVE_ARCH=NO clean build
+rake test:ci && echo "Running clang scan-build" && /Users/administrator/checker-274/scan-build -k -v -v -o $WORKSPACE/clangScanBuildReports xcodebuild -workspace ObjScheme.xcworkspace -scheme ObjScheme -sdk iphonesimulator ONLY_ACTIVE_ARCH=NO clean build
