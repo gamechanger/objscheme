@@ -15,7 +15,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "FBE1480015C6D22A000B79FD"
-               BuildableName = "ObjSchemeTests.octest"
+               BuildableName = "ObjSchemeTests.xctest"
                BlueprintName = "ObjSchemeTests"
                ReferencedContainer = "container:ObjScheme.xcodeproj">
             </BuildableReference>
@@ -33,7 +33,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "FBE1480015C6D22A000B79FD"
-               BuildableName = "ObjSchemeTests.octest"
+               BuildableName = "ObjSchemeTests.xctest"
                BlueprintName = "ObjSchemeTests"
                ReferencedContainer = "container:ObjScheme.xcodeproj">
             </BuildableReference>
