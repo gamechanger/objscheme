@@ -18,7 +18,7 @@ end
 
 namespace :test do
   task :ci => ["debug:cleanbuild", "tests:cleanbuild"] do |t|
-    sh "xctool -workspace ObjScheme.xcworkspace -scheme ObjSchemeTests -sdk iphonesimulator -reporter plain -reporter junit:test-reports/TEST-results.xml test -freshInstall -freshSimulator"
+    sh "xctool -workspace ObjScheme.xcworkspace -scheme ObjSchemeTests -sdk iphonesimulator -reporter plain test -freshInstall -freshSimulator"
   end
 
   task :default do |t|
