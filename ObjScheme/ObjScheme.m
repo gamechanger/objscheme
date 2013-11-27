@@ -1255,6 +1255,9 @@ id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
             return ret;
           }
           @catch (NSException *e) {
+            if ( [e.reason rangeOfString:@"mutated while being"].location == NSNotFound ) {
+              @throw;
+            }
             if ( i == 2 ) {
               @throw;
             }
