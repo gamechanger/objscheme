@@ -1241,16 +1241,26 @@ id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
                                                         fromBlock: ^(ObSCons* args) {
         id<ObSProcedure> testFunction = CAR(args);
         NSArray* inputArray = CADR(args);
-
         id ret = B_FALSE;
 
-        for ( id item in inputArray ) {
-          if ( [testFunction callWithSingleArg: item] != B_FALSE ) {
-            ret = item;
-            break;
+        for ( NSUInteger i = 0; i < 3; i++ ) {
+          // a workaround for a specific concurrent modification case
+          @try {
+            for ( id item in inputArray ) {
+              if ( [testFunction callWithSingleArg: item] != B_FALSE ) {
+                ret = item;
+                break;
+              }
+            }
+            return ret;
+          }
+          @catch (NSException *e) {
+            if ( i == 2 ) {
+              @throw;
+            }
           }
         }
-
+        // shouldn't be possible to get here, but throwing in a return to please the compiler
         return ret;
       }]];
 
