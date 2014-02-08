@@ -2,7 +2,7 @@
 
 echo publishing $1
 
-rvm use 1.9.3@objscheme --create
+rvm use 2.1.0@objscheme --create
 cd $WORKSPACE
 bundle install && pod install
 if [ $? -ne 0 ]
