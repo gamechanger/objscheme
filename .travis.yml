@@ -1,5 +1,6 @@
 language: objective-c
-before_install: rvm use 2.1.0
+rvm:
+  - 2.1.0
 script: rake test:ci analyze
 cache: bundler
 notifications:
