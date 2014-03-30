@@ -1,6 +1,6 @@
 language: objective-c
 rvm:
-    - 2.0.0
+    - 1.9.3
 script: rake test:ci analyze
 cache: bundler
 notifications:
