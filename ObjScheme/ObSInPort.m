@@ -65,7 +65,7 @@ NSString* _EOF = @"#EOF#";
   NSUInteger length = [_data length];
   if ( _cursor < length ) {
     unichar c = [_data characterAtIndex: _cursor];
-    while ( c != ' ' && c != '\t' && c != '\n' && c != ')' ) {
+    while ( c != ' ' && c != '\t' && c != '\n' && c != ')' && c != ']' ) {
       if ( _cursor == length - 1 ) {
         _cursor++;
         break;
