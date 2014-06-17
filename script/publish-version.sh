@@ -15,8 +15,8 @@ then
 fi
 
 set -e
-ruby generate-podspec.rb $1 > ObjScheme.podspec
-git add ObjScheme.podspec
+ruby generate-podspec.rb $1 > ../ObjScheme.podspec
+git add ../ObjScheme.podspec
 git commit -m "Update podspec" || true
 git push origin master
 
