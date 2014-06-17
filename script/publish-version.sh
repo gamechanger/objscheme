@@ -23,4 +23,4 @@ git push origin master
 git tag -a $1 -m "Create tag"
 git push origin $1
 
-pod repo push --allow-warnings gcspecs ObjScheme.podspec
+pod repo push --allow-warnings gcspecs ../ObjScheme.podspec
