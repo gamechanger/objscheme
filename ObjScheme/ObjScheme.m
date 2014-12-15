@@ -302,7 +302,7 @@ id appendListsToList(ObSCons* lists, ObSCons* aList) {
 
   if ( head == S_QUOTE ) { // (quote exp)
     [ObjScheme assertSyntax: (length == 2)
-                  elseRaise: [NSString stringWithFormat: @"quote should have 1 arg, given %d", length-1]];
+                  elseRaise: [NSString stringWithFormat: @"quote should have 1 arg, given %lu", (unsigned long)length - 1]];
 
     id quotee = CADR(list);
     if ( [quotee isKindOfClass: [ObSCons class]] ) {

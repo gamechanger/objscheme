@@ -672,7 +672,7 @@ typedef id (^ObSInternalFunction)(ObSScope* scope, ObSSymbol* name, ObSCons* arg
       _errorLogged = YES;
       NSLog( @"Error %@", e );
       NSLog( @"Evaluating %@", token );
-      for ( int i = [_stack count]-1; i >= 0; i-- ) {
+      for ( NSInteger i = [_stack count] - 1; i >= 0; i-- ) {
         NSLog( @" @ %@", [_stack objectAtIndex: i] );
       }
       [_stack removeAllObjects];

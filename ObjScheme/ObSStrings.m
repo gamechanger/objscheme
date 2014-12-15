@@ -75,7 +75,7 @@
 
           NSInteger argumentIndex = ++implicitPositionCounter;
           if ( argumentIndex > numArgs ) {
-            [NSException raise: @"InvalidFormat" format: @"implicit index in %@ at position %d", formatString, range.location];
+            [NSException raise: @"InvalidFormat" format: @"implicit index in %@ at position %lu", formatString, (unsigned long)range.location];
           }
           [string appendFormat: @"%@", [formatArgs objectAtIndex: argumentIndex]];
 
