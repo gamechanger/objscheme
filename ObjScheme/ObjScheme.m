@@ -962,7 +962,7 @@ id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
 
         } else {
           NSNumber* number = o;
-          return TRUTH(strcmp([number objCType], @encode(int)) == 0);
+          return TRUTH(strcmp([number objCType], @encode(int)) == 0 || strcmp([number objCType], @encode(long)) == 0);
         }
       }]];
 

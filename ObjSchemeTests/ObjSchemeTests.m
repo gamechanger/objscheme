@@ -515,12 +515,12 @@ typedef void (^Thunk)(void);
   aScope = EXEC(@"(let* ((x (lambda () #t))) (the-environment))");
   [autoreleasePool drain];
 
-  XCTAssertTrue([aScope retainCount] == 2, @"Leak should mean we have RC of 2 (the GC keeps one ref, lambda the other), not %d", [aScope retainCount]);
+  XCTAssertTrue([aScope retainCount] == 2, @"Leak should mean we have RC of 2 (the GC keeps one ref, lambda the other), not %lu", (unsigned long)[aScope retainCount]);
 
   [aScope retain];
   [[_objSContext globalScope] gc];
 
-  XCTAssertTrue([aScope retainCount] == 2, @"GC should break the lambda-scope retain cycle, but we retained it, so GC hasn't let go yet, so it should be 2 not %d", [aScope retainCount]);
+  XCTAssertTrue([aScope retainCount] == 2, @"GC should break the lambda-scope retain cycle, but we retained it, so GC hasn't let go yet, so it should be 2 not %lu", (unsigned long)[aScope retainCount]);
   [aScope release];
 }
 
