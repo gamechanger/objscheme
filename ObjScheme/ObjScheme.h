@@ -92,7 +92,7 @@ extern ObSConstant* UNSPECIFIED;
 #define TRUTH(b) ((b) ? B_TRUE : B_FALSE)
 #define IF(x) ((x) != B_FALSE)
 #define CONS(x,y) [ObSCons cons: (x) and: (y)]
-#define ISINT(n) (strcmp([(n) objCType], @encode(int)) == 0)
+#define ISINT(n) (strcmp([(n) objCType], @encode(int)) == 0 || strcmp([(n) objCType], @encode(long)) == 0)
 #define ISDOUBLE(n) (strcmp([(n) objCType], @encode(double)) == 0)
 #define CONST(s) [[ObSConstant alloc] initWithName: (s)]
 #define CAR(x) ((x)->_car)

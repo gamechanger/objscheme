@@ -656,7 +656,7 @@ id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
             return INF;
           }
 
-          if ( ! useDouble && strcmp([n objCType], @encode(int)) == 0 ) {
+          if ( ! useDouble && (strcmp([n objCType], @encode(int)) == 0 || strcmp([n objCType], @encode(long)) == 0 )) {
             intRet += [n intValue];
             doubleRet += [n doubleValue];
 
@@ -683,7 +683,7 @@ id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
           return INF;
         }
 
-        if ( strcmp([first objCType], @encode(int)) == 0 ) {
+        if ( strcmp([first objCType], @encode(int)) == 0 || strcmp([first objCType], @encode(long)) == 0 ) {
           return [NSNumber numberWithInteger: [first intValue]-[second intValue]];
 
         } else {
@@ -703,7 +703,7 @@ id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
 
         for ( NSNumber* number in list ) {
           NSAssert1( [number isKindOfClass: [NSNumber class]], @"%@ is not a number", number );
-          if ( useDouble || strcmp([number objCType], @encode(int)) != 0 ) {
+          if ( useDouble || (strcmp([number objCType], @encode(int)) != 0 && strcmp([number objCType], @encode(long)) != 0)) {
             useDouble = YES;
             doubleRet *= [number doubleValue];
 
@@ -985,7 +985,7 @@ id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
   [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"number->string")
                                            fromBlock: ^(id o) {
         NSNumber* n = o;
-        if ( strcmp([n objCType], @encode(int)) == 0 ) {
+        if ( strcmp([n objCType], @encode(int)) == 0 || strcmp([n objCType], @encode(long)) == 0 ) {
           return [NSString stringWithFormat: @"%d", [n intValue]];
         } else {
           return [NSString stringWithFormat: @"%f", [n doubleValue]];
@@ -1017,7 +1017,7 @@ id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
   [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"abs")
                                            fromBlock: ^(id n) {
         NSNumber* number = n;
-        if ( strcmp([number objCType], @encode(int)) == 0 ) {
+        if ( strcmp([number objCType], @encode(int)) == 0 || strcmp([number objCType], @encode(long)) == 0 ) {
           return [NSNumber numberWithInteger: abs([number intValue])];
 
         } else {

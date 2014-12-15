@@ -28,7 +28,7 @@
  returnValue = [[_objSContext globalScope] evaluate: program];\
  XCTAssertTrue([returnValue isKindOfClass: [NSNumber class]], @"%@ => %@", source, returnValue); \
  number = returnValue;\
- XCTAssertEqual(strcmp([number objCType], @encode(int)), 0, @"%@ => %@", source, returnValue); \
+ XCTAssertTrue(strcmp([number objCType], @encode(int)) == 0 || strcmp([number objCType], @encode(long)) == 0, @"%@ => %@", source, returnValue); \
  XCTAssertEqual([number intValue], (expected), @"%@ => %d", source, [number intValue]);
 
 #define OSAssertEqualsDouble(code, expected) source = (code);\
