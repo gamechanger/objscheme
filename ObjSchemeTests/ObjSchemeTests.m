@@ -28,7 +28,7 @@
  returnValue = [[_objSContext globalScope] evaluate: program];\
  XCTAssertTrue([returnValue isKindOfClass: [NSNumber class]], @"%@ => %@", source, returnValue); \
  number = returnValue;\
- XCTAssertEqual(strcmp([number objCType], @encode(int)), 0, @"%@ => %@", source, returnValue); \
+ XCTAssertTrue(ISINT(number), @"%@ => %@", source, returnValue); \
  XCTAssertEqual([number intValue], (expected), @"%@ => %d", source, [number intValue]);
 
 #define OSAssertEqualsDouble(code, expected) source = (code);\
@@ -36,7 +36,7 @@
  returnValue = [[_objSContext globalScope] evaluate: program];\
  XCTAssertTrue([returnValue isKindOfClass: [NSNumber class]], @"%@ isn't a number", source);\
  number = returnValue;\
- XCTAssertEqual(strcmp([number objCType], @encode(double)), 0, @"%@ isn't a double", source);\
+ XCTAssertTrue(ISDOUBLE(number), @"%@ isn't a double", source);\
  XCTAssertEqualWithAccuracy([number doubleValue], (expected), 0.0001, @"%@ => %f not %f, off by %f", source, [number doubleValue], (expected), (expected)-[number doubleValue]);
 
 #define OSAssertEquals(code, expected) source = (code);\
@@ -515,12 +515,12 @@ typedef void (^Thunk)(void);
   aScope = EXEC(@"(let* ((x (lambda () #t))) (the-environment))");
   [autoreleasePool drain];
 
-  XCTAssertTrue([aScope retainCount] == 2, @"Leak should mean we have RC of 2 (the GC keeps one ref, lambda the other), not %d", [aScope retainCount]);
+  XCTAssertTrue([aScope retainCount] == 2, @"Leak should mean we have RC of 2 (the GC keeps one ref, lambda the other), not %lu", (unsigned long)[aScope retainCount]);
 
   [aScope retain];
   [[_objSContext globalScope] gc];
 
-  XCTAssertTrue([aScope retainCount] == 2, @"GC should break the lambda-scope retain cycle, but we retained it, so GC hasn't let go yet, so it should be 2 not %d", [aScope retainCount]);
+  XCTAssertTrue([aScope retainCount] == 2, @"GC should break the lambda-scope retain cycle, but we retained it, so GC hasn't let go yet, so it should be 2 not %lu", (unsigned long)[aScope retainCount]);
   [aScope release];
 }
 

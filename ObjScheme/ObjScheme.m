@@ -302,7 +302,7 @@ id appendListsToList(ObSCons* lists, ObSCons* aList) {
 
   if ( head == S_QUOTE ) { // (quote exp)
     [ObjScheme assertSyntax: (length == 2)
-                  elseRaise: [NSString stringWithFormat: @"quote should have 1 arg, given %d", length-1]];
+                  elseRaise: [NSString stringWithFormat: @"quote should have 1 arg, given %lu", (unsigned long)length - 1]];
 
     id quotee = CADR(list);
     if ( [quotee isKindOfClass: [ObSCons class]] ) {
@@ -656,7 +656,7 @@ id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
             return INF;
           }
 
-          if ( ! useDouble && strcmp([n objCType], @encode(int)) == 0 ) {
+          if ( ! useDouble && ISINT(n)) {
             intRet += [n intValue];
             doubleRet += [n doubleValue];
 
@@ -683,7 +683,7 @@ id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
           return INF;
         }
 
-        if ( strcmp([first objCType], @encode(int)) == 0 ) {
+        if ( ISINT(first) ) {
           return [NSNumber numberWithInteger: [first intValue]-[second intValue]];
 
         } else {
@@ -703,7 +703,7 @@ id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
 
         for ( NSNumber* number in list ) {
           NSAssert1( [number isKindOfClass: [NSNumber class]], @"%@ is not a number", number );
-          if ( useDouble || strcmp([number objCType], @encode(int)) != 0 ) {
+          if ( useDouble || !ISINT(number) ) {
             useDouble = YES;
             doubleRet *= [number doubleValue];
 
@@ -962,7 +962,7 @@ id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
 
         } else {
           NSNumber* number = o;
-          return TRUTH(strcmp([number objCType], @encode(int)) == 0);
+          return TRUTH(ISINT(number));
         }
       }]];
 
@@ -985,7 +985,7 @@ id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
   [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"number->string")
                                            fromBlock: ^(id o) {
         NSNumber* n = o;
-        if ( strcmp([n objCType], @encode(int)) == 0 ) {
+        if ( ISINT(n) ) {
           return [NSString stringWithFormat: @"%d", [n intValue]];
         } else {
           return [NSString stringWithFormat: @"%f", [n doubleValue]];
@@ -1017,7 +1017,7 @@ id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
   [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"abs")
                                            fromBlock: ^(id n) {
         NSNumber* number = n;
-        if ( strcmp([number objCType], @encode(int)) == 0 ) {
+        if ( ISINT(number) ) {
           return [NSNumber numberWithInteger: abs([number intValue])];
 
         } else {
