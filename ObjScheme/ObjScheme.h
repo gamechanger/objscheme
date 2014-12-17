@@ -102,4 +102,4 @@ extern ObSConstant* UNSPECIFIED;
 #define CADDR(x) CAR((ObSCons*)CDDR(x))
 #define CDDDR(x) CDR((ObSCons*)CDDR(x))
 #define CADDDR(x) CAR((ObSCons*)CDDDR(x))
-#define EMPTY(list) ((id)(list) == C_NULL)
+#define OBS_EMPTY(list) ((id)(list) == C_NULL)
