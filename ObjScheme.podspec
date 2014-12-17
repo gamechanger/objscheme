@@ -8,4 +8,5 @@ Pod::Spec.new do |s|
   s.ios.deployment_target = '5.0'
   s.license      = 'tbd'
   s.source_files = 'ObjScheme'
+  s.requires_arc = false
 end
