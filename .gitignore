@@ -6,3 +6,4 @@ Pods
 test-reports/*
 *~
 .idea
+DerivedData/*
