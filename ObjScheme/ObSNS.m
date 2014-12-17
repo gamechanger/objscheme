@@ -71,7 +71,7 @@
   [scope defineFunction: [ObSNativeLambda named: SY(@"NSMutableDictionary:dictionaryWithObjectsAndKeys")
                                       fromBlock: ^(ObSCons* args) {
         NSMutableDictionary* dict = [NSMutableDictionary dictionary];
-        while ( ! EMPTY(args) ) {
+        while ( ! OBS_EMPTY(args) ) {
           [dict setObject: CAR(args) forKey: CADR(args)];
           args = CDDR(args);
         }
@@ -92,7 +92,7 @@
   
   [scope defineFunction: [ObSNativeLambda named: SY(@"NSArray:array")
                                       fromBlock: ^(ObSCons* args) {
-        return EMPTY(args) ? [NSArray array] : [args toArray];
+        return OBS_EMPTY(args) ? [NSArray array] : [args toArray];
       }]];
 
   [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"NSMutableArray:reversedArrayFromArray")
@@ -148,7 +148,7 @@
 
   [scope defineFunction: [ObSNativeLambda named: SY(@"NSMutableArray:array")
                                       fromBlock: ^(ObSCons* args) {
-        return EMPTY(args) ? [NSMutableArray array] : [args toMutableArray];
+        return OBS_EMPTY(args) ? [NSMutableArray array] : [args toMutableArray];
       }]];
 
   [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"NSMutableArray:addObject")
@@ -212,7 +212,7 @@
 
   [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"list->NSMutableArray")
                                            fromBlock: ^(id x) {
-        if ( EMPTY(x) ) {
+        if ( OBS_EMPTY(x) ) {
           return (NSMutableArray*) [NSMutableArray array];
 
         } else {

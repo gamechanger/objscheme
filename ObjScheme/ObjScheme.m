@@ -155,7 +155,7 @@ static NSMutableArray* __loaders = nil;
 }
 
 + (id)map:(id<ObSProcedure>)proc on:(id)arg {
-  if ( EMPTY(arg) ) {
+  if ( OBS_EMPTY(arg) ) {
     return C_NULL;
 
   } else {
@@ -221,7 +221,7 @@ static NSMutableArray* __loaders = nil;
 }
 
 + (BOOL)isEmptyList:(id)token {
-  return EMPTY(token);
+  return OBS_EMPTY(token);
 }
 
 + (NSUInteger)listLength:(ObSCons*)list {
@@ -241,11 +241,11 @@ static NSMutableArray* __loaders = nil;
 }
 
 id appendListsToList(ObSCons* lists, ObSCons* aList) {
-  if ( EMPTY(lists) ) {
+  if ( OBS_EMPTY(lists) ) {
     return aList;
   }
 
-  if ( EMPTY(aList) ) {
+  if ( OBS_EMPTY(aList) ) {
     return appendListsToList( CDR(lists), CAR(lists) );
   }
 
@@ -253,7 +253,7 @@ id appendListsToList(ObSCons* lists, ObSCons* aList) {
 }
 
 - (id)expandLetDefinitions:(id)definitions {
-  if ( EMPTY(definitions) ) {
+  if ( OBS_EMPTY(definitions) ) {
     return C_NULL;
 
   } else {
@@ -269,7 +269,7 @@ id appendListsToList(ObSCons* lists, ObSCons* aList) {
 }
 
 - (id)expandTokenList:(id)arg atTopLevel:(BOOL)topLevel {
-  if ( EMPTY(arg) ) {
+  if ( OBS_EMPTY(arg) ) {
     return C_NULL;
 
   } else {
@@ -368,7 +368,7 @@ id appendListsToList(ObSCons* lists, ObSCons* aList) {
       ObSCons* callSpec = nameOrSpec;
       macroName = CAR(callSpec);
       id args = CDR(callSpec);
-      id lambdaArgSpec = EMPTY(args) && CAR((ObSCons*)args) == S_DOT ? CADR((ObSCons*)args) : args;
+      id lambdaArgSpec = OBS_EMPTY(args) && CAR((ObSCons*)args) == S_DOT ? CADR((ObSCons*)args) : args;
       body = CONS(S_LAMBDA, CONS(lambdaArgSpec, body));
     }
 
@@ -417,7 +417,7 @@ id appendListsToList(ObSCons* lists, ObSCons* aList) {
       }
 
     } else {
-      [ObjScheme assertSyntax: EMPTY(parameters) || [parameters isKindOfClass: [ObSSymbol class]] elseRaise: [NSString stringWithFormat: @"invalid lambda parameter %@", parameters]];
+      [ObjScheme assertSyntax: OBS_EMPTY(parameters) || [parameters isKindOfClass: [ObSSymbol class]] elseRaise: [NSString stringWithFormat: @"invalid lambda parameter %@", parameters]];
     }
 
     ObSCons* body = CDDR(list);
@@ -442,7 +442,7 @@ id appendListsToList(ObSCons* lists, ObSCons* aList) {
 }
 
 + (id)filter:(id)list with:(id<ObSProcedure>)proc {
-  if ( EMPTY(list) ) {
+  if ( OBS_EMPTY(list) ) {
     return C_NULL;
 
   } else {
@@ -623,7 +623,7 @@ id appendListsToList(ObSCons* lists, ObSCons* aList) {
 }
 
 id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
-  if ( EMPTY(list) ) {
+  if ( OBS_EMPTY(list) ) {
     return C_NULL;
   }
 
@@ -693,7 +693,7 @@ id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
 
   [scope defineFunction: [ObSNativeLambda named: SY(@"*")
                                       fromBlock: ^(ObSCons* list) {
-        if ( EMPTY(list) ) {
+        if ( OBS_EMPTY(list) ) {
           return [NSNumber numberWithInteger: 0];
         }
 
@@ -795,24 +795,24 @@ id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
 
   [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"list?")
                                            fromBlock: ^(id o) {
-        if ( EMPTY(o) ) {
+        if ( OBS_EMPTY(o) ) {
           return B_TRUE;
 
         } else if ( [o isKindOfClass: [ObSCons class]] ) {
           ObSCons* cons = o;
           id cdr = CDR(cons);
-          return TRUTH(EMPTY(cdr) || [cdr isKindOfClass: [ObSCons class]]);
+          return TRUTH(OBS_EMPTY(cdr) || [cdr isKindOfClass: [ObSCons class]]);
 
         } else {
           return B_FALSE;
         }
       }]];
 
-  [scope defineFunction: U_LAMBDA(@"null?", ^(id o) { return TRUTH(EMPTY(o)); })];
+  [scope defineFunction: U_LAMBDA(@"null?", ^(id o) { return TRUTH(OBS_EMPTY(o)); })];
 
   [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"last")
                                             fromBlock: ^(id list) {
-        if ( EMPTY(list) ) {
+        if ( OBS_EMPTY(list) ) {
           return [ObjScheme boolToTruth: NO];
         }
 
@@ -903,7 +903,7 @@ id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
 
   [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"length")
                                            fromBlock: ^(id o) {
-        if ( EMPTY(o) ) {
+        if ( OBS_EMPTY(o) ) {
           return [NSNumber numberWithInteger: 0];
         }
 
@@ -929,7 +929,7 @@ id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
 
   [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"pair?")
                                            fromBlock: ^(id o) {
-        if ( EMPTY(o) || ! [o isKindOfClass: [ObSCons class]] ) {
+        if ( OBS_EMPTY(o) || ! [o isKindOfClass: [ObSCons class]] ) {
           return B_FALSE;
 
         } else {
@@ -939,7 +939,7 @@ id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
           while ( 1 ) {
             o = CDR(cons);
 
-            if ( EMPTY(o) ) {
+            if ( OBS_EMPTY(o) ) {
               return B_FALSE; // this is a list, by definition
             }
 
@@ -1003,7 +1003,7 @@ id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
   [scope defineFunction: [ObSNativeBinaryLambda named: SY(@"map")
                                             fromBlock: ^(id proc, id args) {
         NSAssert1( [proc conformsToProtocol: @protocol(ObSProcedure)], @"map: proc is %@", proc );
-        NSAssert1( EMPTY(args) || [args isKindOfClass: [ObSCons class]], @"map: args is '%@'", args );
+        NSAssert1( OBS_EMPTY(args) || [args isKindOfClass: [ObSCons class]], @"map: args is '%@'", args );
         return [ObjScheme map: (id<ObSProcedure>)proc on: (ObSCons*)args];
       }]];
 
@@ -1142,7 +1142,7 @@ id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
   [scope defineFunction: U_LAMBDA(@"vector?", ^(id a) { return TRUTH([a isKindOfClass: [NSArray class]]); })];
 
          [scope defineFunction: U_LAMBDA(@"vector->list", ^(id a) { return [ObjScheme list: (NSArray*)a]; })];
-         [scope defineFunction: U_LAMBDA(@"list->vector", ^(id a) { if ( EMPTY(a) ) { return (id)[NSArray array]; } else { return (id)[(ObSCons*)a toArray]; } })];
+         [scope defineFunction: U_LAMBDA(@"list->vector", ^(id a) { if ( OBS_EMPTY(a) ) { return (id)[NSArray array]; } else { return (id)[(ObSCons*)a toArray]; } })];
   [scope defineFunction: B_LAMBDA(@"vector-ref", ^(id a, id b) { return [(NSArray*)a objectAtIndex: [(NSNumber*)b intValue]]; })];
   [scope defineFunction: [ObSNativeLambda named: SY(@"vector-set!")
                                       fromBlock: ^(ObSCons* args) {
@@ -1163,7 +1163,7 @@ id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
 
         // if length == 0, we'll just return C_NULL, which is correct
         while ( length-- > 0 ) {
-          if ( EMPTY(ret) ) {
+          if ( OBS_EMPTY(ret) ) {
             // this is just the first iteration, where we create the 1-length sublist
             ret = soFar = CONS(CAR(list), C_NULL);
 
@@ -1231,7 +1231,7 @@ id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
 
   [scope defineFunction: [ObSNativeLambda named: S_APPEND
                                       fromBlock: ^(ObSCons* args) {
-        if ( EMPTY(args) ) {
+        if ( OBS_EMPTY(args) ) {
           return (id)args;
         }
         return appendListsToList(CDR(args), CAR(args));
