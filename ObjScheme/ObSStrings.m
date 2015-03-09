@@ -46,7 +46,6 @@
         return [ObjScheme unspecified];
       }]];
   
-  
   [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"string-length")
                                       fromBlock: ^(id x) {
         NSString *string = ((NSString *)x);
