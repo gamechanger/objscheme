@@ -481,6 +481,7 @@ typedef void (^Thunk)(void);
 
 - (void)testStringFunctions {
   id source, program, returnValue;
+  NSNumber* number;
 
   OSAssertTrue(@"(equal? (list \"a\" \"b\") (string-split \"a-b\" \"-\"))");
   OSAssertTrue(@"(string-startswith? \"garble\" \"gar\")");
@@ -496,6 +497,9 @@ typedef void (^Thunk)(void);
   OSAssertEquals(@"(format #f \"the ~s thing\" 1)", @"the 1 thing");
   OSAssertEquals(@"(format #f \"the ~s thing\" 1)", @"the 1 thing");
   OSAssertEquals(@"(format #f \"the ~s thing ~s like\" 1 \"I\")", @"the 1 thing I like");
+  OSAssertEqualsInt(@"(string-length \"\")", 0);
+  OSAssertEqualsInt(@"(string-length \"GameChanger\")", 11);
+  OSAssertEqualsInt(@"(string-length \"Has Spaces\")", 10);
 }
 
 - (void)testQuotedPairs {

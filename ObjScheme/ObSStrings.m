@@ -45,6 +45,12 @@
         NSLog(@"%@", x);
         return [ObjScheme unspecified];
       }]];
+  
+  [scope defineFunction: [ObSNativeUnaryLambda named: SY(@"string-length")
+                                      fromBlock: ^(id x) {
+        NSString *string = ((NSString *)x);
+        return [NSNumber numberWithInteger:string.length];
+      }]];
 
   [scope defineFunction: [ObSNativeLambda named: SY(@"format")
                                       fromBlock: ^(ObSCons* args) {
