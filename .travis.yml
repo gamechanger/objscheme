@@ -1,6 +1,6 @@
 language: objective-c
 rvm:
-  - 1.9.3
+  - 2.1.0
 before_install:
   - brew update
   - brew unlink xctool
@@ -8,14 +8,8 @@ before_install:
   - rvm get stable
   - rvm install 2.1.0
   - rvm use 2.1.0
+  - gem install cocoapods -v '0.38.2'
 script: rake test:ci analyze
 cache: bundler
 notifications:
   email: false
-  hipchat:
-    template:
-    - ! '%{repository}#%{build_number} (%{branch} - %{commit} : %{author}): %{message}
-      (<a href="%{build_url}">Details</a>/<a href="%{compare_url}">Change view</a>)'
-    format: html
-    rooms:
-      secure: NX/4NH1DDu1k6oyNDAAAWJV+w7IDlmSGQZGbirJYmwMT5jEiambpNRCgvehQDlvciDkgwQlKEdyRa85cHFGT7FWY//2cDtiLkOFdHOdehe3SfBfgQp1kEo9UtpNZMi1hn8nkPAGwMhhcwg3V9R1kc71gUHPw0+YZEOyFGnT/6N8=
