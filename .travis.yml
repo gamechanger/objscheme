@@ -8,6 +8,7 @@ before_install:
   - rvm get stable
   - rvm install 2.1.0
   - rvm use 2.1.0
+  - gem install cocoapods -v '0.38.2'
 script: rake test:ci analyze
 cache: bundler
 notifications:
