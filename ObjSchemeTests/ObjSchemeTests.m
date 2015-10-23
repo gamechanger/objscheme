@@ -259,7 +259,7 @@ typedef void (^Thunk)(void);
 
   OSAssertFalse(@"(find-match (lambda (x) (< x 6))  '())");
   OSAssertFalse(@"(find-match (lambda (x) (< x 6))  '(9 10))");
-  OSAssertEqualsInt(@"(find-match (lambda (x) (< x 6))  '(8 7 3 4))", 4);
+  OSAssertEqualsInt(@"(find-match (lambda (x) (< x 6))  '(8 7 3 4))", 3);
 
   OSAssertTrue(@"(equal? \"frog\" (symbol->string 'frog))");
   OSAssertTrue(@"(equal? \"abc\" (string-append \"a\" \"b\" \"c\"))");
