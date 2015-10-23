@@ -257,6 +257,10 @@ typedef void (^Thunk)(void);
   OSAssertTrue(@"(equal? (list 3 4 5) (map (lambda (x) (+ x 1)) (list 2 3 4)))");
   OSAssertFalse(@"(equal? (list 1 2 3) (map (lambda (x) (+ x 1)) (list 2 3 4)))"); // just because I can't believe the above test passes...
 
+  OSAssertFalse(@"(find-match (lambda (x) (< x 6))  '())");
+  OSAssertFalse(@"(find-match (lambda (x) (< x 6))  '(9 10))");
+  OSAssertEqualsInt(@"(find-match (lambda (x) (< x 6))  '(8 7 3 4))", 3);
+
   OSAssertTrue(@"(equal? \"frog\" (symbol->string 'frog))");
   OSAssertTrue(@"(equal? \"abc\" (string-append \"a\" \"b\" \"c\"))");
 
