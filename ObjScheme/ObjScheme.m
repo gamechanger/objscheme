@@ -155,16 +155,14 @@ static NSMutableArray* __loaders = nil;
 }
 
 + (id)map:(id<ObSProcedure>)proc on:(id)list {
-  id last, result = C_NULL;
+  id result = C_NULL;
   if ( ! OBS_EMPTY(list) ) {
+    id last = C_NULL;
     for (id item in (ObSCons *)list) {
-      ObSCons* cons = CONS([proc callWithSingleArg: item], C_NULL);
+      last = [self lastFromFastAppend: last item: [proc callWithSingleArg: item]];
       if (OBS_EMPTY(result)) {
-        result = cons;
-      } else {
-        [last setCdr: cons];
+        result = last;
       }
-      last = cons;
     }
   }
   return result;
@@ -448,21 +446,29 @@ id appendListsToList(ObSCons* lists, ObSCons* aList) {
 }
 
 + (id)filter:(id)list with:(id<ObSProcedure>)proc {
-  id last, result = C_NULL;
+  id result = C_NULL;
   if ( ! OBS_EMPTY(list) ) {
+    id last = C_NULL;
     for (id item in (ObSCons *)list) {
       if ( [proc callWithSingleArg: item] != B_FALSE ) {
-        ObSCons* cons = CONS(item, C_NULL);
+        last = [self lastFromFastAppend: last item: item];
         if (OBS_EMPTY(result)) {
-          result = cons;
-        } else {
-          [last setCdr: cons];
+          result = last;
         }
-        last = cons;
       }
     }
   }
   return result;
+}
+
++ (id)lastFromFastAppend:(id)list item:(id)item {
+  ObSCons* cons = CONS(item, C_NULL);
+  if (OBS_EMPTY(list)) {
+    return cons;
+  } else {
+    [list setCdr: cons];
+  }
+  return cons;
 }
 
 + (id)list:(NSArray*)tokens {
