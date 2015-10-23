@@ -255,7 +255,8 @@ typedef void (^Thunk)(void);
   OSAssertTrue(@"(equal? (list 2) (eval '(list 2)))");
 
   OSAssertTrue(@"(equal? '() (map (lambda (x) (+ x 1)) '()))");
-  OSAssertTrue(@"(equal? '(3 4 5) (map (lambda (x) (+ x 1)) '(2 3 4)))");
+  OSAssertTrue(@"(equal? '(3) (map (lambda (x) (+ x 2)) '(1)))");
+  OSAssertTrue(@"(equal? '(3 4 5 6) (map (lambda (x) (+ x 1)) '(2 3 4 5)))");
   OSAssertFalse(@"(equal? '(1 2 3) (map (lambda (x) (+ x 1)) '(2 3 4)))");
 
   OSAssertFalse(@"(find-match (lambda (x) (< x 6))  '())");

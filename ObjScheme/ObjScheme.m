@@ -155,9 +155,8 @@ static NSMutableArray* __loaders = nil;
 }
 
 + (id)map:(id<ObSProcedure>)proc on:(id)list {
-  id result = C_NULL;
+  id last, result = C_NULL;
   if ( ! OBS_EMPTY(list) ) {
-    ObSCons* last;
     for (id item in (ObSCons *)list) {
       ObSCons* cons = CONS([proc callWithSingleArg: item], C_NULL);
       if (OBS_EMPTY(result)) {
@@ -449,9 +448,8 @@ id appendListsToList(ObSCons* lists, ObSCons* aList) {
 }
 
 + (id)filter:(id)list with:(id<ObSProcedure>)proc {
-  id result = C_NULL;
+  id last, result = C_NULL;
   if ( ! OBS_EMPTY(list) ) {
-    ObSCons* last;
     for (id item in (ObSCons *)list) {
       if ( [proc callWithSingleArg: item] != B_FALSE ) {
         ObSCons* cons = CONS(item, C_NULL);
