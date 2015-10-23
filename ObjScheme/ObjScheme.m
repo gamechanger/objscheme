@@ -159,7 +159,7 @@ static NSMutableArray* __loaders = nil;
   if ( ! OBS_EMPTY(list) ) {
     id last = C_NULL;
     for (id item in (ObSCons *)list) {
-      last = [self lastFromFastAppend: last item: [proc callWithSingleArg: item]];
+      last = [self lastConsFromMutatingPush: last item: [proc callWithSingleArg: item]];
       if (OBS_EMPTY(result)) {
         result = last;
       }
@@ -451,7 +451,7 @@ id appendListsToList(ObSCons* lists, ObSCons* aList) {
     id last = C_NULL;
     for (id item in (ObSCons *)list) {
       if ( [proc callWithSingleArg: item] != B_FALSE ) {
-        last = [self lastFromFastAppend: last item: item];
+        last = [self lastConsFromMutatingPush: last item: item];
         if (OBS_EMPTY(result)) {
           result = last;
         }
@@ -461,7 +461,7 @@ id appendListsToList(ObSCons* lists, ObSCons* aList) {
   return result;
 }
 
-+ (id)lastFromFastAppend:(id)list item:(id)item {
++ (id)lastConsFromMutatingPush:(id)list item:(id)item {
   ObSCons* cons = CONS(item, C_NULL);
   if (OBS_EMPTY(list)) {
     return cons;
