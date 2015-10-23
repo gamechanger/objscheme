@@ -266,8 +266,8 @@ typedef void (^Thunk)(void);
   OSAssertTrue(@"(equal? \"abc\" (string-append \"a\" \"b\" \"c\"))");
 
   OSAssertTrue(@"(equal? '() (filter (lambda (x) (< x 3)) '()))");
-  OSAssertTrue(@"(equal? '(1 2) (filter (lambda (x) #t) '(1 2)))");
-  OSAssertTrue(@"(equal? '(1 2) (filter (lambda (x) (< x 3)) '(1 2 3)))");
+  OSAssertTrue(@"(equal? '(1 2 3 4) (filter (lambda (x) #t) '(1 2 3 4)))");
+  OSAssertTrue(@"(equal? '(1 2 1) (filter (lambda (x) (< x 3)) '(1 2 3 1)))");
 
   OSAssertFalse(@"(unspecified? #f)");
   OSAssertFalse(@"(unspecified? '())");

@@ -442,18 +442,22 @@ id appendListsToList(ObSCons* lists, ObSCons* aList) {
 }
 
 + (id)filter:(id)list with:(id<ObSProcedure>)proc {
-  if ( OBS_EMPTY(list) ) {
-    return C_NULL;
-
-  } else {
-    ObSCons* cell = list;
-    if ( [proc callWith: CONS(CAR(cell), C_NULL)] != B_FALSE ) {
-      return CONS(CAR(cell), [self filter: CDR(cell) with: proc]);
-
-    } else {
-      return [self filter: CDR(cell) with: proc];
+  id result = C_NULL;
+  if ( ! OBS_EMPTY(list) ) {
+    ObSCons* last;
+    for (id item in (ObSCons *)list) {
+      if ( [proc callWithSingleArg: item] != B_FALSE ) {
+        ObSCons* cons = CONS(item, C_NULL);
+        if (OBS_EMPTY(result)) {
+          result = cons;
+        } else {
+          [last setCdr: cons];
+        }
+        last = cons;
+      }
     }
   }
+  return result;
 }
 
 + (id)list:(NSArray*)tokens {
