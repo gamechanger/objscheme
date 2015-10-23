@@ -154,14 +154,21 @@ static NSMutableArray* __loaders = nil;
   [__loaders removeObject: loader];
 }
 
-+ (id)map:(id<ObSProcedure>)proc on:(id)arg {
-  if ( OBS_EMPTY(arg) ) {
-    return C_NULL;
-
-  } else {
-    ObSCons* list = arg;
-    return CONS([proc callWith: CONS(CAR(list), C_NULL)], [self map: proc on: CDR(list)]);
++ (id)map:(id<ObSProcedure>)proc on:(id)list {
+  id result = C_NULL;
+  if ( ! OBS_EMPTY(list) ) {
+    ObSCons* last;
+    for (id item in (ObSCons *)list) {
+      ObSCons* cons = CONS([proc callWithSingleArg: item], C_NULL);
+      if (OBS_EMPTY(result)) {
+        result = cons;
+      } else {
+        [last setCdr: cons];
+      }
+      last = cons;
+    }
   }
+  return result;
 }
 
 - (void)dealloc {
