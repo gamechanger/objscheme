@@ -1237,24 +1237,18 @@ id srfi1_remove( id<ObSProcedure> predicate, ObSCons* list) {
         return appendListsToList(CDR(args), CAR(args));
       }]];
 
-  [[self globalScope] defineFunction: [ObSNativeLambda named: SY(@"find-match")
-                                                   fromBlock: ^(ObSCons* args) {
-                                                     id<ObSProcedure> testFunction = CAR(args);
-                                                     NSArray* inputArray = CADR(args);
-                                                     id ret = B_FALSE;
-
-                                                     for ( NSUInteger i = 0; i < 3; i++ ) {
-                                                       for ( id item in inputArray ) {
-                                                         if ( [testFunction callWithSingleArg: item] != B_FALSE ) {
-                                                           ret = item;
-                                                           break;
-                                                         }
-                                                       }
-                                                       return ret;
-                                                     }
-                                                     // shouldn't be possible to get here, but throwing in a return to please the compiler
-                                                     return ret;
-                                                   }]];
+  [[self globalScope] defineFunction: [ObSNativeBinaryLambda named: SY(@"find-match")
+                                                         fromBlock: ^(id<ObSProcedure> testFunction, id b) {
+                                                           if ( b != C_NULL ) {
+                                                             ObSCons* list = b;
+                                                             for ( id item in list ) {
+                                                               if ( [testFunction callWithSingleArg: item] != B_FALSE ) {
+                                                                 return item;
+                                                               }
+                                                             }
+                                                           }
+                                                           return (id)B_FALSE;
+                                                         }]];
 
   [[self globalScope] defineFunction: [ObSNativeLambda named: SY(@"find-matches")
                                                         fromBlock: ^(ObSCons* args) {
