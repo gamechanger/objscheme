@@ -254,8 +254,10 @@ typedef void (^Thunk)(void);
   OSAssertEqualsInt(@"(eval 99)", 99);
   OSAssertTrue(@"(equal? (list 2) (eval '(list 2)))");
 
-  OSAssertTrue(@"(equal? (list 3 4 5) (map (lambda (x) (+ x 1)) (list 2 3 4)))");
-  OSAssertFalse(@"(equal? (list 1 2 3) (map (lambda (x) (+ x 1)) (list 2 3 4)))"); // just because I can't believe the above test passes...
+  OSAssertTrue(@"(equal? '() (map (lambda (x) (+ x 1)) '()))");
+  OSAssertTrue(@"(equal? '(3) (map (lambda (x) (+ x 2)) '(1)))");
+  OSAssertTrue(@"(equal? '(3 4 5 6) (map (lambda (x) (+ x 1)) '(2 3 4 5)))");
+  OSAssertFalse(@"(equal? '(1 2 3) (map (lambda (x) (+ x 1)) '(2 3 4)))");
 
   OSAssertFalse(@"(find-match (lambda (x) (< x 6))  '())");
   OSAssertFalse(@"(find-match (lambda (x) (< x 6))  '(9 10))");
@@ -264,9 +266,9 @@ typedef void (^Thunk)(void);
   OSAssertTrue(@"(equal? \"frog\" (symbol->string 'frog))");
   OSAssertTrue(@"(equal? \"abc\" (string-append \"a\" \"b\" \"c\"))");
 
-
-  OSAssertTrue(@"(equal? '(1 2) (filter (lambda (x) #t) '(1 2)))");
-  OSAssertTrue(@"(equal? '(1 2) (filter (lambda (x) (< x 3)) '(1 2 3)))");
+  OSAssertTrue(@"(equal? '() (filter (lambda (x) (< x 3)) '()))");
+  OSAssertTrue(@"(equal? '(1 2 3 4) (filter (lambda (x) #t) '(1 2 3 4)))");
+  OSAssertTrue(@"(equal? '(1 2 1) (filter (lambda (x) (< x 3)) '(1 2 3 1)))");
 
   OSAssertFalse(@"(unspecified? #f)");
   OSAssertFalse(@"(unspecified? '())");

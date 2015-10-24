@@ -154,14 +154,18 @@ static NSMutableArray* __loaders = nil;
   [__loaders removeObject: loader];
 }
 
-+ (id)map:(id<ObSProcedure>)proc on:(id)arg {
-  if ( OBS_EMPTY(arg) ) {
-    return C_NULL;
-
-  } else {
-    ObSCons* list = arg;
-    return CONS([proc callWith: CONS(CAR(list), C_NULL)], [self map: proc on: CDR(list)]);
++ (id)map:(id<ObSProcedure>)proc on:(id)list {
+  id result = C_NULL;
+  if ( ! OBS_EMPTY(list) ) {
+    id last = C_NULL;
+    for (id item in (ObSCons *)list) {
+      last = [self lastConsFromMutatingPush: last item: [proc callWithSingleArg: item]];
+      if (OBS_EMPTY(result)) {
+        result = last;
+      }
+    }
   }
+  return result;
 }
 
 - (void)dealloc {
@@ -442,18 +446,29 @@ id appendListsToList(ObSCons* lists, ObSCons* aList) {
 }
 
 + (id)filter:(id)list with:(id<ObSProcedure>)proc {
-  if ( OBS_EMPTY(list) ) {
-    return C_NULL;
-
-  } else {
-    ObSCons* cell = list;
-    if ( [proc callWith: CONS(CAR(cell), C_NULL)] != B_FALSE ) {
-      return CONS(CAR(cell), [self filter: CDR(cell) with: proc]);
-
-    } else {
-      return [self filter: CDR(cell) with: proc];
+  id result = C_NULL;
+  if ( ! OBS_EMPTY(list) ) {
+    id last = C_NULL;
+    for (id item in (ObSCons *)list) {
+      if ( [proc callWithSingleArg: item] != B_FALSE ) {
+        last = [self lastConsFromMutatingPush: last item: item];
+        if (OBS_EMPTY(result)) {
+          result = last;
+        }
+      }
     }
   }
+  return result;
+}
+
++ (id)lastConsFromMutatingPush:(id)list item:(id)item {
+  ObSCons* cons = CONS(item, C_NULL);
+  if (OBS_EMPTY(list)) {
+    return cons;
+  } else {
+    [list setCdr: cons];
+  }
+  return cons;
 }
 
 + (id)list:(NSArray*)tokens {
