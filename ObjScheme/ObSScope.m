@@ -23,8 +23,8 @@
 @end
 
 @implementation ObSScope {
-  __weak ObSGarbageCollector* _inheritedGC;
-  __weak ObjScheme* _context;
+  ObSGarbageCollector* _inheritedGC;
+  ObjScheme* _context;
 }
 
 @synthesize outer=_outerScope, environ=_environ, context=_context, evalMap=_evalMap, stack=_stack;
