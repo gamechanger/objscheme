@@ -10,7 +10,7 @@
 
 @interface ObSCollectible : NSObject {
 @public
-  __weak ObSGarbageCollector* _garbageCollector;
+  ObSGarbageCollector* _garbageCollector;
 }
 
 - (NSArray*)children;
