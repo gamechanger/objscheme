@@ -5,7 +5,7 @@ Pod::Spec.new do |s|
   s.homepage     = "https://github.com/gamechanger/objscheme"
   s.author       = { "Kiril Savino" => "kiril@gamechanger.io" }
   s.source       = { :git => "https://github.com/gamechanger/objscheme.git", :tag => "0.6.4" }
-  s.ios.deployment_target = '5.0'
+  s.ios.deployment_target = '8.0'
   s.license      = 'tbd'
   s.source_files = 'ObjScheme'
   s.requires_arc = false
