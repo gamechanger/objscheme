@@ -1,5 +1,8 @@
 platform :ios, "7.0"
 workspace 'ObjScheme'
-xcodeproj 'ObjScheme.xcodeproj'
+project 'ObjScheme.xcodeproj'
+use_frameworks!
 
-podspec :path => 'ObjScheme.podspec'
+target 'ObjScheme' do
+    podspec :path => 'ObjScheme.podspec'
+end
