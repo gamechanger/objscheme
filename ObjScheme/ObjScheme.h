@@ -75,6 +75,7 @@ extern ObSConstant* UNSPECIFIED;
 + (void)addFileLoader:(id<ObSFileLoader>)loader;
 + (void)removeFileLoader:(id<ObSFileLoader>)loader;
 
++ (void)initializeWithBundle:(NSBundle *)bundle;
 + (id)map:(id<ObSProcedure>)procedure on:(id)list;
 + (NSArray*)filter:(ObSCons*)list with:(id<ObSProcedure>)procedure;
 + (ObSCons*)list:(NSArray*)array;

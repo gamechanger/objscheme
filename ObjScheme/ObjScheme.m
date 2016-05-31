@@ -120,7 +120,19 @@ static NSMutableArray* __loaders = nil;
   INF =         [[NSNumber alloc] initWithLongLong: LLONG_MAX];
 }
 
-+ (void)initialize {
+- (instancetype)init {
+  return [self initWithBundle:NSBundle.mainBundle];
+}
+
+- (instancetype)initWithBundle:(NSBundle *)bundle {
+  [ObjScheme initializeWithBundle:bundle];
+  self = [super init];
+  if (self) {
+  }
+  return self;
+}
+
++ (void)initializeWithBundle:(NSBundle *)bundle {
   if ( __constants == nil ) {
     [self initializeSymbols];
 
@@ -139,7 +151,7 @@ static NSMutableArray* __loaders = nil;
   if ( __loaders == nil ) {
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        id<ObSFileLoader> bundleLoader = [[ObSBundleFileLoader alloc] init];
+        id<ObSFileLoader> bundleLoader = [[ObSBundleFileLoader alloc] initWithBundle:bundle];
         __loaders = [[NSMutableArray alloc] initWithObjects: bundleLoader, nil];
         [bundleLoader release];
       });
