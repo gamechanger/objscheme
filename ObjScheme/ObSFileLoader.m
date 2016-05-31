@@ -9,8 +9,19 @@
 #import "ObSFileLoader.h"
 #import "ObSInPort.h"
 
-
 @implementation ObSBundleFileLoader
+
+- (instancetype)init {
+  return [self initWithBundle:NSBundle.mainBundle];
+}
+
+- (instancetype)initWithBundle:(NSBundle *)bundle {
+  self = [super init];
+  if (self) {
+    _bundle = bundle;
+  }
+  return self;
+}
 
 - (ObSInPort*)findFile:(NSString*)path {
   if ( ! [[NSFileManager defaultManager] isReadableFileAtPath: path] ) {
@@ -30,7 +41,7 @@
     filename = [filename substringWithRange: NSMakeRange(0, [filename length]-4)];
   }
 
-  return [[NSBundle mainBundle] pathForResource: filename ofType: @"scm"];
+  return [self.bundle pathForResource:filename ofType:@"scm"];
 }
 
 @end

@@ -54,6 +54,8 @@ NSNumber* INF;
 
 @interface ObjScheme ()
 
+@property (nonatomic, strong) NSMutableArray *fileLoaders;
+
 + (id)atomFromToken:(NSString*)token;
 + (NSString*)unpackStringLiteral:(NSString*)string;
 - (id)expandToken:(id)token;
@@ -65,8 +67,6 @@ NSNumber* INF;
 @end
 
 
-
-
 // ------ ObjScheme top-level
 
 @implementation ObjScheme {
@@ -74,7 +74,6 @@ NSNumber* INF;
 }
 
 static NSDictionary* __constants = nil;
-static NSMutableArray* __loaders = nil;
 
 + (void)initializeSymbols {
   S_DOT =             SY(@".");
@@ -135,23 +134,32 @@ static NSMutableArray* __loaders = nil;
                         nil];
       });
   }
+}
 
-  if ( __loaders == nil ) {
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        id<ObSFileLoader> bundleLoader = [[ObSBundleFileLoader alloc] init];
-        __loaders = [[NSMutableArray alloc] initWithObjects: bundleLoader, nil];
-        [bundleLoader release];
-      });
+- (instancetype)init {
+  return [self initWithBundle:NSBundle.mainBundle];
+}
+
+- (instancetype)initWithBundle:(NSBundle *)bundle {
+  self = [super init];
+  if (self) {
+    [self initializeFileLoadersWithBundle:bundle];
   }
+  return self;
 }
 
-+ (void)addFileLoader:(id<ObSFileLoader>)loader {
-  [__loaders addObject: loader];
+- (void)initializeFileLoadersWithBundle:(NSBundle *)bundle {
+  id<ObSFileLoader> bundleLoader = [[ObSBundleFileLoader alloc] initWithBundle:bundle];
+  self.fileLoaders = [NSMutableArray arrayWithObjects:bundleLoader, nil];
+  [bundleLoader release];
 }
 
-+ (void)removeFileLoader:(id<ObSFileLoader>)loader {
-  [__loaders removeObject: loader];
+- (void)addFileLoader:(id<ObSFileLoader>)loader {
+  [self.fileLoaders addObject:loader];
+}
+
+- (void)removeFileLoader:(id<ObSFileLoader>)loader {
+  [self.fileLoaders removeObject:loader];
 }
 
 + (id)map:(id<ObSProcedure>)proc on:(id)list {
@@ -522,7 +530,7 @@ id appendListsToList(ObSCons* lists, ObSCons* aList) {
 }
 
 - (void)loadFile:(NSString*)filename intoScope:(ObSScope*)scope {
-  for ( id<ObSFileLoader> loader in __loaders ) {
+  for ( id<ObSFileLoader> loader in self.fileLoaders ) {
     NSString* qualifiedName = [loader qualifyFileName: filename];
     if ( ! qualifiedName ) {
       continue;

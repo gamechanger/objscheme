@@ -17,6 +17,11 @@
 
 
 @interface ObSBundleFileLoader : NSObject <ObSFileLoader>
+
+@property (nonatomic, strong, readonly) NSBundle *bundle;
+
+- (instancetype)initWithBundle:(NSBundle *)bundle;
+
 @end
 
 
