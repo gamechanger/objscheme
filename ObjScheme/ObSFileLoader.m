@@ -30,7 +30,7 @@
     filename = [filename substringWithRange: NSMakeRange(0, [filename length]-4)];
   }
 
-  return [[NSBundle mainBundle] pathForResource: filename ofType: @"scm"];
+  return [[NSBundle bundleForClass:self.class] pathForResource: filename ofType: @"scm"];
 }
 
 @end
